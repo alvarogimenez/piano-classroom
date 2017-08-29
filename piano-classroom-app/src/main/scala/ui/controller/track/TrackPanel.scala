@@ -26,7 +26,7 @@ class TrackPanel(index: Int, settings: Option[TrackPanelInitialSettings] = None)
   loader.setController(this)
   loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/TrackPanel.fxml"))
   this.setCenter(loader.load().asInstanceOf[BorderPane])
-
+  this.setMinWidth(100)
 
   def initialize(): Unit = {
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {

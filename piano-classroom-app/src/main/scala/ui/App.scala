@@ -26,6 +26,8 @@ class App extends Application {
       }
     })
     val scene = new Scene(rootLayout, 800, 600)
+    primaryStage.setMinHeight(rootLayout.getMinHeight)
+    primaryStage.setMinWidth(rootLayout.getMinWidth)
     primaryStage.setScene(scene)
     primaryStage.setTitle("Piano Classroom v1.0.0")
     primaryStage.show()
