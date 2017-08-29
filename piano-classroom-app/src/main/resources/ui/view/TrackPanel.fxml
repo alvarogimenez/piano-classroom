@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="85.0" prefWidth="704.0" style="-fx-border-style: solid; -fx-border-width: 1px; -fx-border-color: #ccc;" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <BorderPane fx:id="panel_track_main" BorderPane.alignment="CENTER">
+         <left>
+            <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+               <children>
+                  <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="3.0">
+                     <children>
+                        <Label text="INPUT" />
+                        <ComboBox fx:id="combobox_midi_input" minHeight="25.0" minWidth="100.0" prefHeight="25.0" prefWidth="100.0" promptText="Select..." style="-fx-font: 9px &quot;Verdana&quot;;" />
+                        <HBox prefHeight="100.0" prefWidth="200.0" spacing="3.0">
+                           <children>
+                              <Button fx:id="button_link_midi" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Link.png')" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+                  <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="3.0">
+                     <children>
+                        <Label text="VSTi" />
+                        <ComboBox minHeight="25.0" minWidth="100.0" prefHeight="25.0" prefWidth="100.0" promptText="Select..." style="-fx-font: 9px &quot;Verdana&quot;;" />
+                        <HBox prefHeight="100.0" prefWidth="200.0" spacing="3.0">
+                           <children>
+                              <Button maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Folder.png')" />
+                              <Button maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Settings.png')" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </VBox>
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+            </HBox>
+         </left>
+      </BorderPane>
+   </center>
+   <left>
+      <Pane prefHeight="83.0" prefWidth="25.0" BorderPane.alignment="CENTER">
+         <children>
+            <Label layoutX="-14.0" layoutY="33.0" rotate="-90.0" text="Channel 0" />
+         </children>
+      </Pane>
+   </left>
+</BorderPane>

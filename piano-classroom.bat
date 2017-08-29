@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\Java\jre1.8.0_25\bin\java" -jar piano-classroom-app\target\scala-2.11\piano-classroom-app-assembly-1.0.jar
