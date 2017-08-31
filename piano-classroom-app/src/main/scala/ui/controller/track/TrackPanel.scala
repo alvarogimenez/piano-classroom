@@ -14,6 +14,7 @@ import javax.sound.midi.{MidiMessage, ShortMessage}
 import context.Context
 import sound.audio.channel.MidiChannel
 import sound.midi.{MidiInterfaceIdentifier, MidiListener}
+import util.KeyboardNote
 
 import scala.collection.JavaConversions._
 
@@ -98,7 +99,13 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
           Context.midiController.addMidiListener(newValue, new MidiListener() {
             override def midiReceived(msg: MidiMessage, timeStamp: Long): Unit = {
               if(msg.isInstanceOf[ShortMessage]) {
+                val smsg = msg.asInstanceOf[ShortMessage]
                 channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
+                if(smsg.getCommand == ShortMessage.NOTE_ON) {
+                  canvas.queueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
+                } else {
+                  canvas.dequeueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
+                }
               } else {
                 println(s"Unknown MIDI message type [$msg] [${msg.getClass.getName}]")
               }

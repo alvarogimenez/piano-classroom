@@ -10,6 +10,8 @@ import util.{KeyboardNote, MusicNote}
 import util.MusicNote.MusicNote
 
 class KeyboardCanvas extends Pane {
+  var activeNotes: Set[KeyboardNote] = Set.empty
+
   val canvas = new Canvas(getWidth, getHeight)
   getChildren.add(canvas)
 
@@ -19,6 +21,16 @@ class KeyboardCanvas extends Pane {
   canvas.heightProperty().addListener(new InvalidationListener() {
     override def invalidated(observable: Observable): Unit = draw()
   })
+
+  def queueActiveNote(n: KeyboardNote): Unit = {
+    activeNotes += n
+    draw()
+  }
+
+  def dequeueActiveNote(n: KeyboardNote): Unit = {
+    activeNotes = activeNotes - n
+    draw()
+  }
 
   override def layoutChildren(): Unit = {
     super.layoutChildren()
@@ -64,14 +76,27 @@ class KeyboardCanvas extends Pane {
     lowerNotes
       .foreach { n =>
         val offset = displacementFromKeyborardNote(n) - offsetLeft
-        gc.strokeRect(r.x + offset*lowerNoteWidth, r.y, lowerNoteWidth, lowerNoteHeight)
+        if(activeNotes.contains(n)) {
+          gc.setFill(Color.LIGHTBLUE)
+          gc.fillRect(r.x + offset*lowerNoteWidth, r.y, lowerNoteWidth, lowerNoteHeight)
+          gc.strokeRect(r.x + offset*lowerNoteWidth, r.y, lowerNoteWidth, lowerNoteHeight)
+        } else {
+          gc.setFill(Color.WHITE)
+          gc.strokeRect(r.x + offset*lowerNoteWidth, r.y, lowerNoteWidth, lowerNoteHeight)
+        }
       }
 
-    gc.setFill(new Color(0.2, 0.2, 0.2, 1.0))
     upperNotes
       .foreach { n =>
         val offset = displacementFromKeyborardNote(n) - offsetLeft
-        gc.fillRect(r.x + (offset + 0.5)*lowerNoteWidth - upperNoteWidth/2, r.y, upperNoteWidth, upperNoteHeight)
+        if(activeNotes.contains(n)) {
+          gc.setFill(Color.LIGHTBLUE)
+          gc.fillRect(r.x + (offset + 0.5)*lowerNoteWidth - upperNoteWidth/2, r.y, upperNoteWidth, upperNoteHeight)
+          gc.strokeRect(r.x + (offset + 0.5)*lowerNoteWidth - upperNoteWidth/2, r.y, upperNoteWidth, upperNoteHeight)
+        } else {
+          gc.setFill(new Color(0.2, 0.2, 0.2, 1.0))
+          gc.fillRect(r.x + (offset + 0.5)*lowerNoteWidth - upperNoteWidth/2, r.y, upperNoteWidth, upperNoteHeight)
+        }
       }
   }
 

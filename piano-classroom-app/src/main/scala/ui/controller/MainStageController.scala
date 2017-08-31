@@ -38,6 +38,11 @@ class MainStageController extends MenuBarController {
 
         Context.channelController.addChannel(midiChannel)
         Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 0)
+        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 1)
+        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 2)
+        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 3)
+        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 4)
+        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 5)
         tracks.getChildren.add(new TrackPanel(midiChannel, trackModel))
       }
     })
