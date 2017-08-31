@@ -1,6 +1,10 @@
 package sound.midi
 
+import java.io.File
 import javax.sound.midi._
+
+import context.Context
+
 import scala.collection.JavaConversions._
 
 class MidiController {
@@ -51,6 +55,21 @@ class MidiController {
           }
         }
         .toMap
+  }
+
+  def getVstSources(): List[File] = {
+    Context.sessionSettings.`vst-configuration`.`vst-source-directories`
+        .flatMap { directory =>
+          val fDir = new File(directory)
+          if(fDir.exists() && fDir.isDirectory) {
+            fDir
+            .listFiles()
+              .toList
+              .filter(f => f.isFile && f.getName.endsWith(".dll"))
+          } else {
+            List.empty
+          }
+        }
   }
 
   def attach() = {

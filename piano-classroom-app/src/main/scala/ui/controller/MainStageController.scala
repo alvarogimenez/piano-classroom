@@ -1,5 +1,6 @@
 package ui.controller
 
+import java.util.UUID
 import javafx.application.{Application, Platform}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
@@ -9,9 +10,11 @@ import javafx.scene.layout.{BorderPane, VBox}
 import javafx.stage.{Modality, Stage}
 
 import context.Context
+import sound.audio.channel.MidiChannel
+import sound.audio.mixer.ChannelMix
 import sound.midi.MidiInterfaceIdentifier
 import ui.controller.settings.SettingsController
-import ui.controller.track.{TrackPanel, TrackPanelInitialSettings}
+import ui.controller.track.{TrackModel, TrackPanel, TrackPanelInitialSettings}
 
 
 class MainStageController extends MenuBarController {
@@ -26,12 +29,19 @@ class MainStageController extends MenuBarController {
         Platform.exit()
       }
     })
+
     fileTest.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
-        tracks.getChildren.add(new TrackPanel(0, Some(TrackPanelInitialSettings(midiIn = MidiInterfaceIdentifier("[LoopBe Internal MIDI]:1"), vstSource = ""))))
-        tracks.getChildren.add(new TrackPanel(1))
+        val midiChannel = new MidiChannel(UUID.randomUUID().toString)
+        val trackModel = new TrackModel()
+        trackModel.initFromContext()
+
+        Context.channelController.addChannel(midiChannel)
+        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 0)
+        tracks.getChildren.add(new TrackPanel(midiChannel, trackModel))
       }
     })
+
     editSettings.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         val dialog = new Stage()

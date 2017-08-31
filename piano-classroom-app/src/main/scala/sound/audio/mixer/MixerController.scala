@@ -20,7 +20,6 @@ class MixerController(val channelOwner: ChannelOwner) extends MixerOwner {
         }
 
   def pull(sampleRate: Double, bufferSize: Int): Map[Int, Array[Float]] = {
-//    println(s"Mixer pull SampleRate [$sampleRate], BufferSize [$bufferSize]")
     val channelData = channelOwner.pull(sampleRate, bufferSize)
     mixByOutputChannel
         .map { case (key, mixes) =>

@@ -16,6 +16,8 @@ object Context {
   val mixerController = new MixerController(channelController)
   val asioController = new AsioController(mixerController)
 
+  midiController.attach()
+
   sessionSettings.`audio-configuration` match {
     case Some(audioConfiguration) =>
       if(asioController.listDriverNames().contains(audioConfiguration.`driver-name`)) {

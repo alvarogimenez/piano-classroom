@@ -35,7 +35,7 @@
                   <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="3.0">
                      <children>
                         <Label text="VSTi" />
-                        <ComboBox minHeight="25.0" minWidth="100.0" prefHeight="25.0" prefWidth="100.0" promptText="Select..." style="-fx-font: 9px &quot;Verdana&quot;;" />
+                        <ComboBox fx:id="combobox_vst_input" minHeight="25.0" minWidth="100.0" prefHeight="25.0" prefWidth="100.0" promptText="Select..." style="-fx-font: 9px &quot;Verdana&quot;;" />
                         <HBox prefHeight="100.0" prefWidth="200.0" spacing="3.0">
                            <children>
                               <Button maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Folder.png')" />

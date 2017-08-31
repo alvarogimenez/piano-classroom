@@ -2,7 +2,7 @@ package sound.audio.channel
 
 
 trait Channel {
-  val index: Int
+  val id: String
   def pull(sampleRate: Double, bufferSize: Int): Array[Float]
 }
 

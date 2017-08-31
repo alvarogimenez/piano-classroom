@@ -7,7 +7,7 @@ class ChannelController() extends ChannelOwner {
     channels = channels :+ channel
   }
 
-  def pull(sampleRate: Double, bufferSize: Int): Map[Int, Array[Float]] = {
-    channels.map(c => c.index -> c.pull(sampleRate, bufferSize)).toMap
+  def pull(sampleRate: Double, bufferSize: Int): Map[String, Array[Float]] = {
+    channels.map(c => c.id -> c.pull(sampleRate, bufferSize)).toMap
   }
 }
