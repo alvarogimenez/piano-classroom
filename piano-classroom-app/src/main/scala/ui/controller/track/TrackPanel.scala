@@ -6,14 +6,14 @@ import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.event.{ActionEvent, Event, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
-import javafx.scene.control.{Button, ComboBox, Tooltip}
+import javafx.scene.control._
 import javafx.scene.input.{ContextMenuEvent, MouseEvent}
 import javafx.scene.layout.BorderPane
 import javax.sound.midi.{MidiMessage, ShortMessage}
 
 import context.Context
 import sound.audio.channel.MidiChannel
-import sound.midi.{MidiInterfaceIdentifier, MidiListener}
+import sound.midi.{MidiInterfaceIdentifier, MidiListener, MidiSubscriber}
 import util.KeyboardNote
 
 import scala.collection.JavaConversions._
@@ -53,9 +53,9 @@ class TrackModel() {
   def getSelectedMidiVstProperty: SimpleStringProperty = selected_midi_vst
 
   def initFromContext() = {
-    val midiInterfaceNames = Context.midiController.getHardwareMidiDevices()
+    val midiInterfaceNames = Context.midiController.getHardwareMidiDevices
     setMidiInterfaceNames(List(null) ++ midiInterfaceNames.keys.toList)
-    val vstSources = Context.midiController.getVstSources()
+    val vstSources = Context.midiController.getVstSources
     setMidiVstSourceNames(List(null) ++ vstSources.map(_.getName()))
   }
 }
@@ -63,10 +63,12 @@ class TrackModel() {
 class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   val canvas = new KeyboardCanvas()
   @FXML var button_link_midi: Button = _
+  @FXML var button_open_vst_settings: Button = _
+  @FXML var button_open_vst_source: Button = _
   @FXML var panel_track_main: BorderPane = _
   @FXML var combobox_midi_input: ComboBox[MidiInterfaceIdentifier] = _
   @FXML var combobox_vst_input: ComboBox[String] = _
-
+  @FXML var label_track_name: Label = _
 
   val loader = new FXMLLoader()
   loader.setController(this)
@@ -74,9 +76,42 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   this.setCenter(loader.load().asInstanceOf[BorderPane])
   this.setMinWidth(100)
 
+  val _self = this
+
   this.setOnContextMenuRequested(new EventHandler[ContextMenuEvent] {
     override def handle(event: ContextMenuEvent) = {
-      println(s"Context Menu")
+      val contextMenu = new ContextMenu()
+
+      val contextMenu_change_name = new MenuItem("Change name")
+      contextMenu_change_name.setOnAction(new EventHandler[ActionEvent] {
+        override def handle(event: ActionEvent): Unit = {
+          println(s"Change name button pressed on Track (${channel.id})")
+          val dialog = new TextInputDialog("walter")
+          dialog.setTitle("Text Input Dialog")
+          dialog.setHeaderText("Look, a Text Input Dialog")
+          dialog.setContentText("Please enter your name:")
+
+          val result = dialog.showAndWait()
+          if(result.isPresent) {
+            val r = result.get()
+            model.setTrackName(r)
+          }
+        }
+      })
+
+      val contextMenu_separator = new SeparatorMenuItem()
+      val contextMenu_delete = new MenuItem("Delete")
+      contextMenu_delete.setOnAction(new EventHandler[ActionEvent] {
+        override def handle(event: ActionEvent): Unit = {
+          println(s"Delete name button pressed on Track (${channel.id})")
+        }
+      })
+
+      contextMenu.getItems.add(contextMenu_change_name)
+      contextMenu.getItems.add(contextMenu_separator)
+      contextMenu.getItems.add(contextMenu_delete)
+
+      contextMenu.show(_self, event.getScreenX, event.getScreenY)
     }
   })
 
@@ -87,7 +122,15 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
       }
     })
 
+    button_open_vst_source.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        channel.vstPlugin.foreach(_.openPluginEditor(model.getTrackName))
+      }
+    })
+
     panel_track_main.setCenter(canvas)
+
+    label_track_name.textProperty().bind(model.getTrackNameProperty)
 
     combobox_midi_input.itemsProperty().bindBidirectional(model.getMidiInterfaceNamesProperty)
     combobox_midi_input.valueProperty().bindBidirectional(model.getSelectedMidiInterfaceProperty)
@@ -96,21 +139,22 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
       override def changed(observable: ObservableValue[_ <: MidiInterfaceIdentifier], oldValue: MidiInterfaceIdentifier, newValue: MidiInterfaceIdentifier): Unit = {
         println(s"Midi Input changed from $oldValue to $newValue")
         if(newValue != null) {
-          Context.midiController.addMidiListener(newValue, new MidiListener() {
+          Context.midiController.unsubscribeOfAllInterfaces(channel.id)
+          Context.midiController.addMidiSubscriber(newValue, MidiSubscriber(channel.id, new MidiListener() {
             override def midiReceived(msg: MidiMessage, timeStamp: Long): Unit = {
-              if(msg.isInstanceOf[ShortMessage]) {
-                val smsg = msg.asInstanceOf[ShortMessage]
-                channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
-                if(smsg.getCommand == ShortMessage.NOTE_ON) {
-                  canvas.queueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
-                } else {
-                  canvas.dequeueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
-                }
-              } else {
-                println(s"Unknown MIDI message type [$msg] [${msg.getClass.getName}]")
+              msg match {
+                case smsg: ShortMessage =>
+                  channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
+                  if(smsg.getCommand == ShortMessage.NOTE_ON) {
+                    canvas.queueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
+                  } else if(smsg.getCommand == ShortMessage.NOTE_OFF) {
+                    canvas.dequeueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
+                  }
+                case _ =>
+                  println(s"Unknown MIDI message type [$msg] [${msg.getClass.getName}]")
               }
             }
-          })
+          }))
         }
       }
     })

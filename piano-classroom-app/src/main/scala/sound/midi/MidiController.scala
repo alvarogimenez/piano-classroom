@@ -11,33 +11,33 @@ class MidiController {
   private class MidiInputReceiver(sourceId: MidiInterfaceIdentifier, source: MidiDevice) extends Receiver {
     override def send(msg: MidiMessage, timeStamp: Long): Unit = {
       println(s"Received MIDI [${msg.getMessage}] from [$sourceId]")
-      midiListeners.getOrElse(sourceId, List.empty)
-        .foreach { listener =>
-          listener.midiReceived(msg, timeStamp)
+      midiSubscriber.getOrElse(sourceId, List.empty)
+        .foreach { subscriber =>
+          subscriber.listener.midiReceived(msg, timeStamp)
         }
     }
     override def close(): Unit = {}
   }
 
-  var midiListeners: Map[MidiInterfaceIdentifier, List[MidiListener]] = Map.empty
+  var midiSubscriber: Map[MidiInterfaceIdentifier, List[MidiSubscriber]] = Map.empty
 
-  def addMidiListener(id: MidiInterfaceIdentifier, listener: MidiListener) = {
-    midiListeners = midiListeners.updated(id, midiListeners.getOrElse(id, List.empty) :+ listener)
+  def addMidiSubscriber(id: MidiInterfaceIdentifier, subscriber: MidiSubscriber): Unit = {
+    midiSubscriber = midiSubscriber.updated(id, midiSubscriber.getOrElse(id, List.empty) :+ subscriber)
   }
 
-  def removeMidiListener(id: MidiInterfaceIdentifier, listener: MidiListener) = {
-    midiListeners = midiListeners.updated(id, midiListeners.getOrElse(id, List.empty).filter(_ == listener))
+  def removeMidiSubscriber(id: MidiInterfaceIdentifier, subscriber: MidiSubscriber): Unit = {
+    midiSubscriber = midiSubscriber.updated(id, midiSubscriber.getOrElse(id, List.empty).filter(_ == subscriber))
   }
 
-  def removeMidiListener(listener: MidiListener) = {
-    midiListeners =
-      midiListeners
+  def unsubscribeOfAllInterfaces(id: String): Unit = {
+    midiSubscriber =
+      midiSubscriber
         .map { case (key, value) =>
-          (key, midiListeners.getOrElse(key, List.empty).filterNot(_ == listener))
+          (key, value.filterNot(_.id == id))
         }
   }
 
-  def getHardwareMidiDevices(): Map[MidiInterfaceIdentifier, MidiDevice] = {
+  def getHardwareMidiDevices: Map[MidiInterfaceIdentifier, MidiDevice] = {
     MidiSystem.getMidiDeviceInfo
         .map(MidiSystem.getMidiDevice)
         .filter(device => !device.isInstanceOf[Sequencer] && !device.isInstanceOf[Synthesizer])
@@ -57,7 +57,7 @@ class MidiController {
         .toMap
   }
 
-  def getVstSources(): List[File] = {
+  def getVstSources: List[File] = {
     Context.sessionSettings.`vst-configuration`.`vst-source-directories`
         .flatMap { directory =>
           val fDir = new File(directory)
@@ -73,7 +73,7 @@ class MidiController {
   }
 
   def attach() = {
-    getHardwareMidiDevices()
+    getHardwareMidiDevices
       .foreach { case (id, device) =>
         try {
           device.getTransmitter.setReceiver(new MidiInputReceiver(id, device))
@@ -86,7 +86,7 @@ class MidiController {
   }
 
   def detach() = {
-    getHardwareMidiDevices()
+    getHardwareMidiDevices
       .foreach { case (id, device) =>
         try {
           device.getTransmitters.toList.foreach(_.close())

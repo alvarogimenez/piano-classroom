@@ -48,6 +48,10 @@ class VstPlugin(val file: File) {
     vst.foreach(_.queueMidiMessage(msg))
   }
 
+  def openPluginEditor(source: String) = {
+    vst.foreach(_.openEditor(s"Editor for '$source'"))
+  }
+
   def pull(): Option[Array[Array[Float]]] = {
 //    println(s"VST pull [${vst.isDefined}]")
     vst.map { vst =>
