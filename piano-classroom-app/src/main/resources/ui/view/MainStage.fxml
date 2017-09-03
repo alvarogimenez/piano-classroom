@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="400" minWidth="400" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.controller.MainStageController">
@@ -29,13 +32,13 @@
                         <KeyCodeCombination alt="UP" code="M" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                      </accelerator>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" text="Add Audio Track" >
+                  <MenuItem mnemonicParsing="false" text="Add Audio Track">
                       <accelerator>
                           <KeyCodeCombination alt="UP" code="A" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                       </accelerator>
                   </MenuItem>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                <MenuItem fx:id="editSettings" mnemonicParsing="false" text="Settings" >
+                <MenuItem fx:id="editSettings" mnemonicParsing="false" text="Settings">
                     <accelerator>
                         <KeyCodeCombination alt="UP" code="T" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                     </accelerator>
@@ -66,9 +69,51 @@
                </content>
                 </Tab>
                 <Tab text="Mixer">
-                    <content>
-                        <AnchorPane minHeight="0.0" minWidth="0.0" />
-                    </content>
+               <content>
+                  <BorderPane prefHeight="200.0" prefWidth="200.0">
+                     <top>
+                        <BorderPane maxHeight="30.0" prefHeight="30.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                           <right>
+                              <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                                 <children>
+                                    <Button maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Add.png')" />
+                                 </children>
+                                 <BorderPane.margin>
+                                    <Insets left="2.0" right="2.0" />
+                                 </BorderPane.margin>
+                              </HBox>
+                           </right>
+                           <center>
+                              <ScrollPane fx:id="scrollpane_mixer_profiles" hbarPolicy="NEVER" maxHeight="35.0" minHeight="35.0" pannable="true" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+                                 <content>
+                                    <HBox fx:id="hbox_mixer_profiles" alignment="TOP_CENTER" maxHeight="30.0" minHeight="30.0" prefHeight="30.0" spacing="10.0">
+                                       <padding>
+                                          <Insets left="10.0" right="10.0" top="4.0" />
+                                       </padding>
+                                    </HBox>
+                                 </content>
+                              </ScrollPane>
+                           </center>
+                        </BorderPane>
+                     </top>
+                     <center>
+                        <TabPane fx:id="tabs_bus_mixes" prefHeight="200.0" prefWidth="200.0" side="LEFT" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+                          <tabs>
+                            <Tab text="Bus 0">
+                              <content>
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                              </content>
+                            </Tab>
+                            <Tab text="  +  ">
+                              <content>
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                              </content>
+                            </Tab>
+                          </tabs>
+                        </TabPane>
+                     </center>
+                  </BorderPane>
+               </content>
                 </Tab>
             </tabs>
         </TabPane>

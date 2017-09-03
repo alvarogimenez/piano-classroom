@@ -26,6 +26,7 @@ class App extends Application {
       }
     })
     val scene = new Scene(rootLayout, 800, 600)
+    scene.getStylesheets.add("ui/css/stylesheet.css")
     primaryStage.setMinHeight(rootLayout.getMinHeight)
     primaryStage.setMinWidth(rootLayout.getMinWidth)
     primaryStage.setScene(scene)

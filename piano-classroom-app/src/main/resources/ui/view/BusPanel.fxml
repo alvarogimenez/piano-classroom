@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+       <BorderPane maxHeight="30.0" prefHeight="30.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+           <right>
+               <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                   <children>
+                       <Button maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Add.png')" />
+                   </children>
+                   <BorderPane.margin>
+                       <Insets left="2.0" right="2.0" />
+                   </BorderPane.margin>
+               </HBox>
+           </right>
+           <center>
+               <ScrollPane fx:id="scrollpane_bus_profiles" hbarPolicy="NEVER" maxHeight="35.0" minHeight="35.0" pannable="true" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+                   <content>
+                       <HBox fx:id="hbox_bus_profiles" alignment="TOP_CENTER" maxHeight="30.0" minHeight="30.0" prefHeight="30.0" spacing="10.0">
+                           <padding>
+                               <Insets left="10.0" right="10.0" top="4.0" />
+                           </padding>
+                       </HBox>
+                   </content>
+               </ScrollPane>
+           </center>
+       </BorderPane>
+   </top>
+    <center>
+      <BorderPane BorderPane.alignment="CENTER">
+         <center>
+            <VBox fx:id="vbox_bus_faders" prefHeight="200.0" prefWidth="100.0" />
+         </center>
+         <top>
+            <BorderPane fx:id="bpane_master" maxHeight="100.0" prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+               <left>
+                  <VBox alignment="CENTER" BorderPane.alignment="CENTER">
+                     <BorderPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </BorderPane.margin>
+                     <children>
+                        <Group>
+                           <children>
+                              <Label text="Master" />
+                           </children>
+                        </Group>
+                        <Label text="+0.5">
+                           <font>
+                              <Font name="System Bold" size="12.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </VBox>
+               </left>
+               <right>
+                  <BorderPane prefHeight="100.0" prefWidth="130.0" BorderPane.alignment="CENTER" />
+               </right>
+            </BorderPane>
+         </top>
+      </BorderPane>
+   </center>
+</BorderPane>

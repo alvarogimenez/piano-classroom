@@ -7,7 +7,9 @@ import javafx.scene.control.MenuItem
 
 import context.Context
 
-class MenuBarController {
+trait MenuBarController {
 
+  def initializeMenuController() = {
 
+  }
 }
