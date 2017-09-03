@@ -1,5 +1,8 @@
 package ui.controller.mixer
 
+import javafx.beans.binding.Bindings
+import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.event.EventHandler
 import javafx.geometry.VPos
@@ -17,14 +20,31 @@ class Fader extends Pane {
 
   val minValue = 0.0
   val maxValue = dbToFaderPos(10)
-  var position = 1.0
+  val position = new SimpleDoubleProperty()
+  val atenuation = new SimpleDoubleProperty()
   var faderRenderArea: Rectangle = _
   var faderCollisionArea: Rectangle = _
   var faderCollisionAreaWidth = 100
   var faderDragActive = false
+  var faderDragDeltaX = 0.0
 
   calculateRenderAreas()
 
+  def getPosition: Double = position.get
+  def setPosition(x: Double): Unit = position.set(x)
+  def getPositionProperty: SimpleDoubleProperty = position
+
+  def getAtenuation: Double = atenuation.get
+  def setAtenuation(x: Double): Unit = atenuation.set(x)
+  def getAtenuationProperty: SimpleDoubleProperty = atenuation
+
+  position.addListener(new ChangeListener[Number]() {
+    override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
+      calculateRenderAreas()
+      draw()
+      atenuation.set(faderPosToDb(getPosition))
+    }
+  })
   canvas.widthProperty().addListener(new InvalidationListener() {
     override def invalidated(observable: Observable): Unit = {
       calculateRenderAreas()
@@ -41,6 +61,7 @@ class Fader extends Pane {
     override def handle(event: MouseEvent): Unit = {
       if(faderCollisionArea.contains(event.getX.toInt, event.getY.toInt)) {
         faderDragActive = true
+        faderDragDeltaX = event.getX - getFaderCenterX()
       }
     }
   })
@@ -54,11 +75,17 @@ class Fader extends Pane {
       if(faderDragActive) {
         val minX = faderRenderArea.x + faderCollisionAreaWidth/2
         val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth/2
-        val validPosition = Math.max(Math.min(maxX, event.getX), minX)
-        position = (validPosition - minX)/(maxX - minX).toDouble * (maxValue - minValue)
-        calculateRenderAreas()
-        draw()
+        val validPosition = Math.max(Math.min(maxX, event.getX - faderDragDeltaX), minX)
+        setPosition((validPosition - minX)/(maxX - minX).toDouble * (maxValue - minValue))
       }
+    }
+  })
+  canvas.setOnMouseClicked(new EventHandler[MouseEvent]() {
+    override def handle(event: MouseEvent): Unit = {
+      val minX = faderRenderArea.x + faderCollisionAreaWidth/2
+      val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth/2
+      val validPosition = Math.max(Math.min(maxX, event.getX), minX)
+      setPosition((validPosition - minX)/(maxX - minX).toDouble * (maxValue - minValue))
     }
   })
 
@@ -71,18 +98,21 @@ class Fader extends Pane {
     calculateRenderAreas()
   }
 
-  private def calculateRenderAreas() = {
-    faderRenderArea = new Rectangle(
-      canvas.getLayoutX.toInt + 20,
-      canvas.getLayoutY.toInt + 20,
-      canvas.getWidth.toInt - 40,
-      canvas.getHeight.toInt - 40)
-
+  private def getFaderCenterX() = {
     val minX = faderRenderArea.x + faderCollisionAreaWidth/2
     val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth/2
+    minX + (maxX - minX)*getPosition/(maxValue - minValue)
+  }
+
+  private def calculateRenderAreas() = {
+    faderRenderArea = new Rectangle(
+      canvas.getLayoutX.toInt,
+      canvas.getLayoutY.toInt,
+      canvas.getWidth.toInt,
+      canvas.getHeight.toInt)
 
     faderCollisionArea = new Rectangle(
-      (minX + (maxX - minX)*position/(maxValue - minValue) - faderCollisionAreaWidth/2).toInt,
+      (getFaderCenterX() - faderCollisionAreaWidth/2).toInt,
       faderRenderArea.y,
       faderCollisionAreaWidth,
       faderRenderArea.height
@@ -120,24 +150,35 @@ class Fader extends Pane {
         gc.strokeText(text, posX, getHeight/2)
       }
 
+
+    def dDisplace(x: Double) = {
+      gc.strokeLine(
+        faderCollisionArea.x + x,
+        faderCollisionArea.y,
+        faderCollisionArea.x + x,
+        faderCollisionArea.y + faderCollisionArea.height)
+    }
+
+    gc.setFill(new Color(0.9, 0.9, 0.9, 0.5))
+    gc.fillRect(faderCollisionArea.x, faderCollisionArea.y, faderCollisionArea.width, faderCollisionArea.height)
+
+    gc.setStroke(Color.CYAN)
+    dDisplace(faderCollisionAreaWidth/2)
+
+    gc.setLineWidth(2)
     gc.setStroke(Color.gray(0))
-    gc.setLineWidth(3)
     gc.strokeRect(faderCollisionArea.x, faderCollisionArea.y, faderCollisionArea.width, faderCollisionArea.height)
-    gc.strokeLine(
-      faderCollisionArea.x + faderCollisionAreaWidth/2,
-      faderCollisionArea.y,
-      faderCollisionArea.x + faderCollisionAreaWidth / 2,
-      faderCollisionArea.y + faderCollisionArea.height)
-    gc.strokeLine(
-      faderCollisionArea.x + faderCollisionAreaWidth/2 - 10,
-      faderCollisionArea.y,
-      faderCollisionArea.x + faderCollisionAreaWidth / 2 - 10,
-      faderCollisionArea.y + faderCollisionArea.height)
-    gc.strokeLine(
-      faderCollisionArea.x + faderCollisionAreaWidth/2 + 10 ,
-      faderCollisionArea.y,
-      faderCollisionArea.x + faderCollisionAreaWidth / 2 + 10,
-      faderCollisionArea.y + faderCollisionArea.height)
+
+    dDisplace(faderCollisionAreaWidth/2 - 10)
+    dDisplace(faderCollisionAreaWidth/2 - 16)
+    dDisplace(faderCollisionAreaWidth/2 - 20)
+    dDisplace(faderCollisionAreaWidth/2 - 23)
+    dDisplace(faderCollisionAreaWidth/2 + 10)
+    dDisplace(faderCollisionAreaWidth/2 + 16)
+    dDisplace(faderCollisionAreaWidth/2 + 20)
+    dDisplace(faderCollisionAreaWidth/2 + 23)
+    dDisplace(5)
+    dDisplace(faderCollisionAreaWidth - 5)
   }
 
   def faderPosToDb(x: Double) = 20 * Math.log(x) / Math.log(1.8)

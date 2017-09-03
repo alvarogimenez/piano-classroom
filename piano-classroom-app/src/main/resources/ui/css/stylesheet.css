@@ -2,3 +2,29 @@
     -fx-border-color: #000;
     -fx-border-width: 1;
 }
+
+.solo-toggle-button {
+    -fx-border-color: #000;
+    -fx-border-width: 1;
+    -fx-background-color: #077;
+}
+
+
+.solo-toggle-button:selected {
+    -fx-border-color: #000;
+    -fx-border-width: 1;
+    -fx-background-color: #0DD;
+}
+
+.mute-toggle-button {
+    -fx-border-color: #000;
+    -fx-border-width: 1;
+    -fx-background-color: #a07070;
+}
+
+
+.mute-toggle-button:selected {
+    -fx-border-color: #000;
+    -fx-border-width: 1;
+    -fx-background-color: #D00;
+}

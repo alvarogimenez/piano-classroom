@@ -10,30 +10,7 @@ import javafx.scene.paint.Color
 
 import ui.controller.settings.SettingsController
 
-case class MixerGlobalProfile(
-  name: String,
-  color: Color,
-  busMixes: List[MixerBusMixProfile]
-)
 
-case class MixerBusProfile(
-  bus: Int,
-  name: String,
-  color: Color,
-  mixes: MixerBusMixProfile
-)
-
-case class MixerBusMixProfile(
-  bus: Int,
-  mixes: List[MixerChannelMixProfile]
-)
-
-case class MixerChannelMixProfile(
-  channel: String,
-  mix: Float,
-  active: Boolean,
-  solo: Boolean
-)
 
 class MixerModel {
 
@@ -62,7 +39,6 @@ trait MixerController {
     }
 
     val loader = new FXMLLoader()
-    loader.setController(this)
     loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/BusPanel.fxml"))
     loader.setController(new BusMixController())
 

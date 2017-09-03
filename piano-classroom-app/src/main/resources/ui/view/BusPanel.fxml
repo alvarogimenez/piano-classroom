@@ -39,10 +39,13 @@
     <center>
       <BorderPane BorderPane.alignment="CENTER">
          <center>
-            <VBox fx:id="vbox_bus_faders" prefHeight="200.0" prefWidth="100.0" />
+            <VBox fx:id="vbox_bus_faders" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding></VBox>
          </center>
          <top>
-            <BorderPane fx:id="bpane_master" maxHeight="100.0" prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <BorderPane fx:id="bpane_master" maxHeight="100.0" prefHeight="70.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                <left>
                   <VBox alignment="CENTER" BorderPane.alignment="CENTER">
                      <BorderPane.margin>
@@ -51,10 +54,10 @@
                      <children>
                         <Group>
                            <children>
-                              <Label text="Master" />
+                              <Label text="Output" />
                            </children>
                         </Group>
-                        <Label text="+0.5">
+                        <Label fx:id="label_master_gain" alignment="CENTER" minWidth="100" prefWidth="100" text="+0.5">
                            <font>
                               <Font name="System Bold" size="12.0" />
                            </font>
@@ -62,9 +65,21 @@
                      </children>
                   </VBox>
                </left>
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
                <right>
-                  <BorderPane prefHeight="100.0" prefWidth="130.0" BorderPane.alignment="CENTER" />
+                  <BorderPane fx:id="bpane_compressor_preview" maxHeight="50.0" minHeight="50.0" prefHeight="50.0" prefWidth="150.0" BorderPane.alignment="CENTER">
+                     <BorderPane.margin>
+                        <Insets left="10.0" right="10.0" />
+                     </BorderPane.margin></BorderPane>
                </right>
+               <center>
+                  <BorderPane fx:id="bpane_gain_fader" maxHeight="50.0" prefHeight="50.0" BorderPane.alignment="CENTER">
+                     <BorderPane.margin>
+                        <Insets />
+                     </BorderPane.margin></BorderPane>
+               </center>
             </BorderPane>
          </top>
       </BorderPane>
