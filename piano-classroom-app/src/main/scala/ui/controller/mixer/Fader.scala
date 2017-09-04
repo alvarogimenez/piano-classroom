@@ -67,7 +67,14 @@ class Fader extends Pane {
   })
   canvas.setOnMouseReleased(new EventHandler[MouseEvent]() {
     override def handle(event: MouseEvent): Unit = {
-      faderDragActive = false
+      if(faderDragActive) {
+        faderDragActive = false
+      } else {
+        val minX = faderRenderArea.x + faderCollisionAreaWidth / 2
+        val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth / 2
+        val validPosition = Math.max(Math.min(maxX, event.getX), minX)
+        setPosition((validPosition - minX) / (maxX - minX).toDouble * (maxValue - minValue))
+      }
     }
   })
   canvas.setOnMouseDragged(new EventHandler[MouseEvent]() {
@@ -78,14 +85,6 @@ class Fader extends Pane {
         val validPosition = Math.max(Math.min(maxX, event.getX - faderDragDeltaX), minX)
         setPosition((validPosition - minX)/(maxX - minX).toDouble * (maxValue - minValue))
       }
-    }
-  })
-  canvas.setOnMouseClicked(new EventHandler[MouseEvent]() {
-    override def handle(event: MouseEvent): Unit = {
-      val minX = faderRenderArea.x + faderCollisionAreaWidth/2
-      val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth/2
-      val validPosition = Math.max(Math.min(maxX, event.getX), minX)
-      setPosition((validPosition - minX)/(maxX - minX).toDouble * (maxValue - minValue))
     }
   })
 
