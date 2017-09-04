@@ -1,20 +1,32 @@
 package context
 
+import javafx.beans.{InvalidationListener, Observable}
 import javafx.stage.Stage
 
 import io.contracts._
-import sound.audio.asio.AsioController
-import sound.audio.channel.ChannelController
-import sound.audio.mixer.MixerController
-import sound.midi.MidiController
+import sound.audio.asio.AsioService
+import sound.audio.channel.ChannelService
+import sound.audio.mixer.MixerService
+import sound.midi.MidiService
+import ui.controller.mixer.MixerModel
+import ui.controller.track.TrackSetModel
 
 object Context {
   var sessionSettings: SessionContract = readSessionSettings()
 
-  val midiController = new MidiController()
-  val channelController = new ChannelController()
-  val mixerController = new MixerController(channelController)
-  val asioController = new AsioController(mixerController)
+  val midiController = new MidiService()
+  val channelController = new ChannelService()
+  val mixerController = new MixerService(channelController)
+  val asioController = new AsioService(mixerController)
+
+  val trackSetModel = new TrackSetModel()
+  val mixerModel = new MixerModel()
+
+  mixerModel.addInvalidationListener(new InvalidationListener {
+    override def invalidated(observable: Observable) = {
+      println(mixerModel.dumpMix)
+    }
+  })
 
   midiController.attach()
 

@@ -8,7 +8,7 @@ import sound.audio.mixer.MixerOwner
 import scala.collection.JavaConversions._
 import scala.util.Try
 
-class AsioController(mixerOwner: MixerOwner) {
+class AsioService(mixerOwner: MixerOwner) {
   var driver: Option[AsioDriver] = None
 
   def listDriverNames(): List[String] =

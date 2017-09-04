@@ -14,11 +14,14 @@ import sound.audio.channel.MidiChannel
 import sound.audio.mixer.ChannelMix
 import ui.controller.mixer.MixerController
 import ui.controller.settings.SettingsController
-import ui.controller.track.{TrackModel, TrackPanel}
+import ui.controller.track._
 
 
-class MainStageController extends MenuBarController with MixerController {
-  @FXML var tracks: VBox = _
+class MainStageController
+  extends MenuBarController
+    with MixerController
+    with TrackSetController {
+
   @FXML var fileClose: MenuItem = _
   @FXML var fileTest: MenuItem = _
   @FXML var editSettings: MenuItem = _
@@ -27,6 +30,7 @@ class MainStageController extends MenuBarController with MixerController {
   def initialize(): Unit = {
     initializeMenuController()
     initializeMixerController()
+    initializeTrackSetController()
 
     fileClose.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
@@ -37,17 +41,10 @@ class MainStageController extends MenuBarController with MixerController {
     fileTest.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         val midiChannel = new MidiChannel(UUID.randomUUID().toString)
-        val trackModel = new TrackModel()
-        trackModel.initFromContext()
-
-        Context.channelController.addChannel(midiChannel)
-        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 0)
-        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 1)
-        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 2)
-        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 3)
-        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 4)
-        Context.mixerController.setChannelInOutput(ChannelMix(midiChannel.id, 1f), 5)
-        tracks.getChildren.add(new TrackPanel(midiChannel, trackModel))
+        val model = new TrackModel(midiChannel)
+        model.setTrackName(s"Track ${midiChannel.id.take(4)}")
+        model.initFromContext()
+        Context.trackSetModel.addTrack(model)
       }
     })
 

@@ -1,4 +1,4 @@
-package ui.controller.mixer
+package ui.controller.component
 
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.scene.canvas.Canvas

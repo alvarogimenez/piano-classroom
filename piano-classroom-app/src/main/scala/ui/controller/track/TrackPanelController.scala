@@ -19,7 +19,7 @@ import util.KeyboardNote
 
 import scala.collection.JavaConversions._
 
-class TrackModel() {
+class TrackModel(val channel: MidiChannel) {
   var track_name = new SimpleStringProperty()
   val midi_interface_names_ol: ObservableList[MidiInterfaceIdentifier] = FXCollections.observableArrayList[MidiInterfaceIdentifier]
   val midi_interface_names: SimpleListProperty[MidiInterfaceIdentifier] = new SimpleListProperty[MidiInterfaceIdentifier](midi_interface_names_ol)

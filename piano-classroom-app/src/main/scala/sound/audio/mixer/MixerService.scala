@@ -3,7 +3,7 @@ package sound.audio.mixer
 import sound.audio.channel.ChannelOwner
 
 
-class MixerController(val channelOwner: ChannelOwner) extends MixerOwner {
+class MixerService(val channelOwner: ChannelOwner) extends MixerOwner {
   var mixByOutputChannel: Map[Int, Set[ChannelMix]] = Map.empty
 
   def getMixOfOutput(output: Int): Set[ChannelMix] =

@@ -1,19 +1,61 @@
 package ui.controller.mixer
 
+import javafx.beans.property.SimpleListProperty
+import javafx.beans.{InvalidationListener, Observable}
+import javafx.collections.ListChangeListener.Change
+import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
-import javafx.scene.control.{Button, Label, ScrollPane}
+import javafx.scene.control._
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox, VBox}
 
-import ui.controller.component.{Fader, ProfileButton}
+import sound.audio.mixer.ChannelMix
+import ui.controller.component.{CompressorPreview, Fader, ProfileButton}
 
+import scala.collection.JavaConversions._
 
-class BusMixModel {
+class BusMixModel(val channel: Int) {
+  var invalidationListeners: Set[InvalidationListener] = Set.empty[InvalidationListener]
+  val bus_channels_ol: ObservableList[BusChannelModel] = FXCollections.observableArrayList[BusChannelModel]
+  val bus_channels: SimpleListProperty[BusChannelModel] = new SimpleListProperty[BusChannelModel](bus_channels_ol)
 
+  def getBusChannels: List[BusChannelModel] = bus_channels_ol.toList
+  def setBusChannels(l: List[BusChannelModel]): Unit = bus_channels.setAll(l)
+  def addBusChannel(m: BusChannelModel): Unit = bus_channels_ol.add(m)
+  def removeBusChannel(m: BusChannelModel): Unit = bus_channels_ol.remove(m)
+  def getBusChannelsProperty: SimpleListProperty[BusChannelModel] = bus_channels
+  def addInvalidationListener(l: InvalidationListener): Unit = invalidationListeners = invalidationListeners + l
+
+  val superInvalidate = new InvalidationListener {
+    override def invalidated(observable: Observable) = {
+      invalidationListeners.foreach(_.invalidated(observable))
+    }
+  }
+
+  bus_channels.addListener(superInvalidate)
+  bus_channels.addListener(new InvalidationListener {
+    override def invalidated(observable: Observable) = {
+      getBusChannels.foreach(_.addInvalidationListener(superInvalidate))
+    }
+  })
+
+  def dumpMix: Set[ChannelMix] = {
+    getBusChannels
+      .map { busChannel =>
+        ChannelMix(busChannel.id, Math.pow(10, busChannel.getChannelAttenuation/20.0).toFloat)
+      }.toSet
+  }
+
+  override def equals(obj: scala.Any): Boolean = {
+    obj match {
+      case x: BusMixModel => x.channel == channel
+      case _ => false
+    }
+  }
 }
 
-class BusMixController {
+class BusMixController(model: BusMixModel) {
   @FXML var hbox_bus_profiles: HBox = _
   @FXML var scrollpane_bus_profiles: ScrollPane = _
   
@@ -39,6 +81,7 @@ class BusMixController {
       })
       hbox_bus_profiles.getChildren.add(b)
     }
+
     val fader = new Fader()
     label_master_gain.textProperty().bind(fader.getAtenuationProperty.asString("%.1f"))
     bpane_gain_fader.setCenter(fader)
@@ -46,16 +89,27 @@ class BusMixController {
     val compressorPreview = new CompressorPreview()
     bpane_compressor_preview.setCenter(compressorPreview)
 
-    List("Channel A", "Channel B", "Channel C", "Channel D")
-      .foreach { c =>
-        vbox_bus_faders.getChildren.add(loadChannelMix())
+    model.getBusChannelsProperty.addListener(new ListChangeListener[BusChannelModel] {
+      override def onChanged(c: Change[_ <: BusChannelModel]) = {
+        while (c.next()) {
+          if (c.getAddedSize != 0) {
+            c.getAddedSubList
+              .foreach { busChannelModel =>
+                val loader = new FXMLLoader()
+                loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/BusChannelMixPanel.fxml"))
+                loader.setController(new BusChannelController(busChannelModel))
+                val channel = loader.load().asInstanceOf[BorderPane]
+                channel.setUserData(busChannelModel)
+                vbox_bus_faders.getChildren.add(channel)
+              }
+          } else if (c.getRemovedSize != 0) {
+            c.getRemoved
+              .map { busChannelModel =>
+                vbox_bus_faders.getChildren.remove(vbox_bus_faders.getChildren.find(_.getUserData == busChannelModel))
+              }
+          }
+        }
       }
-  }
-
-  def loadChannelMix() = {
-    val loader = new FXMLLoader()
-    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/BusChannelMixPanel.fxml"))
-    loader.setController(new BusChannelController())
-    loader.load().asInstanceOf[BorderPane]
+    })
   }
 }

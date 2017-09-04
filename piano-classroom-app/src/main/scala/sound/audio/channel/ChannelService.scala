@@ -1,6 +1,6 @@
 package sound.audio.channel
 
-class ChannelController() extends ChannelOwner {
+class ChannelService() extends ChannelOwner {
   var channels: List[Channel] = List.empty[Channel]
 
   def addChannel(channel: Channel): Unit = {
