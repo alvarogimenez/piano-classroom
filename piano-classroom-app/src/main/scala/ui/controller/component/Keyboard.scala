@@ -1,4 +1,4 @@
-package ui.controller.track
+package ui.controller.component
 
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.scene.canvas.{Canvas, GraphicsContext}
@@ -6,10 +6,10 @@ import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 
 import com.sun.javafx.geom.Rectangle
-import util.{KeyboardNote, MusicNote}
 import util.MusicNote.MusicNote
+import util.{KeyboardNote, MusicNote}
 
-class KeyboardCanvas extends Pane {
+class Keyboard extends Pane {
   var activeNotes: Set[KeyboardNote] = Set.empty
 
   val canvas = new Canvas(getWidth, getHeight)

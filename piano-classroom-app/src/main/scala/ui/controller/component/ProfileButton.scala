@@ -1,4 +1,4 @@
-package ui.controller.mixer
+package ui.controller.component
 
 import javafx.scene.control.Button
 import javafx.scene.paint.Color

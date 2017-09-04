@@ -4,7 +4,11 @@ import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 
+import ui.controller.component.Fader
 
+class BusChannelModel {
+
+}
 class BusChannelController {
   @FXML var bpane_mix_channel: BorderPane = _
   @FXML var label_gain: Label = _

@@ -2,13 +2,11 @@ package ui.controller.mixer
 
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
-import javafx.scene.Scene
-import javafx.scene.control.{Button, ScrollPane, Tab, TabPane}
+import javafx.scene.control.{ScrollPane, Tab, TabPane}
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox}
-import javafx.scene.paint.Color
 
-import ui.controller.settings.SettingsController
+import ui.controller.component.ProfileButton
 
 
 

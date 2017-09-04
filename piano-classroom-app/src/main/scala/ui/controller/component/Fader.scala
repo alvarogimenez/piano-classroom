@@ -1,6 +1,5 @@
-package ui.controller.mixer
+package ui.controller.component
 
-import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.beans.{InvalidationListener, Observable}

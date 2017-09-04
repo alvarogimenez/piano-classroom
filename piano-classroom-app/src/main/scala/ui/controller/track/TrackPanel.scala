@@ -4,24 +4,20 @@ import java.io.File
 import javafx.beans.property.{Property, SimpleListProperty, SimpleObjectProperty, SimpleStringProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.{FXCollections, ObservableList}
-import javafx.event.{ActionEvent, Event, EventHandler}
+import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
 import javafx.scene.control._
-import javafx.scene.input.{ContextMenuEvent, MouseEvent}
+import javafx.scene.input.ContextMenuEvent
 import javafx.scene.layout.BorderPane
 import javax.sound.midi.{MidiMessage, ShortMessage}
 
 import context.Context
 import sound.audio.channel.MidiChannel
 import sound.midi.{MidiInterfaceIdentifier, MidiListener, MidiSubscriber}
+import ui.controller.component.Keyboard
 import util.KeyboardNote
 
 import scala.collection.JavaConversions._
-
-case class TrackPanelInitialSettings(
-  midiIn: MidiInterfaceIdentifier,
-  vstSource: String
-)
 
 class TrackModel() {
   var track_name = new SimpleStringProperty()
@@ -61,7 +57,7 @@ class TrackModel() {
 }
 
 class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
-  val canvas = new KeyboardCanvas()
+  val canvas = new Keyboard()
   @FXML var button_link_midi: Button = _
   @FXML var button_open_vst_settings: Button = _
   @FXML var button_open_vst_source: Button = _

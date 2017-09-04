@@ -6,6 +6,12 @@ import javafx.scene.control.{Button, Label, ScrollPane}
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox, VBox}
 
+import ui.controller.component.{Fader, ProfileButton}
+
+
+class BusMixModel {
+
+}
 
 class BusMixController {
   @FXML var hbox_bus_profiles: HBox = _

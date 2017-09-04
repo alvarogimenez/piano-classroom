@@ -1,23 +1,20 @@
 package ui.controller
 
 import java.util.UUID
-import javafx.application.{Application, Platform}
-import javafx.event.{ActionEvent, Event, EventHandler}
+import javafx.application.Platform
+import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
 import javafx.scene.Scene
-import javafx.scene.control.{Button, MenuItem, ScrollPane}
-import javafx.scene.input.{DragEvent, MouseEvent, TouchEvent}
-import javafx.scene.layout.{AnchorPane, BorderPane, HBox, VBox}
+import javafx.scene.control.MenuItem
+import javafx.scene.layout.{BorderPane, VBox}
 import javafx.stage.{Modality, Stage}
-import javax.swing.event.{ChangeEvent, ChangeListener}
 
 import context.Context
 import sound.audio.channel.MidiChannel
 import sound.audio.mixer.ChannelMix
-import sound.midi.MidiInterfaceIdentifier
 import ui.controller.mixer.MixerController
 import ui.controller.settings.SettingsController
-import ui.controller.track.{TrackModel, TrackPanel, TrackPanelInitialSettings}
+import ui.controller.track.{TrackModel, TrackPanel}
 
 
 class MainStageController extends MenuBarController with MixerController {
