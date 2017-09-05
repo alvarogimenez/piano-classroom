@@ -12,6 +12,7 @@ class BusChannelModel(val id: String) {
   var invalidationListeners: Set[InvalidationListener] = Set.empty[InvalidationListener]
   var channel_name: SimpleStringProperty = new SimpleStringProperty()
   var channel_attenuation: SimpleDoubleProperty = new SimpleDoubleProperty()
+  val channel_level_db: SimpleDoubleProperty = new SimpleDoubleProperty()
 
   def getChannelName: String = channel_name.get()
   def setChannelName(x: String): Unit = channel_name.set(x)
@@ -20,6 +21,10 @@ class BusChannelModel(val id: String) {
   def setChannelAttenuation(x: Double): Unit = channel_attenuation.set(x)
   def getChannelAttenuationProperty: SimpleDoubleProperty = channel_attenuation
   def addInvalidationListener(l: InvalidationListener): Unit = invalidationListeners = invalidationListeners + l
+  def getChannelLevelDb: Double = channel_level_db.get
+  def setChannelLevelDb(x: Double): Unit = channel_level_db.set(x)
+  def getChannelLevelDbProperty: SimpleDoubleProperty = channel_level_db
+
 
   val superInvalidate = new InvalidationListener {
     override def invalidated(observable: Observable) = {
@@ -28,6 +33,10 @@ class BusChannelModel(val id: String) {
   }
 
   channel_attenuation.addListener(superInvalidate)
+
+  def handleMixOutput(channelLevel: Map[String, Float]): Unit = {
+    setChannelLevelDb(channelLevel.getOrElse(id, Float.NegativeInfinity).toDouble)
+  }
 
   override def equals(obj: scala.Any): Boolean = {
     obj match {
@@ -44,6 +53,7 @@ class BusChannelController(model: BusChannelModel) {
 
   def initialize() = {
     val fader = new Fader()
+    fader.getLevelDbProperty.bindBidirectional(model.getChannelLevelDbProperty)
     label_gain.textProperty().bind(fader.getAtenuationProperty.asString("%.1f"))
     bpane_mix_channel.setCenter(fader)
 

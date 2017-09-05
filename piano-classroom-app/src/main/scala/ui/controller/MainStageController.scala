@@ -44,6 +44,7 @@ class MainStageController
         val model = new TrackModel(midiChannel)
         model.setTrackName(s"Track ${midiChannel.id.take(4)}")
         model.initFromContext()
+        Context.channelController.addChannel(midiChannel)
         Context.trackSetModel.addTrack(model)
       }
     })

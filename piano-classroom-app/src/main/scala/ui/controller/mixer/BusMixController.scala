@@ -1,6 +1,6 @@
 package ui.controller.mixer
 
-import javafx.beans.property.SimpleListProperty
+import javafx.beans.property.{SimpleDoubleProperty, SimpleListProperty}
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.collections.ListChangeListener.Change
 import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
@@ -19,6 +19,7 @@ class BusMixModel(val channel: Int) {
   var invalidationListeners: Set[InvalidationListener] = Set.empty[InvalidationListener]
   val bus_channels_ol: ObservableList[BusChannelModel] = FXCollections.observableArrayList[BusChannelModel]
   val bus_channels: SimpleListProperty[BusChannelModel] = new SimpleListProperty[BusChannelModel](bus_channels_ol)
+  val bus_level_db: SimpleDoubleProperty = new SimpleDoubleProperty()
 
   def getBusChannels: List[BusChannelModel] = bus_channels_ol.toList
   def setBusChannels(l: List[BusChannelModel]): Unit = bus_channels.setAll(l)
@@ -26,6 +27,9 @@ class BusMixModel(val channel: Int) {
   def removeBusChannel(m: BusChannelModel): Unit = bus_channels_ol.remove(m)
   def getBusChannelsProperty: SimpleListProperty[BusChannelModel] = bus_channels
   def addInvalidationListener(l: InvalidationListener): Unit = invalidationListeners = invalidationListeners + l
+  def getBusLevelDb: Double = bus_level_db.get
+  def setBusLevelDb(x: Double): Unit = bus_level_db.set(x)
+  def getBusLevelDbProperty: SimpleDoubleProperty = bus_level_db
 
   val superInvalidate = new InvalidationListener {
     override def invalidated(observable: Observable) = {
@@ -39,6 +43,11 @@ class BusMixModel(val channel: Int) {
       getBusChannels.foreach(_.addInvalidationListener(superInvalidate))
     }
   })
+
+  def handleMixOutput(channelLevel: Map[String, Float], busLevel: Map[Int, Float]): Unit = {
+    setBusLevelDb(busLevel.getOrElse(channel, Float.NegativeInfinity).toDouble)
+    getBusChannels.foreach(_.handleMixOutput(channelLevel))
+  }
 
   def dumpMix: Set[ChannelMix] = {
     getBusChannels
@@ -83,6 +92,7 @@ class BusMixController(model: BusMixModel) {
     }
 
     val fader = new Fader()
+    fader.getLevelDbProperty.bindBidirectional(model.getBusLevelDbProperty)
     label_master_gain.textProperty().bind(fader.getAtenuationProperty.asString("%.1f"))
     bpane_gain_fader.setCenter(fader)
 

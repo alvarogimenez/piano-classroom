@@ -42,6 +42,10 @@ class MixerModel {
       .toMap
   }
 
+  def handleMixOutput(channelLevel: Map[String, Float], busLevel: Map[Int, Float]): Unit = {
+    getBusMixes.foreach(_.handleMixOutput(channelLevel, busLevel))
+  }
+
   val superInvalidate = new InvalidationListener {
     override def invalidated(observable: Observable) = {
       invalidationListeners.foreach(_.invalidated(observable))
@@ -115,7 +119,7 @@ trait MixerController {
                 if (c.getAddedSize != 0) {
                   c.getAddedSubList
                     .foreach { trackModel =>
-                      val busChannelModel = new BusChannelModel(trackModel.getTrackName)
+                      val busChannelModel = new BusChannelModel(trackModel.channel.id)
                       busChannelModel.getChannelNameProperty.bind(trackModel.getTrackNameProperty)
                       model.addBusChannel(busChannelModel)
                     }

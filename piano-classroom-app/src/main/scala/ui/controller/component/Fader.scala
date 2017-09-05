@@ -21,6 +21,7 @@ class Fader extends Pane {
   val maxValue = dbToFaderPos(10)
   val position = new SimpleDoubleProperty()
   val atenuation = new SimpleDoubleProperty()
+  val levelDb = new SimpleDoubleProperty()
   var faderRenderArea: Rectangle = _
   var faderCollisionArea: Rectangle = _
   var faderCollisionAreaWidth = 100
@@ -37,11 +38,20 @@ class Fader extends Pane {
   def setAtenuation(x: Double): Unit = atenuation.set(x)
   def getAtenuationProperty: SimpleDoubleProperty = atenuation
 
+  def getLevelDb(): Double = levelDb.get()
+  def setLevelDb(x: Double):Unit = levelDb.set(x)
+  def getLevelDbProperty: SimpleDoubleProperty = levelDb
+
   position.addListener(new ChangeListener[Number]() {
     override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
       calculateRenderAreas()
       draw()
       atenuation.set(faderPosToDb(getPosition))
+    }
+  })
+  getLevelDbProperty.addListener(new InvalidationListener {
+    override def invalidated(observable: Observable) = {
+      draw()
     }
   })
   canvas.widthProperty().addListener(new InvalidationListener() {
@@ -86,6 +96,11 @@ class Fader extends Pane {
       }
     }
   })
+  levelDb.addListener(new InvalidationListener {
+    override def invalidated(observable: Observable) = {
+      draw()
+    }
+  })
 
   override def layoutChildren(): Unit = {
     super.layoutChildren()
@@ -97,9 +112,13 @@ class Fader extends Pane {
   }
 
   private def getFaderCenterX() = {
+    getFaderPositionFromValue(getPosition)
+  }
+
+  private def getFaderPositionFromValue(x: Double) = {
     val minX = faderRenderArea.x + faderCollisionAreaWidth/2
     val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth/2
-    minX + (maxX - minX)*getPosition/(maxValue - minValue)
+    Math.max(minX, Math.min(maxX, minX + (maxX - minX)*x/(maxValue - minValue)))
   }
 
   private def calculateRenderAreas() = {
@@ -124,16 +143,21 @@ class Fader extends Pane {
     gc.setFill(Color.WHITE)
     gc.fillRect(faderRenderArea.x, faderRenderArea.y, faderRenderArea.width, faderRenderArea.height)
 
+    gc.setFill(Color.web("#b7d2ff"))
+    val leftLevelX = if(getLevelDb() > Double.NegativeInfinity) {
+      getFaderPositionFromValue(dbToFaderPos(getLevelDb()))
+    } else {
+      faderRenderArea.x
+    }
+    gc.fillRect(faderRenderArea.x, faderRenderArea.y, leftLevelX - faderRenderArea.x, faderRenderArea.height)
+
     gc.setStroke(Color.gray(0.7))
     gc.setLineWidth(1)
     gc.strokeRect(faderRenderArea.x, faderRenderArea.y, faderRenderArea.width, faderRenderArea.height)
 
     List(10, 5, 0, -5, -10, -20, -30, -40, -60, Double.NegativeInfinity)
       .foreach { db =>
-        val relativePos = dbToFaderPos(db)
-        val minX = faderRenderArea.x + faderCollisionAreaWidth/2
-        val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth/2
-        val posX = minX + (maxX - minX)*relativePos/(maxValue - minValue)
+        val posX = getFaderPositionFromValue(dbToFaderPos(db))
         gc.setStroke(Color.gray(0.5))
         gc.strokeLine(posX, faderCollisionArea.y, posX, faderCollisionArea.y + faderCollisionArea.height/2 - 10)
         gc.strokeLine(posX, faderCollisionArea.y + faderCollisionArea.height/2 + 10, posX, faderCollisionArea.y + faderCollisionArea.height)

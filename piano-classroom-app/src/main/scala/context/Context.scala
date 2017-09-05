@@ -6,7 +6,7 @@ import javafx.stage.Stage
 import io.contracts._
 import sound.audio.asio.AsioService
 import sound.audio.channel.ChannelService
-import sound.audio.mixer.MixerService
+import sound.audio.mixer.{MixListener, MixerService}
 import sound.midi.MidiService
 import ui.controller.mixer.MixerModel
 import ui.controller.track.TrackSetModel
@@ -25,6 +25,13 @@ object Context {
   mixerModel.addInvalidationListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {
       println(mixerModel.dumpMix)
+      mixerController.setFullMix(mixerModel.dumpMix)
+    }
+  })
+
+  mixerController.addMixListener(new MixListener {
+    override def handle(channelLevel: Map[String, Float], busLevel: Map[Int, Float]) = {
+      mixerModel.handleMixOutput(channelLevel, busLevel)
     }
   })
 
