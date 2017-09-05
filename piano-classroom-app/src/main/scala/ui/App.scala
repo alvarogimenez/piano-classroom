@@ -21,8 +21,8 @@ class App extends Application {
 
     primaryStage.setOnCloseRequest(new EventHandler[WindowEvent]() {
       override def handle(event: WindowEvent): Unit = {
-        Context.asioController.unloadStop()
-        Context.midiController.detach()
+        Context.asioService.unloadStop()
+        Context.midiService.detach()
       }
     })
     val scene = new Scene(rootLayout, 800, 600)

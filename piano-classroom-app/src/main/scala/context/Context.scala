@@ -14,10 +14,10 @@ import ui.controller.track.TrackSetModel
 object Context {
   var sessionSettings: SessionContract = readSessionSettings()
 
-  val midiController = new MidiService()
-  val channelController = new ChannelService()
-  val mixerController = new MixerService(channelController)
-  val asioController = new AsioService(mixerController)
+  val midiService = new MidiService()
+  val channelService = new ChannelService()
+  val mixerService = new MixerService(channelService)
+  val asioService = new AsioService(mixerService)
 
   val trackSetModel = new TrackSetModel()
   val mixerModel = new MixerModel()
@@ -25,52 +25,52 @@ object Context {
   mixerModel.addInvalidationListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {
       println(mixerModel.dumpMix)
-      mixerController.setFullMix(mixerModel.dumpMix)
+      mixerService.setFullMix(mixerModel.dumpMix)
     }
   })
 
-  mixerController.addMixListener(new MixListener {
+  mixerService.addMixListener(new MixListener {
     override def handle(channelLevel: Map[String, Float], busLevel: Map[Int, Float]) = {
       mixerModel.handleMixOutput(channelLevel, busLevel)
     }
   })
 
-  midiController.attach()
+  midiService.attach()
 
   sessionSettings.`audio-configuration` match {
     case Some(audioConfiguration) =>
-      if(asioController.listDriverNames().contains(audioConfiguration.`driver-name`)) {
+      if(asioService.listDriverNames().contains(audioConfiguration.`driver-name`)) {
         println(s"Initialize ASIo Driver '${audioConfiguration.`driver-name`}' from Session Configuration")
 
-        asioController.init(audioConfiguration.`driver-name`)
+        asioService.init(audioConfiguration.`driver-name`)
 
         val inputConfiguration =
-          if(audioConfiguration.`channel-configuration`.input.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioController.getAvailableInputChannels())) {
-              (0 until asioController.getAvailableInputChannels())
+          if(audioConfiguration.`channel-configuration`.input.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioService.getAvailableInputChannels())) {
+              (0 until asioService.getAvailableInputChannels())
                 .map { c =>
                   (c, audioConfiguration.`channel-configuration`.input.find(_.`channel-number` == c).exists(_.enabled))
                 }
                 .toMap
           } else {
-            (0 until asioController.getAvailableInputChannels()).map( _ -> false).toMap
+            (0 until asioService.getAvailableInputChannels()).map( _ -> false).toMap
           }
 
         val outputConfiguration =
-          if(audioConfiguration.`channel-configuration`.output.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioController.getAvailableOutputChannels())) {
-            (0 until asioController.getAvailableOutputChannels())
+          if(audioConfiguration.`channel-configuration`.output.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioService.getAvailableOutputChannels())) {
+            (0 until asioService.getAvailableOutputChannels())
               .map { c =>
                 (c, audioConfiguration.`channel-configuration`.output.find(_.`channel-number` == c).exists(_.enabled))
               }
               .toMap
           } else {
-            (0 until asioController.getAvailableOutputChannels()).map( _ -> false).toMap
+            (0 until asioService.getAvailableOutputChannels()).map( _ -> false).toMap
           }
 
         println(audioConfiguration)
         println(s"Configure ASIO Buffers. Input [$inputConfiguration], Output [$outputConfiguration]")
 
-        asioController.configureChannelBuffers(inputConfiguration, outputConfiguration)
-        asioController.start()
+        asioService.configureChannelBuffers(inputConfiguration, outputConfiguration)
+        asioService.start()
       } else {
         println(s"Driver '${audioConfiguration.`driver-name`}' is not available in the System. Will initialize no ASIO Driver")
       }

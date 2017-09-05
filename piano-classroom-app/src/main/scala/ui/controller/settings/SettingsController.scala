@@ -53,24 +53,24 @@ class SettingsModel {
   def getSoundAsioBufferSizeProperty: SimpleStringProperty = sound_asio_buffer_size
 
   def initializeFromContext(): Unit = {
-    val asioDriverNames = Context.asioController.listDriverNames()
+    val asioDriverNames = Context.asioService.listDriverNames()
     setSoundAsioDriverNames(List(null) ++ asioDriverNames)
-    Context.asioController.tryGetDriver() match {
+    Context.asioService.tryGetDriver() match {
       case Some(currentDriver) if asioDriverNames.contains(currentDriver.getName) =>
         setSoundAsioDriver(currentDriver.getName)
         initSoundAsioInputChannelConfig(currentDriver.getNumChannelsInput)
         initSoundAsioOutputChannelConfig(currentDriver.getNumChannelsOutput)
-        Context.asioController.getInputChannelConfiguration()
+        Context.asioService.getInputChannelConfiguration()
             .foreach { case (channel, enabled) =>
               setSoundAsioInputChannelConfig(channel, enabled)
             }
-        Context.asioController.getOutputChannelConfiguration()
+        Context.asioService.getOutputChannelConfiguration()
           .foreach { case (channel, enabled) =>
             setSoundAsioOutputChannelConfig(channel, enabled)
           }
 
-        setSoundAsioSampleRate(Context.asioController.getDriverSampleRate().toInt)
-        setSoundAsioBufferSize(Context.asioController.getBufferSize())
+        setSoundAsioSampleRate(Context.asioService.getDriverSampleRate().toInt)
+        setSoundAsioBufferSize(Context.asioService.getBufferSize())
       case _ =>
         setSoundAsioDriver(null)
     }
@@ -121,7 +121,7 @@ class SettingsController(dialog: Stage) {
     textfield_buffer_size.disableProperty().bind(combobox_asio_drivers.valueProperty().isNull)
     button_settings_panel.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
-        Context.asioController.openSettingsPanel()
+        Context.asioService.openSettingsPanel()
       }
     })
 
@@ -163,13 +163,13 @@ class SettingsController(dialog: Stage) {
 
   private def save() = {
     if(model.getSoundAsioDriver != null) {
-      Context.asioController.unloadStop()
-      Context.asioController.init(combobox_asio_drivers.valueProperty().get)
-      Context.asioController.configureChannelBuffers(
+      Context.asioService.unloadStop()
+      Context.asioService.init(combobox_asio_drivers.valueProperty().get)
+      Context.asioService.configureChannelBuffers(
         model.getSoundAsioInputChannelConfig.mapValues(_.get()),
         model.getSoundAsioOutputChannelConfig.mapValues(_.get())
       )
-      Context.asioController.start()
+      Context.asioService.start()
     }
 
     val sessionSettings =
@@ -195,22 +195,22 @@ class SettingsController(dialog: Stage) {
   }
 
   private def changeAsioController(driver: String) = {
-    Context.asioController.unloadStop()
-    Context.asioController.init(driver)
+    Context.asioService.unloadStop()
+    Context.asioService.init(driver)
 
-    model.initSoundAsioInputChannelConfig(Context.asioController.getAvailableInputChannels())
-    model.initSoundAsioOutputChannelConfig(Context.asioController.getAvailableOutputChannels())
-    (0 until Context.asioController.getAvailableInputChannels())
+    model.initSoundAsioInputChannelConfig(Context.asioService.getAvailableInputChannels())
+    model.initSoundAsioOutputChannelConfig(Context.asioService.getAvailableOutputChannels())
+    (0 until Context.asioService.getAvailableInputChannels())
       .foreach { c =>
         model.setSoundAsioInputChannelConfig(c, false)
       }
-    (0 until Context.asioController.getAvailableOutputChannels())
+    (0 until Context.asioService.getAvailableOutputChannels())
       .foreach { c =>
         model.setSoundAsioOutputChannelConfig(c, false)
       }
 
-    model.setSoundAsioSampleRate(Context.asioController.getDriverSampleRate().toInt)
-    model.setSoundAsioBufferSize(Context.asioController.getBufferSize())
+    model.setSoundAsioSampleRate(Context.asioService.getDriverSampleRate().toInt)
+    model.setSoundAsioBufferSize(Context.asioService.getBufferSize())
 
     updateAudioSettingsForSelectedDriver()
   }

@@ -49,9 +49,9 @@ class TrackModel(val channel: MidiChannel) {
   def getSelectedMidiVstProperty: SimpleStringProperty = selected_midi_vst
 
   def initFromContext() = {
-    val midiInterfaceNames = Context.midiController.getHardwareMidiDevices
+    val midiInterfaceNames = Context.midiService.getHardwareMidiDevices
     setMidiInterfaceNames(List(null) ++ midiInterfaceNames.keys.toList)
-    val vstSources = Context.midiController.getVstSources
+    val vstSources = Context.midiService.getVstSources
     setMidiVstSourceNames(List(null) ++ vstSources.map(_.getName()))
   }
 }
@@ -135,8 +135,8 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
       override def changed(observable: ObservableValue[_ <: MidiInterfaceIdentifier], oldValue: MidiInterfaceIdentifier, newValue: MidiInterfaceIdentifier): Unit = {
         println(s"Midi Input changed from $oldValue to $newValue")
         if(newValue != null) {
-          Context.midiController.unsubscribeOfAllInterfaces(channel.id)
-          Context.midiController.addMidiSubscriber(newValue, MidiSubscriber(channel.id, new MidiListener() {
+          Context.midiService.unsubscribeOfAllInterfaces(channel.id)
+          Context.midiService.addMidiSubscriber(newValue, MidiSubscriber(channel.id, new MidiListener() {
             override def midiReceived(msg: MidiMessage, timeStamp: Long): Unit = {
               msg match {
                 case smsg: ShortMessage =>
