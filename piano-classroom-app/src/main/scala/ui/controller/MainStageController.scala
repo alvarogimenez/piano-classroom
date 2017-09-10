@@ -13,6 +13,7 @@ import context.Context
 import sound.audio.channel.MidiChannel
 import sound.audio.mixer.ChannelMix
 import ui.controller.mixer.MixerController
+import ui.controller.monitor.MonitorController
 import ui.controller.settings.SettingsController
 import ui.controller.track._
 
@@ -20,7 +21,8 @@ import ui.controller.track._
 class MainStageController
   extends MenuBarController
     with MixerController
-    with TrackSetController {
+    with TrackSetController
+    with MonitorController {
 
   @FXML var fileClose: MenuItem = _
   @FXML var fileTest: MenuItem = _
@@ -31,6 +33,7 @@ class MainStageController
     initializeMenuController()
     initializeMixerController()
     initializeTrackSetController()
+    initializeMonitorController()
 
     fileClose.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
