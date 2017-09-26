@@ -112,7 +112,7 @@
 
                 <Tab text="Monitor">
                <content>
-                  <BorderPane prefHeight="200.0" prefWidth="200.0">
+                  <BorderPane fx:id="bpane_monitor" prefHeight="200.0" prefWidth="200.0">
                      <top>
                         <BorderPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                             <left>
@@ -141,13 +141,13 @@
                                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 </rowConstraints>
                                  <children>
-                                    <ToggleButton maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Camera.png')" GridPane.halignment="CENTER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER">
+                                    <ToggleButton fx:id="toggle_camera" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Camera.png')" GridPane.halignment="CENTER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER">
                                        <toggleGroup>
                                           <ToggleGroup fx:id="monitor_source_toggle" />
                                        </toggleGroup></ToggleButton>
-                                    <ToggleButton maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Pencil.png')" toggleGroup="$monitor_source_toggle" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-                                    <ToggleButton maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Board.png')" toggleGroup="$monitor_source_toggle" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
-                                    <ToggleButton maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Music.png')" toggleGroup="$monitor_source_toggle" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_pencil" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Pencil.png')" toggleGroup="$monitor_source_toggle" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_board" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Board.png')" toggleGroup="$monitor_source_toggle" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_music" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Music.png')" toggleGroup="$monitor_source_toggle" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
                                  </children>
                               </GridPane>
                            </right>
