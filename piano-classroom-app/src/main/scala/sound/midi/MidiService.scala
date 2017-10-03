@@ -10,7 +10,6 @@ import scala.collection.JavaConversions._
 class MidiService {
   private class MidiInputReceiver(sourceId: MidiInterfaceIdentifier, source: MidiDevice) extends Receiver {
     override def send(msg: MidiMessage, timeStamp: Long): Unit = {
-      println(s"Received MIDI [${msg.getMessage}] from [$sourceId]")
       midiSubscriber.getOrElse(sourceId, List.empty)
         .foreach { subscriber =>
           subscriber.listener.midiReceived(msg, timeStamp)

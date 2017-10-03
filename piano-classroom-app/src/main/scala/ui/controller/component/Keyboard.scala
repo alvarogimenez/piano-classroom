@@ -1,10 +1,16 @@
 package ui.controller.component
 
+import java.util.concurrent.atomic.AtomicReference
+import javafx.application.Platform
 import javafx.beans.{InvalidationListener, Observable}
+import javafx.concurrent.Task
+import javafx.embed.swing.SwingFXUtils
 import javafx.scene.canvas.{Canvas, GraphicsContext}
+import javafx.scene.image.WritableImage
 import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 
+import com.github.sarxos.webcam.Webcam
 import com.sun.javafx.geom.Rectangle
 import util.MusicNote.MusicNote
 import util.{KeyboardNote, MusicNote}
@@ -22,14 +28,16 @@ class Keyboard extends Pane {
     override def invalidated(observable: Observable): Unit = draw()
   })
 
+  val thread = new Thread(drawTask())
+  thread.setDaemon(true)
+  thread.start()
+
   def queueActiveNote(n: KeyboardNote): Unit = {
     activeNotes += n
-    draw()
   }
 
   def dequeueActiveNote(n: KeyboardNote): Unit = {
     activeNotes = activeNotes - n
-    draw()
   }
 
   override def layoutChildren(): Unit = {
@@ -44,6 +52,19 @@ class Keyboard extends Pane {
     val gc = canvas.getGraphicsContext2D
     gc.clearRect(0, 0, getWidth, getHeight)
     drawKeyboard(gc, KeyboardNote(MusicNote.A, 0), KeyboardNote(MusicNote.C, 8), new Rectangle(0, 0, getWidth.toInt, getHeight.toInt))
+  }
+
+  private def drawTask() = new Task[Unit]() {
+    override def call(): Unit = {
+      while(!isCancelled) {
+        Platform.runLater(new Runnable() {
+          def run(): Unit = {
+            draw()
+          }
+        })
+        Thread.sleep(100)
+      }
+    }
   }
 
   private def drawKeyboard(gc: GraphicsContext, fromNote: KeyboardNote, toNote: KeyboardNote, r: Rectangle) = {

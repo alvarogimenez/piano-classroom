@@ -38,7 +38,7 @@ class MixerService(val channelOwner: ChannelOwner) extends MixerOwner {
         }
 
     val currentTime = System.currentTimeMillis()
-    if(currentTime - lastMixListenerUpdate > 100) {
+    if(currentTime - lastMixListenerUpdate > 200) {
       lastMixListenerUpdate = currentTime
       mixListeners.foreach(_.handle(
         channelLevel = channelData.mapValues(x => 20* Math.log10(minDouble(x.max)).toFloat),

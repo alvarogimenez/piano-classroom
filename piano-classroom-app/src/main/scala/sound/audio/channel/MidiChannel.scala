@@ -22,7 +22,7 @@ class MidiChannel(val id: String) extends Channel {
         vst.resetSampleInfo(sampleRate, bufferSize)
         vst.pull() match {
           case Some(data) =>
-            data.reduce((a, b) => MixerUtils.mix(a, b, 1f, 1f))
+            data(0)
           case None =>
             Array.fill[Float](bufferSize)(0)
         }
@@ -32,7 +32,6 @@ class MidiChannel(val id: String) extends Channel {
   }
 
   def queueMidiMessage(msg: ShortMessage) = {
-    println(s"Queue message on MIDI Channel ($id) [$msg]")
     vstPlugin.foreach(_.queueMidiMessage(msg))
   }
 }
