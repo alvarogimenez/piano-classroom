@@ -34,7 +34,7 @@ object MusicNote extends Enumeration {
 
 object KeyboardNote {
   def widthAbsoluteIndex(absIndex: Int) = {
-    val octave = absIndex / 12
+    val octave = (absIndex - 12) / 12
     val note = absIndex % 12
     KeyboardNote(MusicNote.withIndex(note), octave)
   }
