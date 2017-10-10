@@ -69,7 +69,8 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   val loader = new FXMLLoader()
   loader.setController(this)
   loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/TrackPanel.fxml"))
-  this.setCenter(loader.load().asInstanceOf[BorderPane])
+  val track = loader.load().asInstanceOf[BorderPane]
+  this.setCenter(track)
   this.setMinWidth(100)
 
   val _self = this
@@ -142,9 +143,15 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
                 case smsg: ShortMessage =>
                   channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
                   if(smsg.getCommand == ShortMessage.NOTE_ON) {
-                    canvas.queueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
+                    canvas.queueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
                   } else if(smsg.getCommand == ShortMessage.NOTE_OFF) {
-                    canvas.dequeueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1))
+                    canvas.dequeueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
+                  } else if(smsg.getCommand == ShortMessage.CONTROL_CHANGE && smsg.getData1 == 0x40 /* Sustain/Damper */) {
+                    if(smsg.getData2 < 64) {
+                      canvas.sustainOff()
+                    } else {
+                      canvas.sustainOn()
+                    }
                   }
                 case _ =>
                   println(s"Unknown MIDI message type [$msg] [${msg.getClass.getName}]")

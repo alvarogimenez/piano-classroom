@@ -25,7 +25,7 @@ object MusicNote extends Enumeration {
 
   protected case class Val(index: Int) extends super.Val
 
-  implicit def valueToPlanetVal(x: Value) = x.asInstanceOf[Val]
+  implicit def valueToVal(x: Value) = x.asInstanceOf[Val]
 
   def withIndex(index: Int): Value = {
     values.find(_.index == index).getOrElse(throw new Exception("No Music Note with index ($index). Valid index should be between 0-11"))
@@ -34,7 +34,7 @@ object MusicNote extends Enumeration {
 
 object KeyboardNote {
   def widthAbsoluteIndex(absIndex: Int) = {
-    val octave = (absIndex - 12) / 12
+    val octave = absIndex / 12
     val note = absIndex % 12
     KeyboardNote(MusicNote.withIndex(note), octave)
   }

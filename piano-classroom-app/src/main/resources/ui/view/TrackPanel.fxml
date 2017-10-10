@@ -11,23 +11,20 @@
 
 <BorderPane maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="85.0" minWidth="300" prefHeight="85.0" prefWidth="700.0" style="-fx-border-style: solid; -fx-border-width: 1px; -fx-border-color: #ccc;" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
    <center>
-      <BorderPane fx:id="panel_track_main" BorderPane.alignment="CENTER">
+      <BorderPane fx:id="panel_track_main" prefWidth="681.0" BorderPane.alignment="CENTER">
          <left>
-            <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <HBox BorderPane.alignment="CENTER">
                <children>
-                  <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="3.0">
+                  <VBox alignment="TOP_CENTER"  spacing="3.0">
                      <children>
                         <Label text="INPUT" />
                         <ComboBox fx:id="combobox_midi_input" minHeight="25.0" minWidth="100.0" prefHeight="25.0" prefWidth="100.0" promptText="Select..." style="-fx-font: 9px &quot;Verdana&quot;;" />
-                        <HBox prefHeight="100.0" prefWidth="200.0" spacing="3.0">
+                        <HBox spacing="3.0">
                            <children>
                               <Button fx:id="button_link_midi" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Link.png')" />
                            </children>
                         </HBox>
                      </children>
-                     <opaqueInsets>
-                        <Insets />
-                     </opaqueInsets>
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>

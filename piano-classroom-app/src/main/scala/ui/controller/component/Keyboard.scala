@@ -16,7 +16,14 @@ import util.MusicNote.MusicNote
 import util.{KeyboardNote, MusicNote}
 
 class Keyboard extends Pane {
-  var activeNotes: Set[KeyboardNote] = Set.empty
+  trait NoteStatus
+  case object NoteActive extends NoteStatus
+  case object NoteOff extends NoteStatus
+  case object NoteSustained extends NoteStatus
+  case class NoteDecaying(s: Double, lastUpdate: Long) extends NoteStatus
+
+  var activeNotes: Map[KeyboardNote, NoteStatus] = Map.empty
+  var sustainActive = false
 
   val canvas = new Canvas(getWidth, getHeight)
   getChildren.add(canvas)
@@ -33,11 +40,29 @@ class Keyboard extends Pane {
   thread.start()
 
   def queueActiveNote(n: KeyboardNote): Unit = {
-    activeNotes += n
+    activeNotes += (n -> NoteActive)
   }
 
   def dequeueActiveNote(n: KeyboardNote): Unit = {
-    activeNotes = activeNotes - n
+    if(!sustainActive) {
+      activeNotes += (n -> NoteDecaying(1.0f, System.currentTimeMillis()))
+    } else {
+      activeNotes += (n -> NoteSustained)
+    }
+  }
+
+  def sustainOn(): Unit = {
+    sustainActive = true
+  }
+
+  def sustainOff(): Unit = {
+    sustainActive = false
+    activeNotes =
+      activeNotes
+        .map {
+          case (k, NoteSustained) => (k, NoteDecaying(1.0f, System.currentTimeMillis()))
+          case (k, v) => (k, v)
+        }
   }
 
   override def layoutChildren(): Unit = {
@@ -62,6 +87,14 @@ class Keyboard extends Pane {
             draw()
           }
         })
+        activeNotes =
+          activeNotes
+            .filterNot(_._2 == NoteOff)
+            .map {
+              case (k, NoteDecaying(s, lastUpdate)) if s > 0 => (k, NoteDecaying(Math.max(0, s - 0.15), lastUpdate))
+              case (k, NoteDecaying(_, _)) => (k, NoteOff)
+              case (k, v) => (k, v)
+            }
         Thread.sleep(100)
       }
     }
@@ -97,8 +130,13 @@ class Keyboard extends Pane {
     lowerNotes
       .foreach { n =>
         val offset = displacementFromKeyborardNote(n) - offsetLeft
-        if(activeNotes.contains(n)) {
-          gc.setFill(Color.LIGHTBLUE)
+        if(activeNotes.contains(n) && activeNotes(n) != NoteOff) {
+          activeNotes(n) match {
+            case NoteActive | NoteSustained =>
+              gc.setFill(Color.LIGHTBLUE)
+            case NoteDecaying(s, _) =>
+              gc.setFill(Color.LIGHTBLUE.deriveColor(0, Math.max(s, 0.05), Math.min(Double.MaxValue, 1.0/s), 1.0))
+          }
           gc.fillRect(r.x + offset*lowerNoteWidth, r.y, lowerNoteWidth, lowerNoteHeight)
           gc.strokeRect(r.x + offset*lowerNoteWidth, r.y, lowerNoteWidth, lowerNoteHeight)
         } else {
@@ -110,8 +148,13 @@ class Keyboard extends Pane {
     upperNotes
       .foreach { n =>
         val offset = displacementFromKeyborardNote(n) - offsetLeft
-        if(activeNotes.contains(n)) {
-          gc.setFill(Color.LIGHTBLUE)
+        if(activeNotes.contains(n) && activeNotes(n) != NoteOff ) {
+          activeNotes(n) match {
+            case NoteActive | NoteSustained =>
+              gc.setFill(Color.LIGHTBLUE)
+            case NoteDecaying(s, _) =>
+              gc.setFill(Color.LIGHTBLUE.deriveColor(0, 1.0, s, 1.0))
+          }
           gc.fillRect(r.x + (offset + 0.5)*lowerNoteWidth - upperNoteWidth/2, r.y, upperNoteWidth, upperNoteHeight)
           gc.strokeRect(r.x + (offset + 0.5)*lowerNoteWidth - upperNoteWidth/2, r.y, upperNoteWidth, upperNoteHeight)
         } else {
