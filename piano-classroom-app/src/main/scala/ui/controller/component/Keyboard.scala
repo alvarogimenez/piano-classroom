@@ -1,16 +1,12 @@
 package ui.controller.component
 
-import java.util.concurrent.atomic.AtomicReference
 import javafx.application.Platform
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.concurrent.Task
-import javafx.embed.swing.SwingFXUtils
 import javafx.scene.canvas.{Canvas, GraphicsContext}
-import javafx.scene.image.WritableImage
 import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 
-import com.github.sarxos.webcam.Webcam
 import com.sun.javafx.geom.Rectangle
 import util.MusicNote.MusicNote
 import util.{KeyboardNote, MusicNote}
@@ -22,7 +18,13 @@ class Keyboard extends Pane {
   case object NoteSustained extends NoteStatus
   case class NoteDecaying(s: Double, lastUpdate: Long) extends NoteStatus
 
+  case class RollNote(note: KeyboardNote, start: Long, end: Option[Long])
+  case class RollSustain(start: Long, end: Option[Long])
+
   var activeNotes: Map[KeyboardNote, NoteStatus] = Map.empty
+  var staticRollNotes: Map[KeyboardNote, List[RollNote]] = Map.empty
+  var staticRollSustain: List[RollSustain] = List.empty
+
   var sustainActive = false
 
   val canvas = new Canvas(getWidth, getHeight)
@@ -41,11 +43,18 @@ class Keyboard extends Pane {
 
   def queueActiveNote(n: KeyboardNote): Unit = {
     activeNotes += (n -> NoteActive)
+    staticRollNotes += (n -> staticRollNotes.getOrElse(n, List.empty[RollNote]).+:(RollNote(n, System.currentTimeMillis(), None)))
   }
 
   def dequeueActiveNote(n: KeyboardNote): Unit = {
     if(!sustainActive) {
       activeNotes += (n -> NoteDecaying(1.0f, System.currentTimeMillis()))
+      staticRollNotes.get(n) match {
+        case Some(rn) if rn.exists(_.end.isEmpty) =>
+          staticRollNotes +=
+            (n -> rn.filter(_.end.isDefined).+:(rn.find(_.end.isEmpty).get.copy(end = Some(System.currentTimeMillis()))))
+        case _ =>
+      }
     } else {
       activeNotes += (n -> NoteSustained)
     }
@@ -53,14 +62,25 @@ class Keyboard extends Pane {
 
   def sustainOn(): Unit = {
     sustainActive = true
+    staticRollSustain = staticRollSustain.+:( RollSustain(System.currentTimeMillis(), None))
   }
 
   def sustainOff(): Unit = {
     sustainActive = false
+    staticRollSustain =
+      staticRollSustain.filter(_.end.isDefined) ++
+      staticRollSustain.find(_.end.isEmpty).map(_.copy(end = Some(System.currentTimeMillis())))
     activeNotes =
       activeNotes
         .map {
-          case (k, NoteSustained) => (k, NoteDecaying(1.0f, System.currentTimeMillis()))
+          case (k, NoteSustained) =>
+            staticRollNotes.get(k) match {
+              case Some(rn) if rn.exists(_.end.isEmpty) =>
+                staticRollNotes +=
+                  (k -> rn.filter(_.end.isDefined).+:(rn.find(_.end.isEmpty).get.copy(end = Some(System.currentTimeMillis()))))
+              case _ =>
+            }
+            (k, NoteDecaying(1.0f, System.currentTimeMillis()))
           case (k, v) => (k, v)
         }
   }
@@ -76,7 +96,8 @@ class Keyboard extends Pane {
   private def draw(): Unit = {
     val gc = canvas.getGraphicsContext2D
     gc.clearRect(0, 0, getWidth, getHeight)
-    drawKeyboard(gc, KeyboardNote(MusicNote.A, 0), KeyboardNote(MusicNote.C, 8), new Rectangle(0, 0, getWidth.toInt, getHeight.toInt))
+    drawRoll(gc, KeyboardNote(MusicNote.C, 2), KeyboardNote(MusicNote.C, 6), new Rectangle(0, 0, getWidth.toInt, getHeight.toInt / 2))
+    drawKeyboard(gc, KeyboardNote(MusicNote.C, 2), KeyboardNote(MusicNote.C, 6), new Rectangle(0, getHeight.toInt / 2, getWidth.toInt, getHeight.toInt / 2))
   }
 
   private def drawTask() = new Task[Unit]() {
@@ -160,6 +181,76 @@ class Keyboard extends Pane {
         } else {
           gc.setFill(new Color(0.2, 0.2, 0.2, 1.0))
           gc.fillRect(r.x + (offset + 0.5)*lowerNoteWidth - upperNoteWidth/2, r.y, upperNoteWidth, upperNoteHeight)
+        }
+      }
+  }
+
+  private def drawRoll(gc: GraphicsContext, fromNote: KeyboardNote, toNote: KeyboardNote, r: Rectangle) = {
+    val from =
+      if(isLower(fromNote.note)) {
+        fromNote.absoluteIndex()
+      } else {
+        fromNote.absoluteIndex() + 1
+      }
+
+    val to =
+      if(isLower(toNote.note)) {
+        toNote.absoluteIndex()
+      } else {
+        toNote.absoluteIndex() + 1
+      }
+
+    val notes = (from to to).map(KeyboardNote.widthAbsoluteIndex)
+    val lowerNotes = notes.filter(n => isLower(n.note))
+    val lowerNoteWidth = r.width / lowerNotes.size.toDouble
+    val rollNoteWidth = 7.0 * lowerNoteWidth / 12.0
+    val lowerNoteHeight = r.height
+
+    gc.setStroke(Color.BLACK)
+    gc.setFill(Color.WHITE)
+    gc.fillRect(r.x, r.y, r.width, r.height)
+
+    val currentTime = System.currentTimeMillis()
+    val startReferenceTime =
+      Math.min(
+        currentTime,
+        (List(Long.MinValue) ++ staticRollNotes.values.flatMap(_.map(x => x.end.getOrElse(x.start + 2000)))).max
+      )
+    val timeScaleFactor = 2/10000.0
+    def timeScale(time: Long) = -1 + 2.0/(1.0 + Math.pow(1.0 + timeScaleFactor, -time))
+
+    notes
+      .zipWithIndex
+      .foreach { case (n, offset) =>
+        val width =
+          if(offset == notes.size - 1) {
+            lowerNoteWidth
+          } else {
+            rollNoteWidth
+          }
+
+        if(!lowerNotes.contains(n)) {
+          gc.setFill(Color.LIGHTGRAY)
+          gc.fillRect(r.x + rollNoteWidth*offset, r.y, rollNoteWidth, lowerNoteHeight)
+        }
+        gc.strokeRect(r.x + rollNoteWidth*offset, r.y, width, lowerNoteHeight)
+
+        staticRollNotes.get(n) match {
+          case Some(rn) =>
+            rn
+              .foreach { rollNote =>
+                val noteStart = timeScale(startReferenceTime - rollNote.start)
+                val noteEnd = timeScale(startReferenceTime - rollNote.end.getOrElse(startReferenceTime))
+
+                gc.setFill(Color.LIGHTBLUE)
+                gc.fillRect(
+                  r.x + rollNoteWidth*offset,
+                  r.y + r.height - r.height * noteStart,
+                  rollNoteWidth,
+                  r.height * Math.abs(noteEnd - noteStart)
+                )
+              }
+          case _ =>
         }
       }
   }

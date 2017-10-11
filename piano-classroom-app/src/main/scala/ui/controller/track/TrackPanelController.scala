@@ -70,6 +70,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   loader.setController(this)
   loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/TrackPanel.fxml"))
   val track = loader.load().asInstanceOf[BorderPane]
+  track.setPrefHeight(300)
   this.setCenter(track)
   this.setMinWidth(100)
 
