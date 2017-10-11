@@ -10,20 +10,24 @@ import util.MusicNote.MusicNote
 object MusicNote extends Enumeration {
   type MusicNote = Value
 
-  val C = Val(0)
-  val `C#-Db` = Val(1)
-  val D = Val(2)
-  val `D#-Eb` = Val(3)
-  val E = Val(4)
-  val F = Val(5)
-  val `F#-Gb` = Val(6)
-  val G = Val(7)
-  val `G#-Ab` = Val(8)
-  val A = Val(9)
-  val `A#-Bb` = Val(10)
-  val B = Val(11)
+  val C = Val(0, "C")
+  val `C#-Db` = Val(1, "C#/Db")
+  val D = Val(2, "D")
+  val `D#-Eb` = Val(3, "D#/Eb")
+  val E = Val(4, "E")
+  val F = Val(5, "F")
+  val `F#-Gb` = Val(6, "F#/Gb")
+  val G = Val(7, "G")
+  val `G#-Ab` = Val(8, "G#/Ab")
+  val A = Val(9, "A")
+  val `A#-Bb` = Val(10, "A#/Bb")
+  val B = Val(11, "B")
 
-  protected case class Val(index: Int) extends super.Val
+  protected case class Val(index: Int, string: String) extends super.Val {
+    override def toString(): String = {
+      string
+    }
+  }
 
   implicit def valueToVal(x: Value) = x.asInstanceOf[Val]
 

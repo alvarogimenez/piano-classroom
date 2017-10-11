@@ -1,6 +1,7 @@
 package ui.controller.component
 
 import javafx.application.Platform
+import javafx.beans.property.{SimpleBooleanProperty, SimpleObjectProperty}
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.concurrent.Task
 import javafx.scene.canvas.{Canvas, GraphicsContext}
@@ -12,6 +13,27 @@ import util.MusicNote.MusicNote
 import util.{KeyboardNote, MusicNote}
 
 class Keyboard extends Pane {
+  val piano_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
+  val piano_roll_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
+  val start_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()
+  val end_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()
+
+  def getPianoEnabled: scala.Boolean = piano_enabled.get
+  def setPianoEnabled(e: scala.Boolean): Unit = piano_enabled.set(e)
+  def getPianoEnabledProperty: SimpleBooleanProperty = piano_enabled
+
+  def getPianoRollEnabled: scala.Boolean = piano_roll_enabled.get
+  def setPianoRollEnabled(e: scala.Boolean): Unit = piano_roll_enabled.set(e)
+  def getPianoRollEnabledProperty: SimpleBooleanProperty = piano_roll_enabled
+
+  def getStartNote: KeyboardNote = start_note.get
+  def setStartNote(n: KeyboardNote): Unit = start_note.set(n)
+  def getStartNoteProperty: SimpleObjectProperty[KeyboardNote] = start_note
+
+  def getEndNote: KeyboardNote = end_note.get
+  def setEndNote(n: KeyboardNote): Unit = end_note.set(n)
+  def getEndNoteProperty: SimpleObjectProperty[KeyboardNote] = end_note
+
   trait NoteStatus
   case object NoteActive extends NoteStatus
   case object NoteOff extends NoteStatus
@@ -34,6 +56,18 @@ class Keyboard extends Pane {
     override def invalidated(observable: Observable): Unit = draw()
   })
   canvas.heightProperty().addListener(new InvalidationListener() {
+    override def invalidated(observable: Observable): Unit = draw()
+  })
+  piano_enabled.addListener(new InvalidationListener() {
+    override def invalidated(observable: Observable): Unit = draw()
+  })
+  piano_roll_enabled.addListener(new InvalidationListener() {
+    override def invalidated(observable: Observable): Unit = draw()
+  })
+  start_note.addListener(new InvalidationListener() {
+    override def invalidated(observable: Observable): Unit = draw()
+  })
+  end_note.addListener(new InvalidationListener() {
     override def invalidated(observable: Observable): Unit = draw()
   })
 
@@ -95,9 +129,32 @@ class Keyboard extends Pane {
 
   private def draw(): Unit = {
     val gc = canvas.getGraphicsContext2D
-    gc.clearRect(0, 0, getWidth, getHeight)
-    drawRoll(gc, KeyboardNote(MusicNote.C, 2), KeyboardNote(MusicNote.C, 6), new Rectangle(0, 0, getWidth.toInt, getHeight.toInt / 2))
-    drawKeyboard(gc, KeyboardNote(MusicNote.C, 2), KeyboardNote(MusicNote.C, 6), new Rectangle(0, getHeight.toInt / 2, getWidth.toInt, getHeight.toInt / 2))
+
+    if(getStartNote != null && getEndNote != null) {
+      val from =
+        if (isLower(getStartNote.note)) {
+          getStartNote
+        } else {
+          KeyboardNote.widthAbsoluteIndex(getStartNote.absoluteIndex() + 1)
+        }
+
+      val to =
+        if (isLower(getEndNote.note)) {
+          getEndNote
+        } else {
+          KeyboardNote.widthAbsoluteIndex(getEndNote.absoluteIndex() + 1)
+        }
+
+      gc.clearRect(0, 0, getWidth, getHeight)
+      if (getPianoEnabled && getPianoRollEnabled) {
+        drawRoll(gc, from, to, new Rectangle(0, 0, getWidth.toInt, (getHeight * 0.7).toInt))
+        drawKeyboard(gc, from, to, new Rectangle(0, (getHeight * 0.7).toInt, getWidth.toInt, (getHeight * 0.3).toInt))
+      } else if (getPianoEnabled) {
+        drawKeyboard(gc, from, to, new Rectangle(0, 0, getWidth.toInt, getHeight.toInt))
+      } else if (getPianoRollEnabled) {
+        drawRoll(gc, from, to, new Rectangle(0, 0, getWidth.toInt, getHeight.toInt))
+      }
+    }
   }
 
   private def drawTask() = new Task[Unit]() {
@@ -122,20 +179,8 @@ class Keyboard extends Pane {
   }
 
   private def drawKeyboard(gc: GraphicsContext, fromNote: KeyboardNote, toNote: KeyboardNote, r: Rectangle) = {
-    val from =
-      if(isLower(fromNote.note)) {
-        fromNote.absoluteIndex()
-      } else {
-        fromNote.absoluteIndex() + 1
-      }
-
-    val to =
-      if(isLower(toNote.note)) {
-        toNote.absoluteIndex()
-      } else {
-        toNote.absoluteIndex() + 1
-      }
-
+    val from = fromNote.absoluteIndex()
+    val to = toNote.absoluteIndex()
     val notes = (from to to).map(KeyboardNote.widthAbsoluteIndex)
     val lowerNotes = notes.filter(n => isLower(n.note))
     val upperNotes = notes.filter(n => !isLower(n.note))
@@ -186,20 +231,8 @@ class Keyboard extends Pane {
   }
 
   private def drawRoll(gc: GraphicsContext, fromNote: KeyboardNote, toNote: KeyboardNote, r: Rectangle) = {
-    val from =
-      if(isLower(fromNote.note)) {
-        fromNote.absoluteIndex()
-      } else {
-        fromNote.absoluteIndex() + 1
-      }
-
-    val to =
-      if(isLower(toNote.note)) {
-        toNote.absoluteIndex()
-      } else {
-        toNote.absoluteIndex() + 1
-      }
-
+    val from = fromNote.absoluteIndex()
+    val to = toNote.absoluteIndex()
     val notes = (from to to).map(KeyboardNote.widthAbsoluteIndex)
     val lowerNotes = notes.filter(n => isLower(n.note))
     val lowerNoteWidth = r.width / lowerNotes.size.toDouble

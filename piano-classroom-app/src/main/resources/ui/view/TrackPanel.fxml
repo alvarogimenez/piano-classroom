@@ -9,13 +9,14 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
+<?import javafx.scene.control.ToggleButton?>
 <BorderPane maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="85.0" minWidth="300" prefHeight="85.0" prefWidth="700.0" style="-fx-border-style: solid; -fx-border-width: 1px; -fx-border-color: #ccc;" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <BorderPane fx:id="panel_track_main" prefWidth="681.0" BorderPane.alignment="CENTER">
          <left>
             <HBox BorderPane.alignment="CENTER">
                <children>
-                  <VBox alignment="TOP_CENTER"  spacing="3.0">
+                  <VBox alignment="TOP_CENTER" spacing="3.0">
                      <children>
                         <Label text="INPUT" />
                         <ComboBox fx:id="combobox_midi_input" minHeight="25.0" minWidth="100.0" prefHeight="25.0" prefWidth="100.0" promptText="Select..." style="-fx-font: 9px &quot;Verdana&quot;;" />
@@ -43,6 +44,16 @@
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
+                  </VBox>
+                  <VBox alignment="TOP_CENTER" spacing="3.0">
+                     <children>
+                        <ToggleButton fx:id="button_show_piano" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Piano.png')" />
+                        <ToggleButton fx:id="button_show_piano_roll"   maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/PianoRoll.png')" />
+                        <Button fx:id="button_piano_range" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/PianoRange.png')" />
+                     </children>
+                     <HBox.margin>
+                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                     </HBox.margin>
                   </VBox>
                </children>
                <opaqueInsets>
