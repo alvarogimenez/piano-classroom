@@ -4,6 +4,7 @@ import javafx.application.Platform
 import javafx.beans.property.{SimpleBooleanProperty, SimpleObjectProperty}
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.concurrent.Task
+import javafx.geometry.Rectangle2D
 import javafx.scene.canvas.{Canvas, GraphicsContext}
 import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
@@ -40,14 +41,13 @@ class Keyboard extends Pane {
   case object NoteSustained extends NoteStatus
   case class NoteDecaying(s: Double, lastUpdate: Long) extends NoteStatus
 
-  case class RollNote(note: KeyboardNote, start: Long, end: Option[Long])
+  case class RollNote(note: KeyboardNote, sustained: Boolean, start: Long, end: Option[Long])
   case class RollSustain(start: Long, end: Option[Long])
 
-  var activeNotes: Map[KeyboardNote, NoteStatus] = Map.empty
-  var staticRollNotes: Map[KeyboardNote, List[RollNote]] = Map.empty
-  var staticRollSustain: List[RollSustain] = List.empty
-
-  var sustainActive = false
+  @volatile var activeNotes: Map[KeyboardNote, NoteStatus] = Map.empty
+  @volatile var staticRollNotes: Map[KeyboardNote, List[RollNote]] = Map.empty
+  @volatile var staticRollSustain: List[RollSustain] = List.empty
+  @volatile var sustainActive = false
 
   val canvas = new Canvas(getWidth, getHeight)
   getChildren.add(canvas)
@@ -76,47 +76,63 @@ class Keyboard extends Pane {
   thread.start()
 
   def queueActiveNote(n: KeyboardNote): Unit = {
-    activeNotes += (n -> NoteActive)
-    staticRollNotes += (n -> staticRollNotes.getOrElse(n, List.empty[RollNote]).+:(RollNote(n, System.currentTimeMillis(), None)))
+    synchronized {
+      activeNotes += (n -> NoteActive)
+      staticRollNotes += (n -> staticRollNotes.getOrElse(n, List.empty[RollNote]).+:(RollNote(n, false, System.currentTimeMillis(), None)))
+    }
   }
 
   def dequeueActiveNote(n: KeyboardNote): Unit = {
-    if(!sustainActive) {
-      activeNotes += (n -> NoteDecaying(1.0f, System.currentTimeMillis()))
-      staticRollNotes.get(n) match {
-        case Some(rn) if rn.exists(_.end.isEmpty) =>
-          staticRollNotes +=
-            (n -> rn.filter(_.end.isDefined).+:(rn.find(_.end.isEmpty).get.copy(end = Some(System.currentTimeMillis()))))
-        case _ =>
+    synchronized {
+      if (!sustainActive) {
+        activeNotes += (n -> NoteDecaying(1.0f, System.currentTimeMillis()))
+        staticRollNotes.get(n) match {
+          case Some(rn) if rn.exists(_.end.isEmpty) =>
+            staticRollNotes +=
+              (n -> rn.filter(_.end.isDefined).+:(rn.find(_.end.isEmpty).get.copy(end = Some(System.currentTimeMillis()))))
+          case _ =>
+        }
+      } else {
+        activeNotes += (n -> NoteSustained)
+        staticRollNotes.get(n) match {
+          case Some(rn) if rn.exists(_.end.isEmpty) =>
+            staticRollNotes +=
+              (n -> rn.filter(_.end.isDefined)
+                .+:(rn.find(_.end.isEmpty).get.copy(end = Some(System.currentTimeMillis())))
+                .+:(RollNote(n, true, System.currentTimeMillis(), None)))
+          case _ =>
+        }
       }
-    } else {
-      activeNotes += (n -> NoteSustained)
     }
   }
 
   def sustainOn(): Unit = {
-    sustainActive = true
-    staticRollSustain = staticRollSustain.+:( RollSustain(System.currentTimeMillis(), None))
+    synchronized {
+      sustainActive = true
+      staticRollSustain = staticRollSustain.+:(RollSustain(System.currentTimeMillis(), None))
+    }
   }
 
   def sustainOff(): Unit = {
-    sustainActive = false
-    staticRollSustain =
-      staticRollSustain.filter(_.end.isDefined) ++
-      staticRollSustain.find(_.end.isEmpty).map(_.copy(end = Some(System.currentTimeMillis())))
-    activeNotes =
-      activeNotes
-        .map {
-          case (k, NoteSustained) =>
-            staticRollNotes.get(k) match {
-              case Some(rn) if rn.exists(_.end.isEmpty) =>
-                staticRollNotes +=
-                  (k -> rn.filter(_.end.isDefined).+:(rn.find(_.end.isEmpty).get.copy(end = Some(System.currentTimeMillis()))))
-              case _ =>
-            }
-            (k, NoteDecaying(1.0f, System.currentTimeMillis()))
-          case (k, v) => (k, v)
-        }
+    synchronized {
+      sustainActive = false
+      staticRollSustain =
+        staticRollSustain.filter(_.end.isDefined) ++
+          staticRollSustain.find(_.end.isEmpty).map(_.copy(end = Some(System.currentTimeMillis())))
+      activeNotes =
+        activeNotes
+          .map {
+            case (k, NoteSustained) =>
+              staticRollNotes.get(k) match {
+                case Some(rn) if rn.exists(_.end.isEmpty) =>
+                  staticRollNotes +=
+                    (k -> rn.filter(_.end.isDefined).+:(rn.find(_.end.isEmpty).get.copy(end = Some(System.currentTimeMillis()))))
+                case _ =>
+              }
+              (k, NoteDecaying(1.0f, System.currentTimeMillis()))
+            case (k, v) => (k, v)
+          }
+    }
   }
 
   override def layoutChildren(): Unit = {
@@ -165,14 +181,19 @@ class Keyboard extends Pane {
             draw()
           }
         })
-        activeNotes =
-          activeNotes
-            .filterNot(_._2 == NoteOff)
-            .map {
-              case (k, NoteDecaying(s, lastUpdate)) if s > 0 => (k, NoteDecaying(Math.max(0, s - 0.15), lastUpdate))
-              case (k, NoteDecaying(_, _)) => (k, NoteOff)
-              case (k, v) => (k, v)
-            }
+        synchronized {
+          val now = System.currentTimeMillis()
+          activeNotes =
+            activeNotes
+              .filterNot(_._2 == NoteOff)
+              .map {
+                case (k, NoteDecaying(s, lastUpdate)) if s > 0 => (k, NoteDecaying(Math.max(0, s - 0.15), lastUpdate))
+                case (k, NoteDecaying(_, _)) => (k, NoteOff)
+                case (k, v) => (k, v)
+              }
+          staticRollNotes = staticRollNotes.map { case (k, v) => k -> v.filter(_.end.forall(e => (now - e) < 120000))}
+          staticRollSustain = staticRollSustain.filter(_.end.forall(e => (now - e) < 120000))
+        }
         Thread.sleep(100)
       }
     }
@@ -247,7 +268,7 @@ class Keyboard extends Pane {
     val startReferenceTime =
       Math.min(
         currentTime,
-        (List(Long.MinValue) ++ staticRollNotes.values.flatMap(_.map(x => x.end.getOrElse(x.start + 2000)))).max
+          (List(Long.MinValue) ++ staticRollNotes.values.flatMap(_.map(x => x.end.getOrElse(System.currentTimeMillis())))).max
       )
     val timeScaleFactor = 2/10000.0
     def timeScale(time: Long) = -1 + 2.0/(1.0 + Math.pow(1.0 + timeScaleFactor, -time))
@@ -263,7 +284,7 @@ class Keyboard extends Pane {
           }
 
         if(!lowerNotes.contains(n)) {
-          gc.setFill(Color.LIGHTGRAY)
+          gc.setFill(Color.GRAY)
           gc.fillRect(r.x + rollNoteWidth*offset, r.y, rollNoteWidth, lowerNoteHeight)
         }
         gc.strokeRect(r.x + rollNoteWidth*offset, r.y, width, lowerNoteHeight)
@@ -274,15 +295,39 @@ class Keyboard extends Pane {
               .foreach { rollNote =>
                 val noteStart = timeScale(startReferenceTime - rollNote.start)
                 val noteEnd = timeScale(startReferenceTime - rollNote.end.getOrElse(startReferenceTime))
-
-                gc.setFill(Color.LIGHTBLUE)
-                gc.fillRect(
+                val noteRect = new Rectangle2D(
                   r.x + rollNoteWidth*offset,
                   r.y + r.height - r.height * noteStart,
                   rollNoteWidth,
                   r.height * Math.abs(noteEnd - noteStart)
                 )
+                if(rollNote.sustained) {
+                  gc.setFill(Color.LIGHTBLUE.brighter())
+                } else {
+                  gc.setFill(Color.LIGHTBLUE)
+                }
+                gc.fillRect(noteRect.getMinX, noteRect.getMinY, noteRect.getWidth, noteRect.getHeight)
+                gc.strokeRect(noteRect.getMinX, noteRect.getMinY, noteRect.getWidth, noteRect.getHeight)
               }
+          case _ =>
+        }
+      }
+
+    staticRollSustain
+      .foreach { rollSustain =>
+        val sustainStartY = r.y + r.height - r.height * timeScale(startReferenceTime - rollSustain.start)
+        val sustainEndY = rollSustain.end.map(end => r.y + r.height - r.height * timeScale(startReferenceTime - end))
+
+        gc.setStroke(Color.RED)
+        gc.setFill(Color.RED)
+        gc.strokeLine(r.x, sustainStartY, r.x + r.width, sustainStartY)
+        gc.fillPolygon(Array(r.x, r.x + 4, r.x + 8), Array(sustainStartY, sustainStartY + 8, sustainStartY), 3)
+        sustainEndY match {
+          case Some(endY) =>
+            gc.setStroke(Color.RED.darker())
+            gc.setFill(Color.RED.darker())
+            gc.strokeLine(r.x, endY, r.x + r.width, endY)
+            gc.fillPolygon(Array(r.x, r.x + 4, r.x + 8), Array(endY, endY - 8, endY), 3)
           case _ =>
         }
       }
