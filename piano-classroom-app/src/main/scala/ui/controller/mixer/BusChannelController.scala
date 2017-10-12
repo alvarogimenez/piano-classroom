@@ -54,7 +54,8 @@ class BusChannelController(model: BusChannelModel) {
   def initialize() = {
     val fader = new Fader()
     fader.setPosition(Fader.dbToFaderPos(model.getChannelAttenuation))
-    fader.setLevelDb(model.getChannelLevelDb)
+    fader.setAtenuation(model.getChannelAttenuation)
+
     fader.getLevelDbProperty.bindBidirectional(model.getChannelLevelDbProperty)
     label_gain.textProperty().bind(fader.getAtenuationProperty.asString("%.1f"))
 
