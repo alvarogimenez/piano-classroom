@@ -8,6 +8,9 @@ class ChannelService() extends ChannelOwner {
     channels = channels :+ channel
   }
 
+  def removeChannels(): Unit =
+    channels = List.empty[Channel]
+
   def pull(sampleRate: Double, bufferSize: Int): Map[String, Array[Float]] = {
     channels.map(c => c.id -> c.pull(sampleRate, bufferSize)).toMap
   }

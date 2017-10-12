@@ -20,6 +20,7 @@ class TrackSetModel {
   def setTrackSet(l: List[TrackModel]): Unit = track_set.setAll(l)
   def addTrack(m: TrackModel): Unit = track_set_ol.add(m)
   def removeTrack(m: TrackModel): Unit = track_set_ol.remove(m)
+  def clear(): Unit = track_set_ol.clear()
   def getTrackSetProperty: SimpleListProperty[TrackModel] = track_set
 }
 

@@ -212,7 +212,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
     combobox_midi_input.itemsProperty().bindBidirectional(model.getMidiInterfaceNamesProperty)
     combobox_midi_input.valueProperty().bindBidirectional(model.getSelectedMidiInterfaceProperty)
 
-    combobox_midi_input.valueProperty().addListener(new ChangeListener[MidiInterfaceIdentifier]() {
+    model.getSelectedMidiInterfaceProperty.addListener(new ChangeListener[MidiInterfaceIdentifier]() {
       override def changed(observable: ObservableValue[_ <: MidiInterfaceIdentifier], oldValue: MidiInterfaceIdentifier, newValue: MidiInterfaceIdentifier): Unit = {
         println(s"Midi Input changed from $oldValue to $newValue")
         if(newValue != null) {
@@ -245,7 +245,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
     combobox_vst_input.itemsProperty().bindBidirectional(model.getMidiVstSourceNamesProperty)
     combobox_vst_input.valueProperty().bindBidirectional(model.getSelectedMidiVstProperty)
 
-    combobox_vst_input.valueProperty().addListener(new ChangeListener[String]() {
+    model.getSelectedMidiVstProperty.addListener(new ChangeListener[String]() {
       override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
         println(s"Midi VST changed from $oldValue to $newValue")
         channel.setVstSource(new File(newValue))

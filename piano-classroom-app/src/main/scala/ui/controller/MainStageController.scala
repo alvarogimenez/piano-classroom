@@ -24,50 +24,10 @@ class MainStageController
     with TrackSetController
     with MonitorController {
 
-  @FXML var fileClose: MenuItem = _
-  @FXML var fileTest: MenuItem = _
-  @FXML var editSettings: MenuItem = _
-
-
   def initialize(): Unit = {
     initializeMenuController()
     initializeMixerController()
     initializeTrackSetController()
     initializeMonitorController()
-
-    fileClose.setOnAction(new EventHandler[ActionEvent] {
-      override def handle(event: ActionEvent): Unit = {
-        Platform.exit()
-      }
-    })
-
-    fileTest.setOnAction(new EventHandler[ActionEvent] {
-      override def handle(event: ActionEvent): Unit = {
-        val midiChannel = new MidiChannel(UUID.randomUUID().toString)
-        val model = new TrackModel(midiChannel)
-        model.setTrackName(s"Track ${midiChannel.id.take(4)}")
-        model.initFromContext()
-        Context.channelService.addChannel(midiChannel)
-        Context.trackSetModel.addTrack(model)
-      }
-    })
-
-    editSettings.setOnAction(new EventHandler[ActionEvent] {
-      override def handle(event: ActionEvent): Unit = {
-        val dialog = new Stage()
-        val loader = new FXMLLoader()
-        loader.setController(this)
-        loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/Settings.fxml"))
-        loader.setController(new SettingsController(dialog))
-
-        dialog.setScene(new Scene(loader.load().asInstanceOf[BorderPane]))
-        dialog.setResizable(false)
-        dialog.setTitle("Settings")
-        dialog.initOwner(Context.primaryStage)
-        dialog.initModality(Modality.APPLICATION_MODAL)
-        dialog.showAndWait()
-      }
-    })
-
   }
 }

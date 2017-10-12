@@ -12,6 +12,7 @@ import javafx.scene.layout.{BorderPane, HBox, VBox}
 
 import sound.audio.mixer.ChannelMix
 import ui.controller.component.{CompressorPreview, Fader, ProfileButton}
+import ui.controller.track.TrackModel
 
 import scala.collection.JavaConversions._
 

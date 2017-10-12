@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "save-state" : {
+    "tracks" : {
+      "channel-info" : [
+        {
+          "id": "c5d84ff1-2579-4f46-b351-e6019c8fdb9c",
+          "name": "Alice",
+          "midi-input": "[V25]: 0",
+          "vst-i": "DSK_AkoustiK_KeyZ.dll",
+          "piano-enabled": true,
+          "piano-roll-enabled": false,
+          "piano-range-start": {
+            "note": "C",
+            "index": 3
+          },
+          "piano-range-end": {
+            "note": "C",
+            "index": 6
+          }
+        }
+      ]
+    },
+    "mixer": {
+      "bus-info": [
+        {
+          "bus": 0,
+          "master-level": 0.0,
+          "bus-mix": [
+            {
+              "channel-id": "c5d84ff1-2579-4f46-b351-e6019c8fdb9c",
+              "level": 0.5
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

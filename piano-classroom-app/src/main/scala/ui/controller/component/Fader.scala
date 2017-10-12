@@ -13,7 +13,13 @@ import javafx.scene.text.TextAlignment
 
 import com.sun.javafx.geom.Rectangle
 
+object Fader {
+  def faderPosToDb(x: Double) = 20 * Math.log(x) / Math.log(1.8)
+  def dbToFaderPos(x: Double) = Math.pow(1.8, x/20.0)
+}
 class Fader extends Pane {
+  import Fader._
+
   val canvas = new Canvas(getWidth, getHeight)
   getChildren.add(canvas)
 
@@ -136,7 +142,8 @@ class Fader extends Pane {
     )
   }
 
-  private def draw(): Unit = {
+  def draw(): Unit = {
+    println(getAtenuation)
     val gc = canvas.getGraphicsContext2D
     gc.clearRect(0, 0, getWidth, getHeight)
 
@@ -202,8 +209,4 @@ class Fader extends Pane {
     dDisplace(5)
     dDisplace(faderCollisionAreaWidth - 5)
   }
-
-  def faderPosToDb(x: Double) = 20 * Math.log(x) / Math.log(1.8)
-  def dbToFaderPos(x: Double) = Math.pow(1.8, x/20.0)
-
 }

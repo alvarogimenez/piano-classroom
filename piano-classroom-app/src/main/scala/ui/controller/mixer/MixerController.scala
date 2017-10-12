@@ -58,6 +58,40 @@ class MixerModel {
       getBusMixes.foreach(_.addInvalidationListener(superInvalidate))
     }
   })
+
+  bus_mixes.addListener(new ListChangeListener[BusMixModel] {
+    override def onChanged(c: Change[_ <: BusMixModel]) = {
+      while(c.next()) {
+        if (c.getAddedSize != 0) {
+          c.getAddedSubList
+            .foreach { busMixModel =>
+              // When a new channel is created or removed, notify the BusMixModel with the changes
+              Context.trackSetModel.getTrackSetProperty.addListener(new ListChangeListener[TrackModel] {
+                override def onChanged(c: Change[_ <: TrackModel]) = {
+                  while(c.next()) {
+                    if (c.getAddedSize != 0) {
+                      c.getAddedSubList
+                        .foreach { trackModel =>
+                          val busChannelModel = new BusChannelModel(trackModel.channel.id)
+                          busChannelModel.getChannelNameProperty.bind(trackModel.getTrackNameProperty)
+                          busMixModel.addBusChannel(busChannelModel)
+                        }
+                    } else if (c.getRemovedSize != 0) {
+                      c.getRemoved
+                        .foreach { trackModel =>
+                          busMixModel.getBusChannels.find(_.id == trackModel.channel.id).foreach(busMixModel.removeBusChannel)
+                        }
+                    }
+                  }
+                }
+              })
+            }
+        } else if (c.getRemovedSize != 0) {
+          // TODO Remove listeners when bus mix model is removed
+        }
+      }
+    }
+  })
 }
 
 trait MixerController {
@@ -112,25 +146,6 @@ trait MixerController {
             val busChannelModel = new BusChannelModel(t.channel.id)
             busChannelModel.getChannelNameProperty.bind(t.getTrackNameProperty)
             busChannelModel
-          })
-          Context.trackSetModel.getTrackSetProperty.addListener(new ListChangeListener[TrackModel] {
-            override def onChanged(c: Change[_ <: TrackModel]) = {
-              while(c.next()) {
-                if (c.getAddedSize != 0) {
-                  c.getAddedSubList
-                    .foreach { trackModel =>
-                      val busChannelModel = new BusChannelModel(trackModel.channel.id)
-                      busChannelModel.getChannelNameProperty.bind(trackModel.getTrackNameProperty)
-                      model.addBusChannel(busChannelModel)
-                    }
-                } else if (c.getRemovedSize != 0) {
-                  c.getRemoved
-                    .foreach { trackModel =>
-                      model.getBusChannels.find(_.id == trackModel.channel.id).foreach(model.removeBusChannel)
-                    }
-                }
-              }
-            }
           })
         }
       }

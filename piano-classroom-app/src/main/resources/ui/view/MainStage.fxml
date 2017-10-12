@@ -25,24 +25,24 @@
             <menus>
                 <Menu mnemonicParsing="false" text="File">
                     <items>
-                        <MenuItem fx:id="fileClose" mnemonicParsing="false" text="Close" />
-                        <MenuItem fx:id="fileTest" mnemonicParsing="false" text="Test" />
+                        <MenuItem fx:id="menu_file_open" mnemonicParsing="false" text="Open..." />
+                        <MenuItem fx:id="menu_file_close" mnemonicParsing="false" text="Close" />
                     </items>
                 </Menu>
             <Menu mnemonicParsing="false" text="Edit">
               <items>
-                  <MenuItem mnemonicParsing="false" text="Add MIDI Track">
+                  <MenuItem fx:id="menu_edit_add_midi_channel" mnemonicParsing="false" text="Add MIDI Track">
                      <accelerator>
-                        <KeyCodeCombination alt="UP" code="M" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                        <KeyCodeCombination  alt="UP" code="M" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                      </accelerator>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" text="Add Audio Track">
+                  <MenuItem fx:id="menu_edit_add_audio_channel" mnemonicParsing="false" text="Add Audio Track">
                       <accelerator>
                           <KeyCodeCombination alt="UP" code="A" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                       </accelerator>
                   </MenuItem>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                <MenuItem fx:id="editSettings" mnemonicParsing="false" text="Settings">
+                <MenuItem fx:id="menu_edit_settings" mnemonicParsing="false" text="Settings">
                     <accelerator>
                         <KeyCodeCombination alt="UP" code="T" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                     </accelerator>
@@ -125,8 +125,8 @@
                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                     </rowConstraints>
                                     <children>
-                                        <Button fx:id="button_hide_fullscreen" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Hide.png')" GridPane.halignment="CENTER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER"/>
-                                        <Button fx:id="button_show_fullscreen" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Fullscreen.png')"  GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                        <Button fx:id="button_hide_fullscreen" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Hide.png')" GridPane.halignment="CENTER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER" />
+                                        <Button fx:id="button_show_fullscreen" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Fullscreen.png')" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
                                        </children>
                                 </GridPane>
                             </left>
