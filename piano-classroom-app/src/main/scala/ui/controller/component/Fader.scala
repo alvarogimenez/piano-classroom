@@ -143,7 +143,6 @@ class Fader extends Pane {
   }
 
   def draw(): Unit = {
-    println(getAtenuation)
     val gc = canvas.getGraphicsContext2D
     gc.clearRect(0, 0, getWidth, getHeight)
 

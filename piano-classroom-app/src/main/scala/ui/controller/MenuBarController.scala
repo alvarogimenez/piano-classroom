@@ -93,13 +93,15 @@ trait MenuBarController {
   }
 
   def load(save: SaveContract): Unit = {
+    Context.channelService.removeChannels()
+    Context.trackSetModel.clear()
+
     save
       .`save-state`
       .`tracks`
       .`channel-info`
       .foreach { channelInfo =>
-        Context.channelService.removeChannels()
-        Context.trackSetModel.clear()
+        println(s"Creating channel '${channelInfo.`name`}' with id '${channelInfo.`id`}'")
 
         val midiChannel = new MidiChannel(channelInfo.`id`)
         val model = new TrackModel(midiChannel)
@@ -135,7 +137,7 @@ trait MenuBarController {
 
         model.setBusChannels(busInfo.`bus-mix`.map { busMix =>
           val busChannelModel = new BusChannelModel(busMix.`channel-id`)
-          busChannelModel.setChannelAttenuation(busMix.`level`)
+          busChannelModel.setChannelAttenuation(busMix.`level`.getOrElse(Double.NegativeInfinity))
           Context.trackSetModel.getTrackSet.find(_.channel.id == busMix.`channel-id`) match {
             case Some(channelModel) =>
               busChannelModel.getChannelNameProperty.bind(channelModel.getTrackNameProperty)

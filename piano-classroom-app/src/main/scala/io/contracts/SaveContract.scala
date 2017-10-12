@@ -42,7 +42,7 @@ case class SaveBusInfo(
 
 case class SaveBusMix(
   `channel-id`: String,
-  `level`: Double
+  `level`: Option[Double]
 )
 
 

@@ -77,7 +77,6 @@ class TrackModel(val channel: MidiChannel) {
       val sumHeight =
         (if (getTrackPianoEnabled()) PIANO_DEFAULT_HEIGHT else 0) +
       (if (getTrackPianoRollEnabled()) PIANO_ROLL_DEFAULT_HEIGHT else 0)
-      println(sumHeight)
       setTrackHeight(Math.max(DEFAULT_TRACK_HEIGHT, sumHeight))
     }
   }

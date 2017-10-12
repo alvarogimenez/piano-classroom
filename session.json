@@ -1,0 +1,7 @@
+{
+  "vst-configuration":{
+    "vst-source-directories":[
+      "."
+    ]
+  }
+}
