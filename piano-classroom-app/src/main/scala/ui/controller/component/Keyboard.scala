@@ -75,14 +75,14 @@ class Keyboard extends Pane {
   thread.setDaemon(true)
   thread.start()
 
-  def queueActiveNote(n: KeyboardNote): Unit = {
+  def noteOn(n: KeyboardNote): Unit = {
     synchronized {
       activeNotes += (n -> NoteActive)
       staticRollNotes += (n -> staticRollNotes.getOrElse(n, List.empty[RollNote]).+:(RollNote(n, false, System.currentTimeMillis(), None)))
     }
   }
 
-  def dequeueActiveNote(n: KeyboardNote): Unit = {
+  def noteOff(n: KeyboardNote): Unit = {
     synchronized {
       if (!sustainActive) {
         activeNotes += (n -> NoteDecaying(1.0f, System.currentTimeMillis()))
@@ -141,6 +141,14 @@ class Keyboard extends Pane {
     canvas.setLayoutY(snappedTopInset())
     canvas.setWidth(snapSize(getWidth) - snappedLeftInset() - snappedRightInset())
     canvas.setHeight(snapSize(getHeight) - snappedTopInset() - snappedBottomInset())
+  }
+
+  def clear(): Unit = {
+    activeNotes = Map.empty
+    staticRollNotes = Map.empty
+    staticRollSustain = List.empty
+    sustainActive = false
+    draw()
   }
 
   private def draw(): Unit = {

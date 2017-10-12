@@ -97,6 +97,8 @@ class TrackModel(val channel: MidiChannel) {
 }
 
 class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
+  final val SUSTAIN_DAMPER_MIDI_DATA = 0x40
+
   val canvas = new Keyboard()
   @FXML var button_link_midi: Button = _
   @FXML var button_open_vst_settings: Button = _
@@ -154,6 +156,20 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
       contextMenu.show(_self, event.getScreenX, event.getScreenY)
     }
   })
+
+  def clear(): Unit = {
+    canvas.clear()
+  }
+
+  def panic(): Unit = {
+    (0 to 127)
+      .foreach { note =>
+        val msg = new ShortMessage(ShortMessage.NOTE_OFF, note, 0x00)
+        channel.queueMidiMessage(msg)
+      }
+    val msg = new ShortMessage(ShortMessage.CONTROL_CHANGE, SUSTAIN_DAMPER_MIDI_DATA, 0x00)
+    channel.queueMidiMessage(msg)
+  }
 
   def initialize(): Unit = {
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {
@@ -222,10 +238,10 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
                 case smsg: ShortMessage =>
                   channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
                   if(smsg.getCommand == ShortMessage.NOTE_ON) {
-                    canvas.queueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
+                    canvas.noteOn(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
                   } else if(smsg.getCommand == ShortMessage.NOTE_OFF) {
-                    canvas.dequeueActiveNote(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
-                  } else if(smsg.getCommand == ShortMessage.CONTROL_CHANGE && smsg.getData1 == 0x40 /* Sustain/Damper */) {
+                    canvas.noteOff(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
+                  } else if(smsg.getCommand == ShortMessage.CONTROL_CHANGE && smsg.getData1 == SUSTAIN_DAMPER_MIDI_DATA) {
                     if(smsg.getData2 < 64) {
                       canvas.sustainOff()
                     } else {

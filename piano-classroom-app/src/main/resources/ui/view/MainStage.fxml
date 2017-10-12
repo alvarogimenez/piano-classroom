@@ -33,7 +33,7 @@
               <items>
                   <MenuItem fx:id="menu_edit_add_midi_channel" mnemonicParsing="false" text="Add MIDI Track">
                      <accelerator>
-                        <KeyCodeCombination  alt="UP" code="M" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                        <KeyCodeCombination alt="UP" code="M" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                      </accelerator>
                   </MenuItem>
                   <MenuItem fx:id="menu_edit_add_audio_channel" mnemonicParsing="false" text="Add Audio Track">
@@ -165,5 +165,23 @@
             </tabs>
         </TabPane>
     </center>
+   <bottom>
+      <BorderPane BorderPane.alignment="CENTER">
+         <top>
+            <HBox alignment="CENTER_RIGHT" prefHeight="40.0" spacing="4.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button fx:id="button_clear_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Trash.png')"  />
+                  <Button fx:id="button_panic" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Warning.png')"  />
+               </children>
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <padding>
+                  <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+               </padding>
+            </HBox>
+         </top>
+      </BorderPane>
+   </bottom>
 
 </BorderPane>

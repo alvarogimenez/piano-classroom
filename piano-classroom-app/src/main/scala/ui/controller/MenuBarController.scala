@@ -1,6 +1,6 @@
 package ui.controller
 
-import java.io.{File, FileNotFoundException, PrintWriter}
+import java.io.{File, FileNotFoundException}
 import java.util.UUID
 import javafx.application.Platform
 import javafx.event.{ActionEvent, EventHandler}
@@ -11,8 +11,8 @@ import javafx.scene.layout.BorderPane
 import javafx.stage.{FileChooser, Modality, Stage}
 
 import context.Context
-import io.contracts.{SaveContract, SessionContract, initializeEmptySesionContract}
-import io.{fromJson, toJson}
+import io.contracts.SaveContract
+import io.fromJson
 import sound.audio.channel.MidiChannel
 import ui.controller.mixer.{BusChannelModel, BusMixModel}
 import ui.controller.settings.SettingsController
