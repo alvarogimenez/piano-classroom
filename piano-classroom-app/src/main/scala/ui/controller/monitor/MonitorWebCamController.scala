@@ -158,33 +158,25 @@ class MonitorWebCamController(model: MonitorWebCamModel) extends TrackSubscriber
               if(!model.isDisplayNoteDisabled) {
                 val textPositionY = r.getY + r.getHeight / 2 - gridSizeY * 2
                 val textCenterX = r.getX + r.getWidth / 2
-                val notes = activeNotes.toList
+                val notes = activeNotes.toList.sortBy(x => (x._1.index, x._1.note.index))
                 val displayedNotes = notes.filter(n => n._2 == NoteActive || n._2 == NoteSustained)
-                val maxNoteWidth =
-                  (notes match {
-                    case Nil => 0
-                    case list =>
-                      if (model.isDisplayNoteInEnglish) {
-                        list
-                          .map { note => Toolkit.getToolkit.getFontLoader.computeStringWidth(note._1.note.string, gc.getFont()) }
-                          .max
-                      } else if (model.isDisplayNoteInFixedDo) {
-                        list
-                          .map { note => Toolkit.getToolkit.getFontLoader.computeStringWidth(note._1.note.fixedDoString, gc.getFont()) }
-                          .max
-                      } else {
-                        0
-                      }
-                  }) + gridSizeX * 0.1
-
-                def textPositionX(i: Int) = {
-                  if(model.isDisplayNoteInEnglish) {
-                    (textCenterX - ((displayedNotes.size - 1) * maxNoteWidth / 2) + i * maxNoteWidth).toInt
-                  } else if(model.isDisplayNoteInFixedDo) {
-                    (textCenterX - ((displayedNotes.size - 1) * maxNoteWidth / 2) + i * maxNoteWidth).toInt
+                def noteWidth(n: MusicNote): Double = {
+                  if (model.isDisplayNoteInEnglish) {
+                    Toolkit.getToolkit.getFontLoader.computeStringWidth(n.string, gc.getFont()) + gridSizeX * 0.3
+                  } else if (model.isDisplayNoteInFixedDo) {
+                    Toolkit.getToolkit.getFontLoader.computeStringWidth(n.fixedDoString, gc.getFont()) + gridSizeX * 0.3
                   } else {
                     0
                   }
+                }
+
+                val fullNotesWidth = (List(0.0) ++ displayedNotes.map(_._1.note).map(noteWidth)).sum
+
+                def textPositionX(i: Int) = {
+                  textCenterX -
+                  fullNotesWidth / 2 +
+                  noteWidth(displayedNotes(i)._1.note).toInt / 2 +
+                  (List(0.0) ++ displayedNotes.take(i).map(_._1.note).map(noteWidth)).sum
                 }
 
                 def text(kn: MusicNote) = {
