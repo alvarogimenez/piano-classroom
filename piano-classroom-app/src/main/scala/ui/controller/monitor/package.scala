@@ -1,5 +1,8 @@
 package ui.controller
 
+import javafx.scene.canvas.GraphicsContext
+import javafx.scene.shape.Rectangle
+
 
 package object monitor {
   case class WebCamSource(
@@ -8,4 +11,8 @@ package object monitor {
   ) {
     override def toString(): String = name
   }
+
+  case class GraphicsDecorator(
+    decorator: (GraphicsContext, Rectangle) => Unit
+  )
 }

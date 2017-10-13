@@ -29,6 +29,8 @@ class TrackModel(val channel: MidiChannel) {
   final val PIANO_ROLL_DEFAULT_HEIGHT = 160
   final val PIANO_DEFAULT_HEIGHT = 90
 
+  var track_subscribers: List[TrackSubscriber] = List.empty
+
   var track_name = new SimpleStringProperty()
   val midi_interface_names_ol: ObservableList[MidiInterfaceIdentifier] = FXCollections.observableArrayList[MidiInterfaceIdentifier]
   val midi_interface_names: SimpleListProperty[MidiInterfaceIdentifier] = new SimpleListProperty[MidiInterfaceIdentifier](midi_interface_names_ol)
@@ -39,7 +41,11 @@ class TrackModel(val channel: MidiChannel) {
   val track_height: SimpleIntegerProperty = new SimpleIntegerProperty()
   val track_piano_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val track_piano_roll_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
-  
+
+  def addTrackSubscriber(s: TrackSubscriber): Unit = track_subscribers = track_subscribers.+:(s)
+  def removeTrackSubscriber(s: TrackSubscriber): Unit = track_subscribers = track_subscribers.filterNot(_ == s)
+  def clearTrackSubscribers(): Unit = track_subscribers = List.empty
+
   def getTrackName: String = track_name.get
   def setTrackName(t: String): Unit = track_name.set(t)
   def getTrackNameProperty: SimpleStringProperty = track_name
@@ -99,7 +105,7 @@ class TrackModel(val channel: MidiChannel) {
 class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   final val SUSTAIN_DAMPER_MIDI_DATA = 0x40
 
-  val canvas = new Keyboard()
+  val keyboard = new Keyboard()
   @FXML var button_link_midi: Button = _
   @FXML var button_open_vst_settings: Button = _
   @FXML var button_open_vst_source: Button = _
@@ -110,6 +116,8 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   @FXML var combobox_midi_input: ComboBox[MidiInterfaceIdentifier] = _
   @FXML var combobox_vst_input: ComboBox[String] = _
   @FXML var label_track_name: Label = _
+
+  model.addTrackSubscriber(keyboard)
 
   val loader = new FXMLLoader()
   loader.setController(this)
@@ -158,7 +166,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   })
 
   def clear(): Unit = {
-    canvas.clear()
+    keyboard.clear()
   }
 
   def panic(): Unit = {
@@ -190,10 +198,10 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
         val loader = new FXMLLoader()
         val model = new PianoRangeModel()
         val controller = new PianoRangeController(dialog, model)
-        model.setSelectedFromNote(canvas.getStartNote.note)
-        model.setSelectedFromIndex(canvas.getStartNote.index)
-        model.setSelectedToNote(canvas.getEndNote.note)
-        model.setSelectedToIndex(canvas.getEndNote.index)
+        model.setSelectedFromNote(keyboard.getStartNote.note)
+        model.setSelectedFromIndex(keyboard.getStartNote.index)
+        model.setSelectedToNote(keyboard.getEndNote.note)
+        model.setSelectedToIndex(keyboard.getEndNote.index)
 
         loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/PianoRangeDialog.fxml"))
         loader.setController(controller)
@@ -206,21 +214,21 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
         dialog.showAndWait()
 
         if(model.getExitStatus == PIANO_RANGE_MODAL_ACCEPT) {
-          canvas.setStartNote(KeyboardNote(model.getSelectedFromNote, model.getSelectedFromIndex))
-          canvas.setEndNote(KeyboardNote(model.getSelectedToNote, model.getSelectedToIndex))
+          keyboard.setStartNote(KeyboardNote(model.getSelectedFromNote, model.getSelectedFromIndex))
+          keyboard.setEndNote(KeyboardNote(model.getSelectedToNote, model.getSelectedToIndex))
         }
       }
     })
 
-    canvas.getPianoEnabledProperty.bindBidirectional(model.getTrackPianoEnabledProperty())
-    canvas.getPianoRollEnabledProperty.bindBidirectional(model.getTrackPianoRollEnabledProperty())
-    canvas.setStartNote(KeyboardNote(MusicNote.C, 2))
-    canvas.setEndNote(KeyboardNote(MusicNote.C, 6))
+    keyboard.getPianoEnabledProperty.bindBidirectional(model.getTrackPianoEnabledProperty())
+    keyboard.getPianoRollEnabledProperty.bindBidirectional(model.getTrackPianoRollEnabledProperty())
+    keyboard.setStartNote(KeyboardNote(MusicNote.C, 2))
+    keyboard.setEndNote(KeyboardNote(MusicNote.C, 6))
 
     button_show_piano.selectedProperty().bindBidirectional(model.getTrackPianoEnabledProperty())
     button_show_piano_roll.selectedProperty().bindBidirectional(model.getTrackPianoRollEnabledProperty())
 
-    panel_track_main.setCenter(canvas)
+    panel_track_main.setCenter(keyboard)
 
     label_track_name.textProperty().bind(model.getTrackNameProperty)
 
@@ -238,14 +246,14 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
                 case smsg: ShortMessage =>
                   channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
                   if(smsg.getCommand == ShortMessage.NOTE_ON && smsg.getData2 > 0) {
-                    canvas.noteOn(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
+                    model.track_subscribers.foreach(_.noteOn(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12)))
                   } else if(smsg.getCommand == ShortMessage.NOTE_OFF || (smsg.getCommand == ShortMessage.NOTE_ON && smsg.getData2 == 0)) {
-                    canvas.noteOff(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
+                    model.track_subscribers.foreach(_.noteOff(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12)))
                   } else if(smsg.getCommand == ShortMessage.CONTROL_CHANGE && smsg.getData1 == SUSTAIN_DAMPER_MIDI_DATA) {
                     if(smsg.getData2 < 64) {
-                      canvas.sustainOff()
+                      model.track_subscribers.foreach(_.sustainOff())
                     } else {
-                      canvas.sustainOn()
+                      model.track_subscribers.foreach(_.sustainOn())
                     }
                   }
                 case _ =>

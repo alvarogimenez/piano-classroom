@@ -7,13 +7,19 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.canvas.Canvas?>
 <BorderPane xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <VBox alignment="TOP_CENTER" spacing="5.0" BorderPane.alignment="CENTER">
          <children>
             <ComboBox fx:id="combobox_source" prefWidth="150.0" promptText="Select..." />
-            <ImageView fx:id="imageview_webcam" pickOnBounds="true" preserveRatio="true" />
-            <HBox prefHeight="100.0" prefWidth="200.0" />
+            <StackPane fx:id="stackpane" prefWidth="300.0" maxWidth="300.0">
+               <children>
+                  <ImageView fx:id="imageview_webcam" pickOnBounds="true" preserveRatio="true" />
+                  <Canvas fx:id="canvas_overlay"/>
+               </children>
+            </StackPane>
          </children>
          <BorderPane.margin>
             <Insets />
