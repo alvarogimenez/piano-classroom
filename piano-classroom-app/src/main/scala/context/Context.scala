@@ -24,6 +24,7 @@ object Context {
   val mixerModel = new MixerModel()
 
   val globalRenderer = new GlobalRenderer()
+  globalRenderer.startThread()
 
   mixerModel.addInvalidationListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {

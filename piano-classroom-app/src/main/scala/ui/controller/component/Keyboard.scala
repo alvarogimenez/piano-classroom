@@ -184,10 +184,10 @@ class Keyboard extends Pane with TrackSubscriber with RendererSlave {
   private val _visibleProperty = new SimpleBooleanProperty()
   _visibleProperty.bind(this.impl_treeVisibleProperty())
 
-  def isNodeVisible():Boolean = _visibleProperty.get()
+  def isNodeVisible:Boolean = _visibleProperty.get()
 
   def render(): Unit = {
-    if(isNodeVisible()) {
+    if(isNodeVisible) {
       draw()
       synchronized {
         val now = System.currentTimeMillis()

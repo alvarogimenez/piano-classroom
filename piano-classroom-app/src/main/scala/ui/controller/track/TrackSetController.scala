@@ -29,10 +29,20 @@ class TrackSetModel {
 
 trait TrackSetController {
   @FXML var tracks: VBox = _
+  @FXML var button_refresh_rendering: Button = _
   @FXML var button_clear_all: Button = _
   @FXML var button_panic: Button = _
 
   def initializeTrackSetController() = {
+    button_refresh_rendering.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        println(s"Refresh rendering...")
+        Context.globalRenderer.stopThread()
+        Thread.sleep(500)
+        Context.globalRenderer.startThread()
+      }
+    })
+
     button_clear_all.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         println(s"Full data clear!")
