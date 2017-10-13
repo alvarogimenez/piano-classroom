@@ -237,9 +237,9 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
               msg match {
                 case smsg: ShortMessage =>
                   channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
-                  if(smsg.getCommand == ShortMessage.NOTE_ON) {
+                  if(smsg.getCommand == ShortMessage.NOTE_ON && smsg.getData2 > 0) {
                     canvas.noteOn(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
-                  } else if(smsg.getCommand == ShortMessage.NOTE_OFF) {
+                  } else if(smsg.getCommand == ShortMessage.NOTE_OFF || (smsg.getCommand == ShortMessage.NOTE_ON && smsg.getData2 == 0)) {
                     canvas.noteOff(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12))
                   } else if(smsg.getCommand == ShortMessage.CONTROL_CHANGE && smsg.getData1 == SUSTAIN_DAMPER_MIDI_DATA) {
                     if(smsg.getData2 < 64) {
