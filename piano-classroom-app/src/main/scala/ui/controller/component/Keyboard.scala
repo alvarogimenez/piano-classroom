@@ -1,7 +1,9 @@
 package ui.controller.component
 
+import java.lang
 import javafx.application.Platform
 import javafx.beans.property.{SimpleBooleanProperty, SimpleObjectProperty}
+import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.concurrent.Task
 import javafx.geometry.Rectangle2D
@@ -11,10 +13,11 @@ import javafx.scene.paint.Color
 
 import com.sun.javafx.geom.Rectangle
 import ui.controller.track.pianoRange.TrackSubscriber
+import ui.renderer.RendererSlave
 import util.MusicNote.MusicNote
 import util.{KeyboardNote, MusicNote}
 
-class Keyboard extends Pane with TrackSubscriber {
+class Keyboard extends Pane with TrackSubscriber with RendererSlave {
   val piano_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val piano_roll_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val start_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()
@@ -71,10 +74,6 @@ class Keyboard extends Pane with TrackSubscriber {
   end_note.addListener(new InvalidationListener() {
     override def invalidated(observable: Observable): Unit = draw()
   })
-
-  val thread = new Thread(drawTask())
-  thread.setDaemon(true)
-  thread.start()
 
   def noteOn(n: KeyboardNote): Unit = {
     synchronized {
@@ -182,28 +181,26 @@ class Keyboard extends Pane with TrackSubscriber {
     }
   }
 
-  private def drawTask() = new Task[Unit]() {
-    override def call(): Unit = {
-      while(!isCancelled) {
-        Platform.runLater(new Runnable() {
-          def run(): Unit = {
-            draw()
-          }
-        })
-        synchronized {
-          val now = System.currentTimeMillis()
-          activeNotes =
-            activeNotes
-              .filterNot(_._2 == NoteOff)
-              .map {
-                case (k, NoteDecaying(s, lastUpdate)) if s > 0 => (k, NoteDecaying(Math.max(0, s - 0.15), lastUpdate))
-                case (k, NoteDecaying(_, _)) => (k, NoteOff)
-                case (k, v) => (k, v)
-              }
-          staticRollNotes = staticRollNotes.map { case (k, v) => k -> v.filter(_.end.forall(e => (now - e) < 120000))}
-          staticRollSustain = staticRollSustain.filter(_.end.forall(e => (now - e) < 120000))
-        }
-        Thread.sleep(100)
+  private val _visibleProperty = new SimpleBooleanProperty()
+  _visibleProperty.bind(this.impl_treeVisibleProperty())
+
+  def isNodeVisible():Boolean = _visibleProperty.get()
+
+  def render(): Unit = {
+    if(isNodeVisible()) {
+      draw()
+      synchronized {
+        val now = System.currentTimeMillis()
+        activeNotes =
+          activeNotes
+            .filterNot(_._2 == NoteOff)
+            .map {
+              case (k, NoteDecaying(s, lastUpdate)) if s > 0 => (k, NoteDecaying(Math.max(0, s - 0.15), lastUpdate))
+              case (k, NoteDecaying(_, _)) => (k, NoteOff)
+              case (k, v) => (k, v)
+            }
+        staticRollNotes = staticRollNotes.map { case (k, v) => k -> v.filter(_.end.forall(e => (now - e) < 120000)) }
+        staticRollSustain = staticRollSustain.filter(_.end.forall(e => (now - e) < 120000))
       }
     }
   }

@@ -180,6 +180,8 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
   }
 
   def initialize(): Unit = {
+    Context.globalRenderer.addSlave(keyboard)
+
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         println(s"Link button pressed on Track (${channel.id})")

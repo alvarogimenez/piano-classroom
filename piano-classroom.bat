@@ -1,1 +1,1 @@
-"C:\Program Files (x86)\Java\jre1.8.0_144\bin\java" -jar piano-classroom-app\target\scala-2.11\piano-classroom-app-assembly-1.0.jar
+"C:\Program Files (x86)\Java\jre1.8.0_111\bin\java" -jar piano-classroom-app\target\scala-2.11\piano-classroom-app-assembly-1.0.jar -Xmx2048 -Xms1024

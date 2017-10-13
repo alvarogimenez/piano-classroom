@@ -10,6 +10,7 @@ import sound.audio.mixer.{MixListener, MixerService}
 import sound.midi.MidiService
 import ui.controller.mixer.MixerModel
 import ui.controller.track.TrackSetModel
+import ui.renderer.GlobalRenderer
 
 object Context {
   var sessionSettings: SessionContract = readSessionSettings()
@@ -21,6 +22,8 @@ object Context {
 
   val trackSetModel = new TrackSetModel()
   val mixerModel = new MixerModel()
+
+  val globalRenderer = new GlobalRenderer()
 
   mixerModel.addInvalidationListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {
