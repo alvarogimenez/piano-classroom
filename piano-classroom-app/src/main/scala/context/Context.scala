@@ -9,6 +9,7 @@ import sound.audio.channel.ChannelService
 import sound.audio.mixer.{MixListener, MixerService}
 import sound.midi.MidiService
 import ui.controller.mixer.MixerModel
+import ui.controller.monitor.MonitorModel
 import ui.controller.track.TrackSetModel
 import ui.renderer.GlobalRenderer
 
@@ -22,9 +23,14 @@ object Context {
 
   val trackSetModel = new TrackSetModel()
   val mixerModel = new MixerModel()
+  val monitorModel = new MonitorModel()
 
   val globalRenderer = new GlobalRenderer()
   globalRenderer.startThread()
+
+  var pianoMock = new Thread() {
+
+  }
 
   mixerModel.addInvalidationListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {

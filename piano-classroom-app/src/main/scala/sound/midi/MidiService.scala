@@ -1,11 +1,13 @@
 package sound.midi
 
 import java.io.File
+import javafx.concurrent.Task
 import javax.sound.midi._
 
 import context.Context
 
 import scala.collection.JavaConversions._
+import scala.util.Random
 
 class MidiService {
   private class MidiInputReceiver(sourceId: MidiInterfaceIdentifier, source: MidiDevice) extends Receiver {
@@ -35,6 +37,48 @@ class MidiService {
           (key, value.filterNot(_.id == id))
         }
   }
+
+  val task = new Task[Unit]() {
+    override def call(): Unit = {
+      while(!isCancelled) {
+//        val sustainOn = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127)
+//        midiSubscriber
+//          .values
+//          .flatten
+//          .foreach { s =>
+//            s.listener.midiReceived(sustainOn, System.currentTimeMillis())
+//          }
+        (48 to 72)
+          .foreach { i =>
+            val msgOn = new ShortMessage(ShortMessage.NOTE_ON, i, 64)
+            val msgOff = new ShortMessage(ShortMessage.NOTE_OFF, i, 0)
+            midiSubscriber
+            .values
+              .flatten
+              .foreach { s =>
+                s.listener.midiReceived(msgOn, System.currentTimeMillis())
+              }
+            Thread.sleep(200)
+            midiSubscriber
+              .values
+              .flatten
+              .foreach { s =>
+                s.listener.midiReceived(msgOff, System.currentTimeMillis())
+              }
+          }
+//        val sustainOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0)
+//        midiSubscriber
+//          .values
+//          .flatten
+//          .foreach { s =>
+//            s.listener.midiReceived(sustainOff, System.currentTimeMillis())
+//          }
+      }
+    }
+  }
+  val thread = new Thread(task)
+  thread.setDaemon(true)
+  thread.start()
 
   def getHardwareMidiDevices: Map[MidiInterfaceIdentifier, MidiDevice] = {
     MidiSystem.getMidiDeviceInfo

@@ -4,9 +4,6 @@ import javax.sound.midi.ShortMessage
 
 import util.MusicNote.MusicNote
 
-/**
-  * Created by nesbu on 27/08/2017.
-  */
 object MusicNote extends Enumeration {
   type MusicNote = Value
 

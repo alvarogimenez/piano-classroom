@@ -15,4 +15,9 @@ package object monitor {
   case class GraphicsDecorator(
     decorator: (GraphicsContext, Rectangle) => Unit
   )
+
+  object MonitorSource extends Enumeration {
+    type MonitorSource = Value
+    val CAMERA, PENCIL, BOARD, MUSIC = Value
+  }
 }

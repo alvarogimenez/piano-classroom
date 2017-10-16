@@ -143,11 +143,11 @@
                                  <children>
                                     <ToggleButton fx:id="toggle_camera" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Camera.png')" GridPane.halignment="CENTER" GridPane.valignment="CENTER" GridPane.vgrow="NEVER">
                                        <toggleGroup>
-                                          <ToggleGroup fx:id="monitor_source_toggle" />
+                                          <ToggleGroup fx:id="toggle_monitor_source" />
                                        </toggleGroup></ToggleButton>
-                                    <ToggleButton fx:id="toggle_pencil" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Pencil.png')" toggleGroup="$monitor_source_toggle" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-                                    <ToggleButton fx:id="toggle_board" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Board.png')" toggleGroup="$monitor_source_toggle" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
-                                    <ToggleButton fx:id="toggle_music" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Music.png')" toggleGroup="$monitor_source_toggle" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_pencil" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Pencil.png')" toggleGroup="$toggle_monitor_source" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_board" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Board.png')" toggleGroup="$toggle_monitor_source" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_music" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Music.png')" toggleGroup="$toggle_monitor_source" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
                                  </children>
                               </GridPane>
                            </right>

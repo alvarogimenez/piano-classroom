@@ -86,7 +86,6 @@ class MonitorWebCamController(model: MonitorWebCamModel) extends TrackSubscriber
   var sustainActive = false
 
   def initialize() = {
-    println()
     imageview_webcam.setPreserveRatio(true)
     imageview_webcam.fitWidthProperty().bind(stackpane.widthProperty())
     canvas_overlay.widthProperty().bind(stackpane.widthProperty())
@@ -116,23 +115,33 @@ class MonitorWebCamController(model: MonitorWebCamModel) extends TrackSubscriber
     combobox_source.itemsProperty().bindBidirectional(model.getSourcesProperty)
     combobox_source.valueProperty().bindBidirectional(model.getSelectedSourceProperty)
 
-    combobox_source.valueProperty().addListener(new ChangeListener[WebCamSource]() {
+    model.getSelectedSourceProperty.addListener(new ChangeListener[WebCamSource]() {
       override def changed(observable: ObservableValue[_ <: WebCamSource], oldValue: WebCamSource, newValue: WebCamSource): Unit = {
         println(s"Webcam changed from $oldValue to $newValue")
-
-        if(currentWebCamTask != null) {
-          currentWebCamTask.cancel()
-        }
-
-        if(newValue != null) {
-          currentWebCamTask = webCamTask(newValue.index)
-          val thread = new Thread(currentWebCamTask)
-          thread.setDaemon(true)
-          thread.start()
-        }
+        start()
       }
     })
+  }
 
+  def start() = {
+    println(s"Starting WebCam with source '${model.getSelectedSource}'...")
+
+    if(currentWebCamTask != null) {
+      currentWebCamTask.cancel()
+    }
+
+    if(model.getSelectedSource != null) {
+      currentWebCamTask = webCamTask(model.getSelectedSource.index)
+      val thread = new Thread(currentWebCamTask)
+      thread.setDaemon(true)
+      thread.start()
+    }
+  }
+
+  def stop() = {
+    if(currentWebCamTask != null) {
+      currentWebCamTask.cancel()
+    }
   }
 
   def webCamTask(index: Int) = new Task[Unit]() {
