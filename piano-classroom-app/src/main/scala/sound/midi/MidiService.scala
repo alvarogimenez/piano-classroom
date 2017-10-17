@@ -1,7 +1,9 @@
 package sound.midi
 
 import java.io.File
+import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.concurrent.Task
+import javafx.concurrent.Worker.State
 import javax.sound.midi._
 
 import context.Context
@@ -21,6 +23,7 @@ class MidiService {
   }
 
   var midiSubscriber: Map[MidiInterfaceIdentifier, List[MidiSubscriber]] = Map.empty
+  var currentTestTask: Task[Unit] = _
 
   def addMidiSubscriber(id: MidiInterfaceIdentifier, subscriber: MidiSubscriber): Unit = {
     midiSubscriber = midiSubscriber.updated(id, midiSubscriber.getOrElse(id, List.empty) :+ subscriber)
@@ -37,48 +40,6 @@ class MidiService {
           (key, value.filterNot(_.id == id))
         }
   }
-
-  val task = new Task[Unit]() {
-    override def call(): Unit = {
-      while(!isCancelled) {
-//        val sustainOn = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127)
-//        midiSubscriber
-//          .values
-//          .flatten
-//          .foreach { s =>
-//            s.listener.midiReceived(sustainOn, System.currentTimeMillis())
-//          }
-        (48 to 72)
-          .foreach { i =>
-            val msgOn = new ShortMessage(ShortMessage.NOTE_ON, i, 64)
-            val msgOff = new ShortMessage(ShortMessage.NOTE_OFF, i, 0)
-            midiSubscriber
-            .values
-              .flatten
-              .foreach { s =>
-                s.listener.midiReceived(msgOn, System.currentTimeMillis())
-              }
-            Thread.sleep(200)
-            midiSubscriber
-              .values
-              .flatten
-              .foreach { s =>
-                s.listener.midiReceived(msgOff, System.currentTimeMillis())
-              }
-          }
-//        val sustainOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0)
-//        midiSubscriber
-//          .values
-//          .flatten
-//          .foreach { s =>
-//            s.listener.midiReceived(sustainOff, System.currentTimeMillis())
-//          }
-      }
-    }
-  }
-  val thread = new Thread(task)
-  thread.setDaemon(true)
-  thread.start()
 
   def getHardwareMidiDevices: Map[MidiInterfaceIdentifier, MidiDevice] = {
     MidiSystem.getMidiDeviceInfo
@@ -139,5 +100,76 @@ class MidiService {
             println(s"Error closing [$id]: '${e.getMessage}'")
         }
       }
+  }
+
+
+  def testTask() = new Task[Unit]() {
+    override def call(): Unit = {
+      while(!isCancelled) {
+        //        val sustainOn = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127)
+        //        midiSubscriber
+        //          .values
+        //          .flatten
+        //          .foreach { s =>
+        //            s.listener.midiReceived(sustainOn, System.currentTimeMillis())
+        //          }
+        (48 to 72)
+          .foreach { i =>
+            val msgOn = new ShortMessage(ShortMessage.NOTE_ON, i, 64)
+            val msgOff = new ShortMessage(ShortMessage.NOTE_OFF, i, 0)
+            midiSubscriber
+              .values
+              .flatten
+              .foreach { s =>
+                s.listener.midiReceived(msgOn, System.currentTimeMillis())
+              }
+            Thread.sleep(200)
+            midiSubscriber
+              .values
+              .flatten
+              .foreach { s =>
+                s.listener.midiReceived(msgOff, System.currentTimeMillis())
+              }
+          }
+        //        val sustainOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0)
+        //        midiSubscriber
+        //          .values
+        //          .flatten
+        //          .foreach { s =>
+        //            s.listener.midiReceived(sustainOff, System.currentTimeMillis())
+        //          }
+      }
+    }
+  }
+
+  def startTestTask() = {
+    println(s"Starting TestTask...")
+
+    if(currentTestTask != null && currentTestTask.isRunning) {
+      currentTestTask.cancel()
+      currentTestTask.stateProperty.addListener(new ChangeListener[State] {
+        override def changed(observable: ObservableValue[_ <: State], oldValue: State, newValue: State) = {
+          runThread()
+        }
+      })
+    } else {
+      runThread()
+    }
+  }
+
+  def stopTestTask() = {
+    println(s"Stopping TestTask...")
+
+    if(currentTestTask != null && currentTestTask.isRunning) {
+      currentTestTask.cancel()
+    }
+  }
+
+  private def runThread(): Unit = {
+    println("Running thread")
+    currentTestTask = testTask()
+    val thread = new Thread(currentTestTask)
+    thread.setDaemon(true)
+    thread.start()
   }
 }
