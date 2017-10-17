@@ -69,7 +69,7 @@ package object context {
 
         Context.mixerService.clearListeners
         Context.mixerService.clearMix
-        Context.channelService.removeChannels()
+        Context.channelService.closeAndRemoveChannels()
 
         save
           .`save-state`

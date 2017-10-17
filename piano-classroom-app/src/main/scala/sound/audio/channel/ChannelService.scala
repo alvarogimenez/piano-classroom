@@ -8,8 +8,10 @@ class ChannelService() extends ChannelOwner {
     channels = channels :+ channel
   }
 
-  def removeChannels(): Unit =
+  def closeAndRemoveChannels(): Unit = {
+    channels.foreach(_.close())
     channels = List.empty[Channel]
+  }
 
   def pull(sampleRate: Double, bufferSize: Int): Map[String, Array[Float]] = {
     channels.map(c => c.id -> c.pull(sampleRate, bufferSize)).toMap
