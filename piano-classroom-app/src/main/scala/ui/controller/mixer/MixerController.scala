@@ -30,6 +30,7 @@ class MixerModel {
   def setBusMixes(l: List[BusMixModel]): Unit = bus_mixes.setAll(l)
   def addBusMix(m: BusMixModel): Unit = bus_mixes_ol.add(m)
   def removeBusMix(m: BusMixModel): Unit = bus_mixes_ol.remove(m)
+  def clear(): Unit = bus_mixes_ol.clear()
   def getBusMixesProperty: SimpleListProperty[BusMixModel] = bus_mixes
 
   def addInvalidationListener(l: InvalidationListener): Unit = invalidationListeners = invalidationListeners + l
@@ -189,7 +190,11 @@ trait MixerController {
           } else if (c.getRemovedSize != 0) {
             c.getRemoved
               .map { busMixModel =>
-                tabs_bus_mixes.getTabs.remove(tabs_bus_mixes.getTabs.find(_.getUserData == busMixModel))
+                tabs_bus_mixes.getTabs.find(_.getUserData == busMixModel) match {
+                  case Some(tab) =>
+                    tabs_bus_mixes.getTabs.remove(tab)
+                  case _ =>
+                }
               }
           }
         }

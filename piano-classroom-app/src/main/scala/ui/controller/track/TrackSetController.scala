@@ -83,7 +83,11 @@ trait TrackSetController {
           } else if (c.getRemovedSize != 0) {
             c.getRemoved
               .map { trackModel =>
-                tracks.getChildren.remove(tracks.getChildren.find(_.getUserData == trackModel))
+                tracks.getChildren.find(_.getUserData == trackModel) match {
+                  case Some(track) =>
+                    tracks.getChildren.remove(track)
+                  case _ =>
+                }
               }
           }
         }

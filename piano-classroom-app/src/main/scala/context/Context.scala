@@ -1,5 +1,6 @@
 package context
 
+import java.io.File
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.stage.Stage
 
@@ -97,6 +98,7 @@ object Context {
     sessionSettings
       .`global`
       .foreach { globalSettings =>
+        // Monitor Configuration
         globalSettings.`monitor` match {
           case Some(monitorSettings) =>
             // Configure global Monitor Settings
@@ -120,6 +122,15 @@ object Context {
                   case _ =>
                 }
               case _ =>
+            }
+          case _ =>
+        }
+
+        // IO Configuration
+        globalSettings.`io` match {
+          case Some(ioSettings) =>
+            ioSettings.`last-opened-file`.foreach { lastOpenedFile =>
+              loadFile(new File(lastOpenedFile))
             }
           case _ =>
         }

@@ -27,6 +27,9 @@ class MixerService(val channelOwner: ChannelOwner) extends MixerOwner {
 
   def addMixListener(m: MixListener): Unit = mixListeners = mixListeners :+ m
 
+  def clearMix: Unit = mixByOutputChannel = Map.empty
+  def clearListeners: Unit = mixListeners = List.empty
+
   def pull(sampleRate: Double, bufferSize: Int): Map[Int, Array[Float]] = {
     val channelData = channelOwner.pull(sampleRate, bufferSize)
     val mixOutputByChannel = mixByOutputChannel

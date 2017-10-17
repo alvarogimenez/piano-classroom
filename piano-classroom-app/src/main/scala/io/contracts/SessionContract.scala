@@ -20,7 +20,8 @@ case class VstConfiguration(
 )
 
 case class GlobalConfiguration(
-  `monitor`: Option[GlobalMonitorConfiguration] = None
+  `monitor`: Option[GlobalMonitorConfiguration] = None,
+  `io`: Option[GlobalIoConfiguration] = None
 )
 
 case class GlobalMonitorConfiguration(
@@ -37,6 +38,10 @@ case class GlobalMonitorCameraSettings(
 
 case class GlobalMonitorDrawBoardSettings(
 
+)
+
+case class GlobalIoConfiguration(
+  `last-opened-file`: Option[String] = None
 )
 
 case class SessionContract(
