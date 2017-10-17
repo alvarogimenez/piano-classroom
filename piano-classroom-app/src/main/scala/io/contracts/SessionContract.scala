@@ -19,7 +19,28 @@ case class VstConfiguration(
   `vst-source-directories`: List[String]
 )
 
+case class GlobalConfiguration(
+  `monitor`: Option[GlobalMonitorConfiguration] = None
+)
+
+case class GlobalMonitorConfiguration(
+  `source-index`: Int,
+  `fullscreen`: Boolean,
+  `active-view`: Option[String],
+  `camera-settings`: GlobalMonitorCameraSettings,
+  `draw-board-settings`: GlobalMonitorDrawBoardSettings
+)
+
+case class GlobalMonitorCameraSettings(
+  `source`: Option[String]
+)
+
+case class GlobalMonitorDrawBoardSettings(
+
+)
+
 case class SessionContract(
   `audio-configuration`: Option[AsioConfiguration],
-  `vst-configuration`: VstConfiguration
+  `vst-configuration`: VstConfiguration,
+  `global`: Option[GlobalConfiguration]
 )

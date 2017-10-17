@@ -7,7 +7,8 @@ package object contracts {
       `audio-configuration` = None,
       `vst-configuration` = VstConfiguration(
         `vst-source-directories` = List(".")
-      )
+      ),
+      `global` = None
     )
   }
 }

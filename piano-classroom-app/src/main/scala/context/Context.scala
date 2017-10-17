@@ -8,10 +8,13 @@ import sound.audio.asio.AsioService
 import sound.audio.channel.ChannelService
 import sound.audio.mixer.{MixListener, MixerService}
 import sound.midi.MidiService
+import ui.controller.MainStageController
 import ui.controller.mixer.MixerModel
-import ui.controller.monitor.MonitorModel
+import ui.controller.monitor.{MonitorModel, MonitorSource}
 import ui.controller.track.TrackSetModel
 import ui.renderer.GlobalRenderer
+
+import scala.util.Try
 
 object Context {
   var sessionSettings: SessionContract = readSessionSettings()
@@ -28,9 +31,9 @@ object Context {
   val globalRenderer = new GlobalRenderer()
   globalRenderer.startThread()
 
-  var pianoMock = new Thread() {
+  var primaryStage: Stage = _
 
-  }
+  var updateSessionDisabled = false
 
   mixerModel.addInvalidationListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {
@@ -88,7 +91,41 @@ object Context {
       println(s"No ASIO Driver found on configuration. Skiping ASIO Driver initialization phase")
   }
 
-  var primaryStage: Stage = _
+  def loadControllerDependantSettings(controller: MainStageController): Unit = {
+    updateSessionDisabled = true
 
+    sessionSettings
+      .`global`
+      .foreach { globalSettings =>
+        globalSettings.`monitor` match {
+          case Some(monitorSettings) =>
+            // Configure global Monitor Settings
+            if(monitorSettings.`fullscreen`) {
+              controller.selectMonitorSourceWithIndex(monitorSettings.`source-index`)
+              controller.goMonitorFullScreen()
+            }
+            // Configure active view
+            val activeView = monitorSettings.`active-view`.flatMap(v => Try(MonitorSource.withName(v)).toOption)
+            activeView
+              .foreach { view =>
+                controller.selectMonitorView(view)
+              }
+            // Configure Camera Settings
+            monitorSettings.`camera-settings`.`source` match {
+              case Some(selectedCameraSource) =>
+                val webCamSource = Context.monitorModel.monitorWebCamModel.getSources.find(w => w != null && w.name == selectedCameraSource)
+                webCamSource match {
+                  case Some(w) =>
+                    Context.monitorModel.monitorWebCamModel.setSelectedSource(w)
+                  case _ =>
+                }
+              case _ =>
+            }
+          case _ =>
+        }
+      }
 
+    updateSessionDisabled = false
+  }
 }
+

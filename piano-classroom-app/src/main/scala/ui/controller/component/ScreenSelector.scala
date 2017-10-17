@@ -11,7 +11,7 @@ import javafx.stage.Screen
 import com.sun.javafx.geom.Rectangle
 
 import scala.collection.JavaConversions._
-import scala.util.Random
+import scala.util.{Random, Try}
 
 class ScreenSelector extends Pane {
   val colorSeed = System.currentTimeMillis()
@@ -22,6 +22,10 @@ class ScreenSelector extends Pane {
   def getSelectedScreen: Option[ScreenDefinition] = selected_screen.get
   def setSelectedScreen(x: Option[ScreenDefinition]) = selected_screen.set(x)
   def getSelectedScreenProperty: SimpleObjectProperty[Option[ScreenDefinition]] = selected_screen
+
+  def setSelectedScreenByIndex(index: Int) = {
+    setSelectedScreen(Try(calculateScreens().get(index)).toOption)
+  }
 
   this.setOnMouseClicked(new EventHandler[MouseEvent] {
     override def handle(event: MouseEvent): Unit = {

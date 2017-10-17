@@ -37,13 +37,15 @@ package object context {
   }
 
   def writeSessionSettings(session: SessionContract): Unit = {
-    try {
-      val w = new PrintWriter(new File("session.json"))
-      w.write(toJson(session))
-      w.close()
-    } catch {
-      case e: Exception =>
-        println(s"Error writing session.json file: '${e.getMessage}'")
+    if(!Context.updateSessionDisabled) {
+      try {
+        val w = new PrintWriter(new File("session.json"))
+        w.write(toJson(session))
+        w.close()
+      } catch {
+        case e: Exception =>
+          println(s"Error writing session.json file: '${e.getMessage}'")
+      }
     }
   }
 }

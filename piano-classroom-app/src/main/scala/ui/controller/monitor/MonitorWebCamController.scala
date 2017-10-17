@@ -2,10 +2,11 @@ package ui.controller.monitor
 
 import java.util.concurrent.atomic.AtomicReference
 import javafx.application.Platform
-import javafx.beans.property.{SimpleBooleanProperty, SimpleListProperty, SimpleObjectProperty, SimpleStringProperty}
+import javafx.beans.property.{SimpleBooleanProperty, SimpleListProperty, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.concurrent.Task
+import javafx.concurrent.Worker.State
 import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
 import javafx.geometry.VPos
@@ -19,9 +20,10 @@ import javafx.scene.text.{Font, TextAlignment}
 
 import com.github.sarxos.webcam.Webcam
 import com.sun.javafx.tk.Toolkit
+import context.Context
 import ui.controller.track.pianoRange.TrackSubscriber
+import util.KeyboardNote
 import util.MusicNote.MusicNote
-import util.{KeyboardNote, MusicNote}
 
 import scala.collection.JavaConversions._
 
@@ -66,7 +68,7 @@ class MonitorWebCamModel {
   setDisplayNoteDisabled(true)
 }
 
-class MonitorWebCamController(model: MonitorWebCamModel) extends TrackSubscriber {
+class MonitorWebCamController(parentController: MonitorController, model: MonitorWebCamModel) extends TrackSubscriber {
   @FXML var stackpane: StackPane = _
   @FXML var imageview_webcam: ImageView = _
   @FXML var canvas_overlay: Canvas = _
@@ -118,7 +120,12 @@ class MonitorWebCamController(model: MonitorWebCamModel) extends TrackSubscriber
     model.getSelectedSourceProperty.addListener(new ChangeListener[WebCamSource]() {
       override def changed(observable: ObservableValue[_ <: WebCamSource], oldValue: WebCamSource, newValue: WebCamSource): Unit = {
         println(s"Webcam changed from $oldValue to $newValue")
-        start()
+
+        if(Context.monitorModel.getSelectedSource != null && Context.monitorModel.getSelectedSource.getUserData == MonitorSource.CAMERA) {
+          start()
+        }
+
+        parentController.updateSession()
       }
     })
   }
@@ -126,10 +133,28 @@ class MonitorWebCamController(model: MonitorWebCamModel) extends TrackSubscriber
   def start() = {
     println(s"Starting WebCam with source '${model.getSelectedSource}'...")
 
-    if(currentWebCamTask != null) {
+    if(currentWebCamTask != null && currentWebCamTask.isRunning) {
+      currentWebCamTask.cancel()
+      currentWebCamTask.stateProperty.addListener(new ChangeListener[State] {
+        override def changed(observable: ObservableValue[_ <: State], oldValue: State, newValue: State) = {
+          runThread()
+        }
+      })
+    } else {
+      runThread()
+    }
+  }
+
+  def stop() = {
+    println(s"Stopping active WebCam...")
+
+    if(currentWebCamTask != null && currentWebCamTask.isRunning) {
       currentWebCamTask.cancel()
     }
+  }
 
+  private def runThread(): Unit = {
+    println("Running thread")
     if(model.getSelectedSource != null) {
       currentWebCamTask = webCamTask(model.getSelectedSource.index)
       val thread = new Thread(currentWebCamTask)
@@ -138,102 +163,104 @@ class MonitorWebCamController(model: MonitorWebCamModel) extends TrackSubscriber
     }
   }
 
-  def stop() = {
-    if(currentWebCamTask != null) {
-      currentWebCamTask.cancel()
-    }
-  }
-
   def webCamTask(index: Int) = new Task[Unit]() {
     override def call(): Unit = {
-      val cam = Webcam.getWebcams.get(index)
-      cam.open()
+      try {
+        val cam = Webcam.getWebcams.get(index)
+        cam.open()
 
-      val imageRef = new AtomicReference[WritableImage]()
-      val decoratorRef = new AtomicReference[GraphicsDecorator]()
-      while(!isCancelled) {
-        val img = cam.getImage
-        if(img != null) {
-          imageRef.set(SwingFXUtils.toFXImage(img, imageRef.get()))
-          decoratorRef.set(
-            GraphicsDecorator({ case (gc:GraphicsContext, r: Rectangle) =>
-              val gridSizeY = r.getHeight * 0.1
-              val gridSizeX = r.getWidth * 0.1
-              gc.clearRect(r.getX, r.getY, r.getWidth, r.getHeight)
-              gc.setFont(new Font(gridSizeY))
-              gc.setTextAlign(TextAlignment.CENTER)
-              gc.setTextBaseline(VPos.CENTER)
-              
-              if(!model.isDisplayNoteDisabled) {
-                val textPositionY = r.getY + r.getHeight / 2 - gridSizeY * 2
-                val textCenterX = r.getX + r.getWidth / 2
-                val notes = activeNotes.toList.sortBy(x => (x._1.index, x._1.note.index))
-                val displayedNotes = notes.filter(n => n._2 == NoteActive || n._2 == NoteSustained)
-                def noteWidth(n: MusicNote): Double = {
-                  if (model.isDisplayNoteInEnglish) {
-                    Toolkit.getToolkit.getFontLoader.computeStringWidth(n.string, gc.getFont()) + gridSizeX * 0.3
-                  } else if (model.isDisplayNoteInFixedDo) {
-                    Toolkit.getToolkit.getFontLoader.computeStringWidth(n.fixedDoString, gc.getFont()) + gridSizeX * 0.3
-                  } else {
-                    0
+        val imageRef = new AtomicReference[WritableImage]()
+        val decoratorRef = new AtomicReference[GraphicsDecorator]()
+        while (!isCancelled) {
+          val img = cam.getImage
+          if (img != null) {
+            imageRef.set(SwingFXUtils.toFXImage(img, imageRef.get()))
+            decoratorRef.set(
+              GraphicsDecorator({ case (gc: GraphicsContext, r: Rectangle) =>
+                val gridSizeY = r.getHeight * 0.1
+                val gridSizeX = r.getWidth * 0.1
+                gc.clearRect(r.getX, r.getY, r.getWidth, r.getHeight)
+                gc.setFont(new Font(gridSizeY))
+                gc.setTextAlign(TextAlignment.CENTER)
+                gc.setTextBaseline(VPos.CENTER)
+
+                if (!model.isDisplayNoteDisabled) {
+                  val textPositionY = r.getY + r.getHeight / 2 - gridSizeY * 2
+                  val textCenterX = r.getX + r.getWidth / 2
+                  val notes = activeNotes.toList.sortBy(x => (x._1.index, x._1.note.index))
+                  val displayedNotes = notes.filter(n => n._2 == NoteActive || n._2 == NoteSustained)
+
+                  def noteWidth(n: MusicNote): Double = {
+                    if (model.isDisplayNoteInEnglish) {
+                      Toolkit.getToolkit.getFontLoader.computeStringWidth(n.string, gc.getFont()) + gridSizeX * 0.3
+                    } else if (model.isDisplayNoteInFixedDo) {
+                      Toolkit.getToolkit.getFontLoader.computeStringWidth(n.fixedDoString, gc.getFont()) + gridSizeX * 0.3
+                    } else {
+                      0
+                    }
                   }
-                }
 
-                val fullNotesWidth = (List(0.0) ++ displayedNotes.map(_._1.note).map(noteWidth)).sum
+                  val fullNotesWidth = (List(0.0) ++ displayedNotes.map(_._1.note).map(noteWidth)).sum
 
-                def textPositionX(i: Int) = {
-                  textCenterX -
-                  fullNotesWidth / 2 +
-                  noteWidth(displayedNotes(i)._1.note).toInt / 2 +
-                  (List(0.0) ++ displayedNotes.take(i).map(_._1.note).map(noteWidth)).sum
-                }
-
-                def text(kn: MusicNote) = {
-                  if(model.isDisplayNoteInEnglish) {
-                    kn.string
-                  } else if(model.isDisplayNoteInFixedDo) {
-                    kn.fixedDoString
-                  } else {
-                    ""
+                  def textPositionX(i: Int) = {
+                    textCenterX -
+                      fullNotesWidth / 2 +
+                      noteWidth(displayedNotes(i)._1.note).toInt / 2 +
+                      (List(0.0) ++ displayedNotes.take(i).map(_._1.note).map(noteWidth)).sum
                   }
-                }
 
-
-                displayedNotes
-                  .zipWithIndex
-                  .foreach {
-                    case ((note, NoteActive), i) =>
-                      gc.setFill(Color.RED)
-                      gc.setStroke(Color.WHITE)
-                      gc.fillText(text(note.note), textPositionX(i), textPositionY.toInt)
-                      gc.strokeText(text(note.note), textPositionX(i), textPositionY.toInt)
-                    case ((note, NoteSustained), i) =>
-                      gc.setFill(Color.RED.desaturate())
-                      gc.setStroke(Color.WHITE)
-                      gc.fillText(text(note.note), textPositionX(i), textPositionY.toInt)
-                      gc.strokeText(text(note.note), textPositionX(i), textPositionY.toInt)
-                    case _ =>
+                  def text(kn: MusicNote) = {
+                    if (model.isDisplayNoteInEnglish) {
+                      kn.string
+                    } else if (model.isDisplayNoteInFixedDo) {
+                      kn.fixedDoString
+                    } else {
+                      ""
+                    }
                   }
+
+
+                  displayedNotes
+                    .zipWithIndex
+                    .foreach {
+                      case ((note, NoteActive), i) =>
+                        gc.setFill(Color.RED)
+                        gc.setStroke(Color.WHITE)
+                        gc.fillText(text(note.note), textPositionX(i), textPositionY.toInt)
+                        gc.strokeText(text(note.note), textPositionX(i), textPositionY.toInt)
+                      case ((note, NoteSustained), i) =>
+                        gc.setFill(Color.RED.desaturate())
+                        gc.setStroke(Color.WHITE)
+                        gc.fillText(text(note.note), textPositionX(i), textPositionY.toInt)
+                        gc.strokeText(text(note.note), textPositionX(i), textPositionY.toInt)
+                      case _ =>
+                    }
+                }
+              })
+            )
+            img.flush()
+
+            Platform.runLater(new Runnable() {
+              def run(): Unit = {
+                model.setSourceImage(imageRef.get())
+                model.setDecorator(decoratorRef.get())
               }
             })
-          )
-          img.flush()
-
-          Platform.runLater(new Runnable() {
-            def run(): Unit = {
-              model.setSourceImage(imageRef.get())
-              model.setDecorator(decoratorRef.get())
-            }
-          })
+          }
         }
+
+        cam.close()
+        Platform.runLater(new Runnable() {
+          def run(): Unit = {
+            model.setSourceImage(null)
+          }
+        })
+        println(s"Finish task")
+      } catch {
+        case e: Exception =>
+          println(s"Exception in WebCam Task thread: ${e.getMessage}")
+          e.printStackTrace()
       }
-
-      cam.close()
-      Platform.runLater(new Runnable() {
-        def run(): Unit = {
-          model.setSourceImage(null)
-        }
-      })
     }
   }
 

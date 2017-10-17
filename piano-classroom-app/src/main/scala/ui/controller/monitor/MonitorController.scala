@@ -1,6 +1,6 @@
 package ui.controller.monitor
 
-import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.{SimpleIntegerProperty, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
@@ -13,17 +13,24 @@ import javafx.scene.shape.Rectangle
 import javafx.stage.{Stage, StageStyle}
 
 import context.Context
+import io.contracts.{GlobalConfiguration, GlobalMonitorCameraSettings, GlobalMonitorConfiguration, GlobalMonitorDrawBoardSettings}
 import ui.controller.component.ScreenSelector
+import ui.controller.monitor.MonitorSource.MonitorSource
 
 class MonitorModel {
   val monitorWebCamModel = new MonitorWebCamModel()
   val monitorDrawBoardModel = new MonitorDrawBoardModel()
 
   val selected_source_toggle: SimpleObjectProperty[Toggle] = new SimpleObjectProperty[Toggle]()
+  val selected_target_monitor: SimpleIntegerProperty = new SimpleIntegerProperty()
 
   def getSelectedSource: Toggle = selected_source_toggle.get()
   def setSelectedSourceToggle(t: Toggle):Unit = selected_source_toggle.set(t)
   def getSelectedSourceToggleProperty: SimpleObjectProperty[Toggle] = selected_source_toggle
+
+  def getSelectedTargetMonitor: Int = selected_target_monitor.get
+  def setSelectedTargetMonitor(t: Int): Unit = selected_target_monitor.set(t)
+  def getSelectedTargetMonitorProperty: SimpleIntegerProperty = selected_target_monitor
 }
 
 trait MonitorController {
@@ -37,16 +44,16 @@ trait MonitorController {
   @FXML var toggle_board: ToggleButton = _
   @FXML var toggle_music: ToggleButton = _
 
-  val screenSelector = new ScreenSelector()
-  val screenStage = new Stage()
-  val screenImage = new ImageView()
-  val screenCanvas = new Canvas()
-  val screenPane = new StackPane()
+  private val screenSelector = new ScreenSelector()
+  private val screenStage = new Stage()
+  private val screenImage = new ImageView()
+  private val screenCanvas = new Canvas()
+  private val screenPane = new StackPane()
 
-  val monitorWebCamController = new MonitorWebCamController(Context.monitorModel.monitorWebCamModel)
+  val monitorWebCamController = new MonitorWebCamController(this, Context.monitorModel.monitorWebCamModel)
   val monitorDrawBoardController = new MonitorDrawBoardController(Context.monitorModel.monitorDrawBoardModel)
-  val monitorWebCamView = loadWebCamView()
-  val monitorDrawBoardView = loadDrawBoardView()
+  private val monitorWebCamView = loadWebCamView()
+  private val monitorDrawBoardView = loadDrawBoardView()
 
   def initializeMonitorController() = {
     toggle_camera.setUserData(MonitorSource.CAMERA)
@@ -69,24 +76,29 @@ trait MonitorController {
 
     bpane_monitor_screen.setCenter(screenSelector)
 
-    button_show_fullscreen.setOnAction(new EventHandler[ActionEvent] {
-      override def handle(event: ActionEvent) = {
-        screenSelector.getSelectedScreen match {
-          case Some(s) =>
-            screenStage.setResizable(false)
-            screenStage.setX(s.screen.getBounds.getMinX)
-            screenStage.setY(s.screen.getBounds.getMinY)
-            screenStage.setWidth(s.screen.getBounds.getWidth)
-            screenStage.setHeight(s.screen.getBounds.getHeight)
-            screenStage.show()
+    button_show_fullscreen.disableProperty().bind(screenSelector.getSelectedScreenProperty.isEqualTo(None))
+    button_hide_fullscreen.disableProperty().bind(screenStage.showingProperty().not())
+
+    screenSelector.getSelectedScreenProperty.addListener(new ChangeListener[Option[screenSelector.ScreenDefinition]] {
+      override def changed(observable: ObservableValue[_ <: Option[screenSelector.ScreenDefinition]], oldValue: Option[screenSelector.ScreenDefinition], newValue: Option[screenSelector.ScreenDefinition]) = {
+        newValue match {
+          case Some(s) => Context.monitorModel.setSelectedTargetMonitor(s.index)
           case _ =>
         }
+      }
+    })
+
+    button_show_fullscreen.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent) = {
+        goMonitorFullScreen()
+        updateSession()
       }
     })
 
     button_hide_fullscreen.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent) = {
         screenStage.hide()
+        updateSession()
       }
     })
 
@@ -115,31 +127,88 @@ trait MonitorController {
         monitorWebCamController.stop()
         monitorDrawBoardController.stop()
 
-        newValue.getUserData match {
-          case MonitorSource.CAMERA =>
-            bpane_monitor.setCenter(monitorWebCamView)
-            screenImage.imageProperty().bind(Context.monitorModel.monitorWebCamModel.getSourceImageProperty)
-//            Context.trackSetModel.getTrackSet.headOption.map(_.addTrackSubscriber(monitorWebCamController))
-            monitorWebCamController.start()
-          case MonitorSource.PENCIL =>
-            bpane_monitor.setCenter(monitorDrawBoardView)
-            monitorDrawBoardController.start()
+        if(newValue != null) {
+          newValue.getUserData match {
+            case MonitorSource.CAMERA =>
+              bpane_monitor.setCenter(monitorWebCamView)
+              screenImage.imageProperty().bind(Context.monitorModel.monitorWebCamModel.getSourceImageProperty)
+              //            Context.trackSetModel.getTrackSet.headOption.map(_.addTrackSubscriber(monitorWebCamController))
+              monitorWebCamController.start()
+            case MonitorSource.PENCIL =>
+              bpane_monitor.setCenter(monitorDrawBoardView)
+              monitorDrawBoardController.start()
+          }
         }
+
+        updateSession()
       }
     })
   }
 
-  def loadWebCamView() = {
+  private def loadWebCamView() = {
     val loader = new FXMLLoader()
     loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/MonitorWebCamView.fxml"))
     loader.setController(monitorWebCamController)
     loader.load.asInstanceOf[BorderPane]
   }
 
-  def loadDrawBoardView() = {
+  private def loadDrawBoardView() = {
     val loader = new FXMLLoader()
     loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/MonitorDrawBoardView.fxml"))
     loader.setController(monitorDrawBoardController)
     loader.load.asInstanceOf[BorderPane]
+  }
+
+  def updateSession(): Unit = {
+    val monitorConfiguration =
+      GlobalMonitorConfiguration(
+        `source-index` = Context.monitorModel.getSelectedTargetMonitor,
+        `fullscreen` = screenStage.isShowing,
+        `active-view` = Option(Context.monitorModel.getSelectedSource).map(_.getUserData.toString),
+        `camera-settings` = GlobalMonitorCameraSettings(
+          `source` = Option(Context.monitorModel.monitorWebCamModel.getSelectedSource).map(_.name)
+        ),
+        `draw-board-settings` = GlobalMonitorDrawBoardSettings()
+      )
+
+    context.writeSessionSettings(
+      Context.sessionSettings.copy(
+        `global` =
+          Some(
+            Context.sessionSettings.`global`
+              .getOrElse(GlobalConfiguration())
+              .copy(`monitor` = Some(monitorConfiguration))
+          )
+      )
+    )
+  }
+
+  def selectMonitorView(view: MonitorSource): Unit = {
+    getMonitorAvailableSourceToggles
+      .find(_.getUserData == view)
+      .foreach { source =>
+        source.setSelected(true)
+      }
+  }
+
+  def getMonitorAvailableSourceToggles: List[Toggle] = {
+    List(toggle_camera, toggle_board, toggle_music, toggle_pencil)
+  }
+
+  def selectMonitorSourceWithIndex(index: Int): Unit = {
+    screenSelector.setSelectedScreenByIndex(index)
+  }
+
+  def goMonitorFullScreen(): Unit = {
+    screenSelector.getSelectedScreen match {
+      case Some(s) =>
+        screenStage.setResizable(false)
+        screenStage.setX(s.screen.getBounds.getMinX)
+        screenStage.setY(s.screen.getBounds.getMinY)
+        screenStage.setWidth(s.screen.getBounds.getWidth)
+        screenStage.setHeight(s.screen.getBounds.getHeight)
+        screenStage.show()
+      case _ =>
+    }
   }
 }

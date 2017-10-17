@@ -1,6 +1,6 @@
 package ui
 
-import javafx.application.Application
+import javafx.application.{Application, Platform}
 import javafx.event.EventHandler
 import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
@@ -23,6 +23,7 @@ class App extends Application {
       override def handle(event: WindowEvent): Unit = {
         Context.asioService.unloadStop()
         Context.midiService.detach()
+        Platform.exit()
       }
     })
     val scene = new Scene(rootLayout, 800, 600)
