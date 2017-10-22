@@ -5,6 +5,13 @@ import javafx.scene.shape.Rectangle
 
 
 package object monitor {
+  case class ChannelSource(
+    name: String,
+    id: String
+  ) {
+    override def toString(): String = name
+  }
+
   case class WebCamSource(
     name: String,
     index: Int

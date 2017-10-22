@@ -4,6 +4,7 @@ import java.io.File
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.concurrent.Task
 import javafx.concurrent.Worker.State
+import javafx.scene.shape.Path
 import javax.sound.midi._
 
 import context.Context

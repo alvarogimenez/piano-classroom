@@ -33,7 +33,13 @@ case class GlobalMonitorConfiguration(
 )
 
 case class GlobalMonitorCameraSettings(
-  `source`: Option[String]
+  `source`: Option[String],
+  `note-display`: Option[GlobalMonitorCameraNoteDisplaySettings]
+)
+
+case class GlobalMonitorCameraNoteDisplaySettings(
+  `source-track-id`: Option[String],
+  `display`: String
 )
 
 case class GlobalMonitorDrawBoardSettings(

@@ -98,6 +98,15 @@ object Context {
     sessionSettings
       .`global`
       .foreach { globalSettings =>
+        // IO Configuration
+        globalSettings.`io` match {
+          case Some(ioSettings) =>
+            ioSettings.`last-opened-file`.foreach { lastOpenedFile =>
+              loadFile(new File(lastOpenedFile))
+            }
+          case _ =>
+        }
+
         // Monitor Configuration
         globalSettings.`monitor` match {
           case Some(monitorSettings) =>
@@ -123,14 +132,33 @@ object Context {
                 }
               case _ =>
             }
-          case _ =>
-        }
+            // Configure Note Display
+            monitorSettings.`camera-settings`.`note-display` match {
+              case Some(noteDisplay) =>
+                noteDisplay.`display` match {
+                  case "FixedDo" => Context.monitorModel.monitorWebCamModel.setDisplayNoteInFixedDo(true)
+                  case "English" => Context.monitorModel.monitorWebCamModel.setDisplayNoteInEnglish(true)
+                  case "NoDisplay" => Context.monitorModel.monitorWebCamModel.setDisplayNoteDisabled(true)
+                  case _ =>
+                }
+                noteDisplay.`source-track-id` match {
+                  case Some(id) =>
+                    println(Context
+                      .monitorModel
+                      .monitorWebCamModel
+                      .getTrackNoteSources)
+                    Context
+                      .monitorModel
+                      .monitorWebCamModel
+                      .getTrackNoteSources
+                      .find(s => s != null && s.id == id)
+                      .foreach { source =>
+                        Context.monitorModel.monitorWebCamModel.setTrackNoteSelectedSource(source)
+                      }
+                  case _ =>
+                }
 
-        // IO Configuration
-        globalSettings.`io` match {
-          case Some(ioSettings) =>
-            ioSettings.`last-opened-file`.foreach { lastOpenedFile =>
-              loadFile(new File(lastOpenedFile))
+              case _ =>
             }
           case _ =>
         }

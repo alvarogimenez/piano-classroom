@@ -1,18 +1,23 @@
-package ui.controller.monitor
+package ui.controller.monitor.webcam
 
+import java.lang.Boolean
 import java.util.concurrent.atomic.AtomicReference
 import javafx.application.Platform
+import javafx.beans.{InvalidationListener, Observable}
 import javafx.beans.property.{SimpleBooleanProperty, SimpleListProperty, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import javafx.collections.{FXCollections, ObservableList}
+import javafx.collections.ListChangeListener.Change
+import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
 import javafx.concurrent.Task
 import javafx.concurrent.Worker.State
 import javafx.embed.swing.SwingFXUtils
+import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.geometry.VPos
 import javafx.scene.canvas.{Canvas, GraphicsContext}
 import javafx.scene.control.{ComboBox, ToggleButton}
 import javafx.scene.image.{Image, ImageView, WritableImage}
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
@@ -21,6 +26,10 @@ import javafx.scene.text.{Font, TextAlignment}
 import com.github.sarxos.webcam.Webcam
 import com.sun.javafx.tk.Toolkit
 import context.Context
+import ui.controller.component.drawboard.CanvasPreview
+import ui.controller.monitor.drawboard.DrawBoardCanvasModel
+import ui.controller.monitor._
+import ui.controller.track.TrackModel
 import ui.controller.track.pianoRange.TrackSubscriber
 import util.KeyboardNote
 import util.MusicNote.MusicNote
@@ -31,6 +40,9 @@ class MonitorWebCamModel {
   val sources_ol: ObservableList[WebCamSource] = FXCollections.observableArrayList[WebCamSource]
   val sources: SimpleListProperty[WebCamSource] = new SimpleListProperty[WebCamSource](sources_ol)
   val selected_source: SimpleObjectProperty[WebCamSource] = new SimpleObjectProperty[WebCamSource]()
+  val track_note_sources_ol: ObservableList[ChannelSource] = FXCollections.observableArrayList[ChannelSource]
+  val track_note_sources: SimpleListProperty[ChannelSource] = new SimpleListProperty[ChannelSource](track_note_sources_ol)
+  val track_note_selected_source: SimpleObjectProperty[ChannelSource] = new SimpleObjectProperty[ChannelSource]()
   val source_image: SimpleObjectProperty[Image] = new SimpleObjectProperty[Image]()
   val decorator: SimpleObjectProperty[GraphicsDecorator] = new SimpleObjectProperty[GraphicsDecorator]()
   val displayNoteDisabled: SimpleBooleanProperty = new SimpleBooleanProperty()
@@ -44,6 +56,14 @@ class MonitorWebCamModel {
   def getSelectedSource: WebCamSource = selected_source.get()
   def setSelectedSource(s: WebCamSource) = selected_source.set(s)
   def getSelectedSourceProperty: SimpleObjectProperty[WebCamSource] = selected_source
+
+  def getTrackNoteSources: List[ChannelSource] = track_note_sources.get().toList
+  def setTrackNoteSources(l: List[ChannelSource]) = track_note_sources_ol.setAll(l)
+  def getTrackNoteSourcesProperty: SimpleListProperty[ChannelSource] = track_note_sources
+
+  def getTrackNoteSelectedSource: ChannelSource = track_note_selected_source.get()
+  def setTrackNoteSelectedSource(s: ChannelSource) = track_note_selected_source.set(s)
+  def getTrackNoteSelectedSourceProperty: SimpleObjectProperty[ChannelSource] = track_note_selected_source
 
   def getSourceImage: Image = source_image.get()
   def setSourceImage(i: Image): Unit = source_image.set(i)
@@ -66,6 +86,34 @@ class MonitorWebCamModel {
   def getDisplayNoteInFixedDoProperty: SimpleBooleanProperty = displayNoteInFixedDo
 
   setDisplayNoteDisabled(true)
+  setTrackNoteSources(List(null))
+
+  Context.trackSetModel.getTrackSetProperty.addListener(new ListChangeListener[TrackModel] {
+    override def onChanged(c: Change[_ <: TrackModel]) = {
+      while (c.next()) {
+        if (c.getAddedSize != 0) {
+          c.getAddedSubList
+            .foreach { trackModel =>
+              recreateSourcesFromModel()
+              trackModel.getTrackNameProperty.addListener(new InvalidationListener {
+                override def invalidated(observable: Observable) = {
+                  recreateSourcesFromModel()
+                }
+              })
+            }
+        } else if (c.getRemovedSize != 0) {
+          c.getRemoved
+            .map { trackModel =>
+              recreateSourcesFromModel()
+            }
+        }
+      }
+    }
+  })
+
+  def recreateSourcesFromModel() = {
+    setTrackNoteSources(List(null) ++ Context.trackSetModel.getTrackSet.map(t => ChannelSource(t.getTrackName, t.channel.id)))
+  }
 }
 
 class MonitorWebCamController(parentController: MonitorController, model: MonitorWebCamModel) extends TrackSubscriber {
@@ -73,12 +121,14 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
   @FXML var imageview_webcam: ImageView = _
   @FXML var canvas_overlay: Canvas = _
   @FXML var combobox_source: ComboBox[WebCamSource] = _
+  @FXML var combobox_note_helper_source: ComboBox[ChannelSource] = _
 
   @FXML var toggle_note_display_no_display: ToggleButton = _ 
   @FXML var toggle_note_display_english: ToggleButton = _ 
   @FXML var toggle_note_display_fixed_do: ToggleButton = _ 
   
   var currentWebCamTask: Task[Unit] = _
+  var _self = this
 
   trait NoteStatus
   case object NoteActive extends NoteStatus
@@ -96,6 +146,16 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
     toggle_note_display_no_display.selectedProperty.bindBidirectional(model.getDisplayNoteDisabledProperty)
     toggle_note_display_english.selectedProperty().bindBidirectional(model.getDisplayNoteInEnglishProperty)
     toggle_note_display_fixed_do.selectedProperty().bindBidirectional(model.getDisplayNoteInFixedDoProperty)
+
+    model.getDisplayNoteDisabledProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateSession()
+    })
+    model.getDisplayNoteInEnglishProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateSession()
+    })
+    model.getDisplayNoteInFixedDoProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateSession()
+    })
 
     imageview_webcam.imageProperty().bind(model.getSourceImageProperty)
     model.getDecoratorProperty.addListener(new ChangeListener[GraphicsDecorator] {
@@ -117,6 +177,9 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
     combobox_source.itemsProperty().bindBidirectional(model.getSourcesProperty)
     combobox_source.valueProperty().bindBidirectional(model.getSelectedSourceProperty)
 
+    combobox_note_helper_source.itemsProperty().bindBidirectional(model.getTrackNoteSourcesProperty)
+    combobox_note_helper_source.valueProperty().bindBidirectional(model.getTrackNoteSelectedSourceProperty)
+
     model.getSelectedSourceProperty.addListener(new ChangeListener[WebCamSource]() {
       override def changed(observable: ObservableValue[_ <: WebCamSource], oldValue: WebCamSource, newValue: WebCamSource): Unit = {
         println(s"Webcam changed from $oldValue to $newValue")
@@ -125,6 +188,16 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
           start()
         }
 
+        parentController.updateSession()
+      }
+    })
+
+    model.getTrackNoteSelectedSourceProperty.addListener(new ChangeListener[ChannelSource] {
+      override def changed(observable: ObservableValue[_ <: ChannelSource], oldValue: ChannelSource, newValue: ChannelSource) = {
+        Context.trackSetModel.getTrackSet.foreach(_.removeTrackSubscriber(_self))
+        if(newValue != null) {
+          Context.trackSetModel.getTrackSet.find(_.channel.id == newValue.id).foreach(_.addTrackSubscriber(_self))
+        }
         parentController.updateSession()
       }
     })

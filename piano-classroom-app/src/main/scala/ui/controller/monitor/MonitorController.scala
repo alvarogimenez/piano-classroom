@@ -9,13 +9,16 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.control.{Button, Toggle, ToggleButton, ToggleGroup}
 import javafx.scene.image.ImageView
 import javafx.scene.layout.{BorderPane, StackPane}
+import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.stage.{Stage, StageStyle}
 
 import context.Context
-import io.contracts.{GlobalConfiguration, GlobalMonitorCameraSettings, GlobalMonitorConfiguration, GlobalMonitorDrawBoardSettings}
+import io.contracts._
 import ui.controller.component.ScreenSelector
 import ui.controller.monitor.MonitorSource.MonitorSource
+import ui.controller.monitor.drawboard.{MonitorDrawBoardController, MonitorDrawBoardModel}
+import ui.controller.monitor.webcam.{MonitorWebCamController, MonitorWebCamModel}
 
 class MonitorModel {
   val monitorWebCamModel = new MonitorWebCamModel()
@@ -23,6 +26,7 @@ class MonitorModel {
 
   val selected_source_toggle: SimpleObjectProperty[Toggle] = new SimpleObjectProperty[Toggle]()
   val selected_target_monitor: SimpleIntegerProperty = new SimpleIntegerProperty()
+  val decorator: SimpleObjectProperty[GraphicsDecorator] = new SimpleObjectProperty[GraphicsDecorator]()
 
   def getSelectedSource: Toggle = selected_source_toggle.get()
   def setSelectedSourceToggle(t: Toggle):Unit = selected_source_toggle.set(t)
@@ -31,6 +35,10 @@ class MonitorModel {
   def getSelectedTargetMonitor: Int = selected_target_monitor.get
   def setSelectedTargetMonitor(t: Int): Unit = selected_target_monitor.set(t)
   def getSelectedTargetMonitorProperty: SimpleIntegerProperty = selected_target_monitor
+
+  def getDecorator: GraphicsDecorator = decorator.get
+  def setDecorator(d: GraphicsDecorator): Unit = decorator.set(d)
+  def getDecoratorProperty: SimpleObjectProperty[GraphicsDecorator] = decorator
 }
 
 trait MonitorController {
@@ -105,24 +113,34 @@ trait MonitorController {
     val decoratorListener = new ChangeListener[GraphicsDecorator] {
       override def changed(observable: ObservableValue[_ <: GraphicsDecorator], oldValue: GraphicsDecorator, newValue: GraphicsDecorator): Unit = {
         val gc = screenCanvas.getGraphicsContext2D
-        newValue.decorator(
-          gc,
-          new Rectangle(
+        if(newValue != null) {
+          newValue.decorator(
+            gc,
+            new Rectangle(
+              screenCanvas.getLayoutBounds.getMinX,
+              screenCanvas.getLayoutBounds.getMinY,
+              screenCanvas.getLayoutBounds.getWidth,
+              screenCanvas.getLayoutBounds.getHeight
+            )
+          )
+        } else {
+          gc.setFill(Color.WHITE)
+          gc.fillRect(
             screenCanvas.getLayoutBounds.getMinX,
             screenCanvas.getLayoutBounds.getMinY,
             screenCanvas.getLayoutBounds.getWidth,
             screenCanvas.getLayoutBounds.getHeight
           )
-        )
+        }
       }
     }
 
-    Context.monitorModel.monitorWebCamModel.getDecoratorProperty.addListener(decoratorListener)
-    Context.monitorModel.monitorDrawBoardModel.getDecoratorProperty.addListener(decoratorListener)
+    Context.monitorModel.getDecoratorProperty.addListener(decoratorListener)
 
     Context.monitorModel.getSelectedSourceToggleProperty.addListener( new ChangeListener[Toggle] {
       override def changed(observable: ObservableValue[_ <: Toggle], oldValue: Toggle, newValue: Toggle): Unit = {
         screenImage.imageProperty().unbind()
+        Context.monitorModel.getDecoratorProperty.unbind()
         screenImage.setImage(null)
         monitorWebCamController.stop()
         monitorDrawBoardController.stop()
@@ -132,10 +150,11 @@ trait MonitorController {
             case MonitorSource.CAMERA =>
               bpane_monitor.setCenter(monitorWebCamView)
               screenImage.imageProperty().bind(Context.monitorModel.monitorWebCamModel.getSourceImageProperty)
-              //            Context.trackSetModel.getTrackSet.headOption.map(_.addTrackSubscriber(monitorWebCamController))
+              Context.monitorModel.getDecoratorProperty.bind(Context.monitorModel.monitorWebCamModel.getDecoratorProperty)
               monitorWebCamController.start()
             case MonitorSource.PENCIL =>
               bpane_monitor.setCenter(monitorDrawBoardView)
+              Context.monitorModel.getDecoratorProperty.bind(Context.monitorModel.monitorDrawBoardModel.getDecoratorProperty)
               monitorDrawBoardController.start()
           }
         }
@@ -166,7 +185,18 @@ trait MonitorController {
         `fullscreen` = screenStage.isShowing,
         `active-view` = Option(Context.monitorModel.getSelectedSource).map(_.getUserData.toString),
         `camera-settings` = GlobalMonitorCameraSettings(
-          `source` = Option(Context.monitorModel.monitorWebCamModel.getSelectedSource).map(_.name)
+          `source` = Option(Context.monitorModel.monitorWebCamModel.getSelectedSource).map(_.name),
+          `note-display`= Some(GlobalMonitorCameraNoteDisplaySettings(
+            `source-track-id` = Option(Context.monitorModel.monitorWebCamModel.getTrackNoteSelectedSource).map(_.id),
+            `display` =
+              if(Context.monitorModel.monitorWebCamModel.isDisplayNoteInEnglish) {
+                "English"
+              } else if(Context.monitorModel.monitorWebCamModel.isDisplayNoteInFixedDo) {
+                "FixedDo"
+              } else {
+                "NoDisplay"
+              }
+          ))
         ),
         `draw-board-settings` = GlobalMonitorDrawBoardSettings()
       )
