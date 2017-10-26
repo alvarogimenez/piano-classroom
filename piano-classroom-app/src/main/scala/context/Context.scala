@@ -3,9 +3,12 @@ package context
 import java.io.File
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.scene.paint.Color
+import javafx.scene.shape.Rectangle
 import javafx.stage.Stage
 
 import io.contracts._
+import org.json4s.{Formats, NoTypeHints}
+import org.json4s.native.Serialization
 import sound.audio.asio.AsioService
 import sound.audio.channel.ChannelService
 import sound.audio.mixer.{MixListener, MixerService}
@@ -13,6 +16,7 @@ import sound.midi.MidiService
 import ui.controller.MainStageController
 import ui.controller.component.PaletteColorButton
 import ui.controller.mixer.MixerModel
+import ui.controller.monitor.drawboard.{CanvasData, CanvasLine, DrawBoardCanvasModel}
 import ui.controller.monitor.{MonitorModel, MonitorSource}
 import ui.controller.track.TrackSetModel
 import ui.renderer.GlobalRenderer
@@ -20,6 +24,10 @@ import ui.renderer.GlobalRenderer
 import scala.util.Try
 
 object Context {
+  implicit val formats: Formats =
+    Serialization.formats(NoTypeHints) +
+      new GlobalMonitorDrawBoardSettingsCanvasShapeSerializer
+
   var sessionSettings: SessionContract = readSessionSettings()
 
   val midiService = new MidiService()
@@ -179,6 +187,54 @@ object Context {
                       )
                     }
                 )
+              case _ =>
+            }
+
+            monitorSettings.`draw-board-settings`.`canvas` match {
+              case Some(canvas) =>
+                Context.monitorModel.monitorDrawBoardModel.setDrawBoardCanvasModels(
+                  canvas
+                    .map { c =>
+                      val m = new DrawBoardCanvasModel()
+                      m.setCanvasData(CanvasData(
+                        name = c.`name`,
+                        aspectRatio = c.`aspect-ratio`,
+                        fullscreenViewport = new Rectangle(0, 0, 100, 100),
+                        shapes =
+                          c.`shapes`
+                            .map {
+                              case x: GlobalMonitorDrawBoardSettingsCanvasLine =>
+                                CanvasLine(
+                                  x.`id`,
+                                  CanvasLine.pathFromString(x.`path`),
+                                  x.`size`,
+                                  new Color(
+                                    x.`color`.`r` / 255.0,
+                                    x.`color`.`g` / 255.0,
+                                    x.`color`.`b` / 255.0,
+                                    1.0
+                                  )
+                                )
+                            }.toSet
+                      ))
+                      m
+                    }
+                )
+              case _ =>
+            }
+            monitorSettings.`draw-board-settings`.`selected-canvas-name` match {
+              case Some(selectedCanvasName) =>
+                Context
+                  .monitorModel
+                  .monitorDrawBoardModel
+                  .getDrawBoardCanvasModels
+                  .find(_.getCanvasData.name == selectedCanvasName)
+                  .foreach { model =>
+                    Context
+                      .monitorModel
+                      .monitorDrawBoardModel
+                      .setSelectedDrawBoardCanvasModel(model)
+                  }
               case _ =>
             }
           case _ =>

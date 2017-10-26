@@ -43,11 +43,36 @@ case class GlobalMonitorCameraNoteDisplaySettings(
 )
 
 case class GlobalMonitorDrawBoardSettings(
-  `pens`: Option[List[GlobalMonitorDrawBoardSettingsPen]]
+  `pens`: Option[List[GlobalMonitorDrawBoardSettingsPen]],
+  `selected-canvas-name`: Option[String],
+  `canvas`: Option[List[GlobalMonitorDrawBoardSettingsCanvas]]
 )
 
 case class GlobalMonitorDrawBoardSettingsPen(
   `size`: Int,
+  `r`: Int,
+  `g`: Int,
+  `b`: Int
+)
+
+case class GlobalMonitorDrawBoardSettingsCanvas(
+  `name`: String,
+  `aspect-ratio`: Double,
+  `shapes`: List[GlobalMonitorDrawBoardSettingsCanvasShape]
+)
+
+sealed trait GlobalMonitorDrawBoardSettingsCanvasShape {
+  val `type`: String
+}
+case class GlobalMonitorDrawBoardSettingsCanvasLine(
+  `type`: String = "Line",
+  `id`: String,
+  `size`: Double,
+  `color`: GlobalMonitorDrawBoardSettingsCanvasColor,
+  `path`: String
+)  extends GlobalMonitorDrawBoardSettingsCanvasShape
+
+case class GlobalMonitorDrawBoardSettingsCanvasColor(
   `r`: Int,
   `g`: Int,
   `b`: Int

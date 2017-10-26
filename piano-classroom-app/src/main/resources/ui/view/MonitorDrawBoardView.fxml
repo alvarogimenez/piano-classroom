@@ -17,15 +17,32 @@
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
          </padding>
          <children>
-            <ScrollPane hbarPolicy="ALWAYS" minHeight="150.0" minWidth="150.0" prefHeight="150.0" vbarPolicy="NEVER">
-               <content>
-                  <HBox fx:id="hbox_available_canvas" minHeight="150.0" prefHeight="150.0" spacing="10.0">
+            <BorderPane>
+               <center>
+                  <ScrollPane hbarPolicy="ALWAYS" minHeight="150.0" minWidth="150.0" prefHeight="150.0" vbarPolicy="NEVER">
+                     <content>
+                        <HBox fx:id="hbox_available_canvas" minHeight="150.0" prefHeight="150.0" spacing="10.0">
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                     </content>
+                  </ScrollPane>
+               </center>
+               <right>
+                  <VBox spacing="4.0" BorderPane.alignment="CENTER">
+                     <children>
+                        <Button fx:id="button_add_canvas" maxHeight="40.0" maxWidth="40.0" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Add.png')" />
+                     </children>
                      <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        <Insets bottom="4.0" left="4.0" right="4.0" top="0.0" />
                      </padding>
-                  </HBox>
-               </content>
-            </ScrollPane>
+                  </VBox>
+               </right>
+               <padding>
+                  <Insets left="48.0" />
+               </padding>
+            </BorderPane>
             <BorderPane fx:id="bpane_main">
                <left>
                   <VBox alignment="TOP_CENTER" prefWidth="40.0" spacing="4.0" BorderPane.alignment="CENTER">
@@ -54,8 +71,8 @@
                               <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
                            </padding>
                         </VBox>
-                        <ScrollPane fx:id="scrollpane_palette" fitToWidth="true" hbarPolicy="NEVER" maxHeight="200.0" maxWidth="44.0" pannable="true" vbarPolicy="NEVER" style="-fx-background-color: transparent;">
-                           <VBox fx:id="vbox_palette" alignment="TOP_CENTER" prefWidth="40.0" spacing="4.0" BorderPane.alignment="CENTER"/>
+                        <ScrollPane fx:id="scrollpane_palette" fitToWidth="true" hbarPolicy="NEVER" maxHeight="200.0" maxWidth="44.0" pannable="true" style="-fx-background-color: transparent;" vbarPolicy="NEVER">
+                           <VBox fx:id="vbox_palette" alignment="TOP_CENTER" prefWidth="40.0" spacing="4.0" BorderPane.alignment="CENTER" />
                         </ScrollPane>
                      </children>
                   </VBox>

@@ -1,5 +1,6 @@
 package ui.controller.monitor.drawboard
 
+import java.util.UUID
 import javafx.beans.property.{SimpleListProperty, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.ListChangeListener.Change
@@ -46,6 +47,7 @@ class MonitorDrawBoardModel {
 
   def getDrawBoardCanvasModels: List[DrawBoardCanvasModel] = draw_board_canvas_models.get().toList
   def setDrawBoardCanvasModels(m: List[DrawBoardCanvasModel]) = draw_board_canvas_models_ol.setAll(m)
+  def addDrawBoardCanvasModels(m: DrawBoardCanvasModel) = draw_board_canvas_models_ol.add(m)
   def getDrawBoardCanvasModelProperty: SimpleListProperty[DrawBoardCanvasModel] = draw_board_canvas_models
 
   def getSelectedDrawBoardCanvasModel: DrawBoardCanvasModel = selected_draw_board_canvas_model.get()
@@ -75,6 +77,7 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
   @FXML var color_picker: ColorPicker = _
   @FXML var choicebox_pen_millis: ChoiceBox[PenSizeMillis] = _
   @FXML var button_add_color: Button = _
+  @FXML var button_add_canvas: Button = _
 
   def initialize() = {
     model.setSelectedPen(Pen(3.0 / 1000.0, Color.BLACK))
@@ -105,6 +108,8 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
               }
           }
         }
+
+        parentController.updateSession()
       }
     })
 
@@ -157,22 +162,15 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
           newValue.getPenProperty.bind(model.getSelectedPenProperty)
           model.getDecoratorProperty.bind(newValue.decorator)
           val drawBoardCanvas = new DrawBoardCanvas(newValue)
+          drawBoardCanvas.setUpdateHandler(new EventHandler[MouseEvent] {
+            override def handle(event: MouseEvent) = parentController.updateSession()
+          })
           bpane_main.setCenter(drawBoardCanvas)
         }
+
+        parentController.updateSession()
       }
     })
-
-    model.setDrawBoardCanvasModels((0 to 10)
-      .map { i =>
-        val m = new DrawBoardCanvasModel()
-        m.setCanvasData(CanvasData(
-          name = s"Canvas $i",
-          aspectRatio = 4.0/3.0,
-          fullscreenViewport = new Rectangle(0, 0, 100, 100),
-          shapes = Set.empty
-        ))
-        m
-      }.toList)
 
     val availablePenSizes = (1 to 15).toList.map(PenSizeMillis)
     model.setPenSizeValues(availablePenSizes)
@@ -187,6 +185,19 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
         val colorButton = new PaletteColorButton(selectedColor, selectedSize)
 
         model.addAvailableColorButtons(colorButton)
+      }
+    })
+
+    button_add_canvas.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent) = {
+        val m = new DrawBoardCanvasModel()
+        m.setCanvasData(CanvasData(
+          name = UUID.randomUUID().toString.take(6),
+          aspectRatio = 4.0/3.0,
+          fullscreenViewport = new Rectangle(0, 0, 100, 100),
+          shapes = Set.empty
+        ))
+        model.addDrawBoardCanvasModels(m)
       }
     })
   }

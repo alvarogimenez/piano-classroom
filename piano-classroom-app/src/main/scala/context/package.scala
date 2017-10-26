@@ -11,6 +11,8 @@ import scala.util.{Failure, Success, Try}
 
 package object context {
   def readSessionSettings(): SessionContract = {
+    import Context._
+
     val sessionContract =
       Try(Source.fromFile("session.json").mkString)
         .map(fromJson[SessionContract])
@@ -40,6 +42,8 @@ package object context {
   }
 
   def writeSessionSettings(session: SessionContract): Unit = {
+    import Context._
+
     if(!Context.updateSessionDisabled) {
       try {
         val w = new PrintWriter(new File("session.json"))
@@ -53,6 +57,8 @@ package object context {
   }
 
   def loadFile(file: File): Unit = {
+    import Context._
+
     Try(Source.fromFile(file).mkString)
       .map(fromJson[SaveContract])
       .recoverWith {

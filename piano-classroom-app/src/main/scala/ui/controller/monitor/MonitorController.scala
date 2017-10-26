@@ -17,7 +17,7 @@ import context.Context
 import io.contracts._
 import ui.controller.component.ScreenSelector
 import ui.controller.monitor.MonitorSource.MonitorSource
-import ui.controller.monitor.drawboard.{MonitorDrawBoardController, MonitorDrawBoardModel}
+import ui.controller.monitor.drawboard.{CanvasLine, MonitorDrawBoardController, MonitorDrawBoardModel}
 import ui.controller.monitor.webcam.{MonitorWebCamController, MonitorWebCamModel}
 
 class MonitorModel {
@@ -212,6 +212,35 @@ trait MonitorController {
                     (cb.color.getBlue* 255).toInt
                   )
                 }
+          ),
+          `selected-canvas-name` = Option(Context
+              .monitorModel
+              .monitorDrawBoardModel
+              .getSelectedDrawBoardCanvasModel).map(_.getCanvasData.name),
+          `canvas` = Some(
+            Context
+              .monitorModel
+              .monitorDrawBoardModel
+              .getDrawBoardCanvasModels
+              .map { m =>
+                GlobalMonitorDrawBoardSettingsCanvas(
+                  m.getCanvasData.name,
+                  m.getCanvasData.aspectRatio,
+                  m.getCanvasData.shapes.map {
+                    case x: CanvasLine =>
+                      GlobalMonitorDrawBoardSettingsCanvasLine(
+                         `id` = x.id,
+                         `size` = x.size,
+                         `color` = GlobalMonitorDrawBoardSettingsCanvasColor(
+                           `r` = (x.color.getRed * 255).toInt,
+                           `g` = (x.color.getGreen * 255).toInt,
+                           `b` = (x.color.getBlue * 255).toInt
+                         ),
+                        `path` = CanvasLine.pathToString(x.path)
+                      )
+                  }.toList
+                )
+              }
           )
         )
       )

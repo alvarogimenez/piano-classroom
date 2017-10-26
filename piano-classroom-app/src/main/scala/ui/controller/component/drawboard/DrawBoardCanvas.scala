@@ -22,6 +22,9 @@ class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
 
   getChildren.add(canvas)
 
+  var updateHandler: EventHandler[MouseEvent] = _
+  def setUpdateHandler(handler: EventHandler[MouseEvent]): Unit = updateHandler = handler
+
   canvas.widthProperty().addListener(new InvalidationListener() {
     override def invalidated(observable: Observable): Unit = draw()
   })
@@ -70,7 +73,9 @@ class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
   })
   canvas.setOnMouseReleased(new EventHandler[MouseEvent] {
     override def handle(event: MouseEvent) = {
-      println(s"Released ${event.getX}, ${event.getY}")
+      if(updateHandler != null) {
+        updateHandler.handle(event)
+      }
     }
   })
 
