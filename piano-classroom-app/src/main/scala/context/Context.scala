@@ -2,6 +2,7 @@ package context
 
 import java.io.File
 import javafx.beans.{InvalidationListener, Observable}
+import javafx.scene.paint.Color
 import javafx.stage.Stage
 
 import io.contracts._
@@ -10,6 +11,7 @@ import sound.audio.channel.ChannelService
 import sound.audio.mixer.{MixListener, MixerService}
 import sound.midi.MidiService
 import ui.controller.MainStageController
+import ui.controller.component.PaletteColorButton
 import ui.controller.mixer.MixerModel
 import ui.controller.monitor.{MonitorModel, MonitorSource}
 import ui.controller.track.TrackSetModel
@@ -158,6 +160,25 @@ object Context {
                   case _ =>
                 }
 
+              case _ =>
+            }
+            // Drawboard Settings
+            monitorSettings.`draw-board-settings`.`pens` match {
+              case Some(pens) =>
+                Context.monitorModel.monitorDrawBoardModel.setAvailableColorButtons(
+                  pens
+                    .map { pen =>
+                      new PaletteColorButton(
+                        new Color(
+                          pen.`r` / 255.0,
+                          pen.`g` / 255.0,
+                          pen.`b` / 255.0,
+                          1.0
+                        ),
+                        pen.`size` / 1000
+                      )
+                    }
+                )
               case _ =>
             }
           case _ =>

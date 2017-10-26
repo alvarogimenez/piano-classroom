@@ -6,13 +6,19 @@ import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
 import javafx.scene.shape.{LineTo, MoveTo, Rectangle}
 
+import ui.controller.component.drawboard.Pen
 import ui.controller.monitor.GraphicsDecorator
 
 import scala.collection.JavaConversions._
 
 class DrawBoardCanvasModel {
+  val pen: SimpleObjectProperty[Pen] = new SimpleObjectProperty[Pen]()
   val canvas_data: SimpleObjectProperty[CanvasData] = new SimpleObjectProperty[CanvasData]()
   val decorator: SimpleObjectProperty[GraphicsDecorator] = new SimpleObjectProperty[GraphicsDecorator]()
+
+  def getPen: Pen = pen.get()
+  def setPen(c: Pen): Unit = pen.set(c)
+  def getPenProperty: SimpleObjectProperty[Pen] = pen
 
   def getCanvasData: CanvasData = canvas_data.get()
   def setCanvasData(c: CanvasData): Unit = canvas_data.set(c)
@@ -31,9 +37,9 @@ class DrawBoardCanvasModel {
             newValue
               .shapes
               .foreach {
-                case CanvasLine(id, path) =>
-                  gc.setStroke(Color.BLACK)
-                  gc.setLineWidth(r.getWidth*3.0/1000.0)
+                case CanvasLine(id, path, size, color) =>
+                  gc.setStroke(color)
+                  gc.setLineWidth(size * r.getWidth)
                   gc.beginPath()
                   path.getElements.toList.foreach {
                     case x: MoveTo => gc.moveTo(r.getX + r.getWidth * x.getX, r.getY + r.getHeight * x.getY)

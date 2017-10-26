@@ -36,7 +36,7 @@ class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
           if(event.getButton == MouseButton.PRIMARY) {
             val path = new Path()
             path.getElements.add(new MoveTo(event.getX / canvas.getWidth, event.getY / canvas.getHeight))
-            _status = Some(ActionFreeDraw(UUID.randomUUID().toString, path))
+            _status = Some(ActionFreeDraw(UUID.randomUUID().toString, path, model.getPen))
           } else {
             _status = Some(ActionFreeErase())
           }
@@ -47,13 +47,13 @@ class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
   canvas.setOnMouseDragged(new EventHandler[MouseEvent] {
     override def handle(event: MouseEvent) = {
       _status = _status match {
-        case Some(ActionFreeDraw(id, path)) =>
+        case Some(ActionFreeDraw(id, path, pen)) =>
           path.getElements.add(new LineTo(event.getX / canvas.getWidth, event.getY / canvas.getHeight))
-          model.setCanvasData(model.getCanvasData.copy(shapes = model.getCanvasData.shapes.filterNot(_.id == id) ++ Set(CanvasLine(id, path))))
+          model.setCanvasData(model.getCanvasData.copy(shapes = model.getCanvasData.shapes.filterNot(_.id == id) ++ Set(CanvasLine(id, path, pen.size, pen.color))))
           _status
         case Some(ActionFreeErase()) =>
           model.setCanvasData(model.getCanvasData.copy(shapes = model.getCanvasData.shapes.filterNot {
-            case CanvasLine(id, path) =>
+            case CanvasLine(id, path, _, _) =>
               val denormalizedPath = new Path()
               path.getElements.toList.foreach {
                 case x: MoveTo => denormalizedPath.getElements.add(new MoveTo(x.getX * canvas.getWidth, x.getY * canvas.getHeight))
@@ -91,7 +91,6 @@ class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
 
   model.getDecoratorProperty.addListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {
-
       draw()
     }
   })

@@ -43,7 +43,14 @@ case class GlobalMonitorCameraNoteDisplaySettings(
 )
 
 case class GlobalMonitorDrawBoardSettings(
+  `pens`: Option[List[GlobalMonitorDrawBoardSettingsPen]]
+)
 
+case class GlobalMonitorDrawBoardSettingsPen(
+  `size`: Int,
+  `r`: Int,
+  `g`: Int,
+  `b`: Int
 )
 
 case class GlobalIoConfiguration(

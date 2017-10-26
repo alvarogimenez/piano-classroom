@@ -59,7 +59,7 @@ trait MonitorController {
   private val screenPane = new StackPane()
 
   val monitorWebCamController = new MonitorWebCamController(this, Context.monitorModel.monitorWebCamModel)
-  val monitorDrawBoardController = new MonitorDrawBoardController(Context.monitorModel.monitorDrawBoardModel)
+  val monitorDrawBoardController = new MonitorDrawBoardController(this, Context.monitorModel.monitorDrawBoardModel)
   private val monitorWebCamView = loadWebCamView()
   private val monitorDrawBoardView = loadDrawBoardView()
 
@@ -198,7 +198,22 @@ trait MonitorController {
               }
           ))
         ),
-        `draw-board-settings` = GlobalMonitorDrawBoardSettings()
+        `draw-board-settings` = GlobalMonitorDrawBoardSettings(
+          `pens` = Some(
+            Context
+              .monitorModel
+              .monitorDrawBoardModel
+              .getAvailableColorButtons
+                .map { cb =>
+                  GlobalMonitorDrawBoardSettingsPen(
+                    cb.millis * 1000,
+                    (cb.color.getRed* 255).toInt,
+                    (cb.color.getGreen* 255).toInt,
+                    (cb.color.getBlue* 255).toInt
+                  )
+                }
+          )
+        )
       )
 
     context.writeSessionSettings(
