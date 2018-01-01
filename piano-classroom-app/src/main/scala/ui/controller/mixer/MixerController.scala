@@ -100,7 +100,7 @@ trait MixerController {
   @FXML var tabs_bus_mixes: TabPane = _
 
   var tab_add_bus: Tab = _
-  var _self = this
+  private val _self = this
 
   def initializeMixerController(mainController: MainStageController) = {
     List("Default", "Broadcast").foreach { i =>

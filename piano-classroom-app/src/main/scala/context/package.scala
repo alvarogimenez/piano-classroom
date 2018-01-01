@@ -11,6 +11,7 @@ import ui.controller.mixer.{BusChannelModel, BusMixModel}
 import ui.controller.monitor.MonitorSource
 import ui.controller.monitor.drawboard.{CanvasData, CanvasLine, DrawBoardCanvasModel}
 import ui.controller.track.TrackModel
+import util.{KeyboardNote, MusicNote}
 
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
@@ -148,20 +149,38 @@ package object context {
 
         model.setTrackName(channelInfo.`name`)
         model.initFromContext()
-        model.getMidiInterfaceNames.find(i => i!= null && i.name == channelInfo.`midi-input`) match {
-          case Some(midiIdentifier) =>
-            model.setSelectedMidiInterface(midiIdentifier)
-          case _ =>
+        channelInfo.`midi-input`.foreach { midiInput =>
+          model.getMidiInterfaceNames.find(i => i!= null && i.name == midiInput) match {
+            case Some(midiIdentifier) =>
+              model.setSelectedMidiInterface(midiIdentifier)
+            case _ =>
+          }
         }
-        model.getMidiVstSourceNames.find(_ == channelInfo.`vst-i`) match {
-          case Some(vst) =>
-            model.setSelectedMidiVst(vst)
-          case _ =>
+
+        channelInfo.`vst-i`.foreach { vst =>
+          model.getMidiVstSourceNames.find(_ == vst) match {
+            case Some(v) =>
+              model.setSelectedMidiVst(v)
+            case _ =>
+          }
         }
+
         model.setTrackPianoEnabled(channelInfo.`piano-enabled`)
         model.setTrackPianoRollEnabled(channelInfo.`piano-roll-enabled`)
 
-        // TODO Set Piano Range (Start -> ENd)
+        model.setTrackPianoStartNote(
+          KeyboardNote(
+            note = MusicNote.withName(channelInfo.`piano-range-start`.`note`),
+            index = channelInfo.`piano-range-start`.index
+          )
+        )
+
+        model.setTrackPianoEndNote(
+          KeyboardNote(
+            note = MusicNote.withName(channelInfo.`piano-range-end`.`note`),
+            index = channelInfo.`piano-range-end`.index
+          )
+        )
       }
 
     Context.projectSession
@@ -176,6 +195,7 @@ package object context {
         model.setBusChannels(busInfo.`bus-mix`.map { busMix =>
           val busChannelModel = new BusChannelModel(busMix.`channel-id`)
           busChannelModel.setChannelAttenuation(busMix.`level`.getOrElse(Double.NegativeInfinity))
+          println(s"Set channel mix ${busMix.`level`.getOrElse(Double.NegativeInfinity)} to bus ${busMix.`channel-id`}")
           Context.trackSetModel.getTrackSet.find(_.channel.id == busMix.`channel-id`) match {
             case Some(channelModel) =>
               busChannelModel.getChannelNameProperty.bind(channelModel.getTrackNameProperty)

@@ -21,8 +21,8 @@ case class SaveTracks(
 case class SaveChannelInfo(
   `id`: String,
   `name`: String,
-  `midi-input`: String,
-  `vst-i`: String,
+  `midi-input`: Option[String],
+  `vst-i`: Option[String],
   `piano-enabled`: Boolean,
   `piano-roll-enabled`: Boolean,
   `piano-range-start`: SavePianoRange,

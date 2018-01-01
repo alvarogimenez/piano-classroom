@@ -2,6 +2,7 @@ package ui.controller.track
 
 import java.io.File
 import java.lang.Boolean
+import javafx.beans.{InvalidationListener, Observable}
 import javafx.beans.property._
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.{FXCollections, ObservableList}
@@ -41,6 +42,8 @@ class TrackModel(val channel: MidiChannel) {
   val track_height: SimpleIntegerProperty = new SimpleIntegerProperty()
   val track_piano_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val track_piano_roll_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
+  val track_piano_start_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()
+  val track_piano_end_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()
 
   def addTrackSubscriber(s: TrackSubscriber): Unit = track_subscribers = track_subscribers.+:(s)
   def removeTrackSubscriber(s: TrackSubscriber): Unit = track_subscribers = track_subscribers.filterNot(_ == s)
@@ -78,6 +81,14 @@ class TrackModel(val channel: MidiChannel) {
   def setTrackPianoRollEnabled(e: scala.Boolean): Unit = track_piano_roll_enabled.set(e)
   def getTrackPianoRollEnabledProperty(): SimpleBooleanProperty = track_piano_roll_enabled
 
+  def getTrackPianoStartNote: KeyboardNote = track_piano_start_note.get
+  def setTrackPianoStartNote(n: KeyboardNote): Unit = track_piano_start_note.set(n)
+  def getTrackPianoStartNoteProperty: SimpleObjectProperty[KeyboardNote] = track_piano_start_note
+
+  def getTrackPianoEndNote: KeyboardNote = track_piano_end_note.get
+  def setTrackPianoEndNote(n: KeyboardNote): Unit = track_piano_end_note.set(n)
+  def getTrackPianoEndNoteProperty: SimpleObjectProperty[KeyboardNote] = track_piano_end_note
+  
   val heightListener = new ChangeListener[Boolean] {
     override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = {
       val sumHeight =
@@ -93,6 +104,8 @@ class TrackModel(val channel: MidiChannel) {
   setTrackHeight(300)
   setTrackPianoEnabled(true)
   setTrackPianoRollEnabled(true)
+  setTrackPianoStartNote(KeyboardNote(MusicNote.C, 2))
+  setTrackPianoEndNote(KeyboardNote(MusicNote.C, 6))
   
   def initFromContext() = {
     val midiInterfaceNames = Context.midiService.getHardwareMidiDevices
@@ -102,7 +115,7 @@ class TrackModel(val channel: MidiChannel) {
   }
 }
 
-class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
+class TrackPanel(parentController: TrackSetController, channel: MidiChannel, model: TrackModel) extends BorderPane {
   final val SUSTAIN_DAMPER_MIDI_DATA = 0x40
 
   val keyboard = new Keyboard()
@@ -145,6 +158,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
           if(result.isPresent) {
             val r = result.get()
             model.setTrackName(r)
+            parentController.updateTrackSession()
           }
         }
       })
@@ -154,6 +168,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
       contextMenu_delete.setOnAction(new EventHandler[ActionEvent] {
         override def handle(event: ActionEvent): Unit = {
           println(s"Delete name button pressed on Track (${channel.id})")
+          parentController.updateTrackSession()
         }
       })
 
@@ -185,12 +200,14 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         println(s"Link button pressed on Track (${channel.id})")
+        parentController.updateTrackSession()
       }
     })
 
     button_open_vst_settings.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         channel.vstPlugin.foreach(_.openPluginEditor(model.getTrackName))
+        parentController.updateTrackSession()
       }
     })
 
@@ -198,12 +215,12 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
       override def handle(event: ActionEvent): Unit = {
         val dialog = new Stage()
         val loader = new FXMLLoader()
-        val model = new PianoRangeModel()
-        val controller = new PianoRangeController(dialog, model)
-        model.setSelectedFromNote(keyboard.getStartNote.note)
-        model.setSelectedFromIndex(keyboard.getStartNote.index)
-        model.setSelectedToNote(keyboard.getEndNote.note)
-        model.setSelectedToIndex(keyboard.getEndNote.index)
+        val pianoRangeModel = new PianoRangeModel()
+        val controller = new PianoRangeController(dialog, pianoRangeModel)
+        pianoRangeModel.setSelectedFromNote(keyboard.getStartNote.note)
+        pianoRangeModel.setSelectedFromIndex(keyboard.getStartNote.index)
+        pianoRangeModel.setSelectedToNote(keyboard.getEndNote.note)
+        pianoRangeModel.setSelectedToIndex(keyboard.getEndNote.index)
 
         loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/PianoRangeDialog.fxml"))
         loader.setController(controller)
@@ -215,17 +232,26 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
         dialog.initModality(Modality.APPLICATION_MODAL)
         dialog.showAndWait()
 
-        if(model.getExitStatus == PIANO_RANGE_MODAL_ACCEPT) {
-          keyboard.setStartNote(KeyboardNote(model.getSelectedFromNote, model.getSelectedFromIndex))
-          keyboard.setEndNote(KeyboardNote(model.getSelectedToNote, model.getSelectedToIndex))
+        if(pianoRangeModel.getExitStatus == PIANO_RANGE_MODAL_ACCEPT) {
+          model.setTrackPianoStartNote(KeyboardNote(pianoRangeModel.getSelectedFromNote, pianoRangeModel.getSelectedFromIndex))
+          model.setTrackPianoEndNote(KeyboardNote(pianoRangeModel.getSelectedToNote, pianoRangeModel.getSelectedToIndex))
+          parentController.updateTrackSession()
         }
       }
     })
 
+
     keyboard.getPianoEnabledProperty.bindBidirectional(model.getTrackPianoEnabledProperty())
     keyboard.getPianoRollEnabledProperty.bindBidirectional(model.getTrackPianoRollEnabledProperty())
-    keyboard.setStartNote(KeyboardNote(MusicNote.C, 2))
-    keyboard.setEndNote(KeyboardNote(MusicNote.C, 6))
+    keyboard.getStartNoteProperty.bind(model.getTrackPianoStartNoteProperty)
+    keyboard.getEndNoteProperty.bind(model.getTrackPianoEndNoteProperty)
+
+    model.getTrackPianoEnabledProperty().addListener(new InvalidationListener {
+      override def invalidated(observable: Observable) = parentController.updateTrackSession()
+    })
+    model.getTrackPianoRollEnabledProperty().addListener(new InvalidationListener {
+      override def invalidated(observable: Observable) = parentController.updateTrackSession()
+    })
 
     button_show_piano.selectedProperty().bindBidirectional(model.getTrackPianoEnabledProperty())
     button_show_piano_roll.selectedProperty().bindBidirectional(model.getTrackPianoRollEnabledProperty())
@@ -264,6 +290,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
             }
           }))
         }
+        parentController.updateTrackSession()
       }
     })
 
@@ -274,6 +301,7 @@ class TrackPanel(channel: MidiChannel, model: TrackModel) extends BorderPane {
       override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
         println(s"Midi VST changed from $oldValue to $newValue")
         channel.setVstSource(new File(newValue))
+        parentController.updateTrackSession()
       }
     })
   }
