@@ -1,6 +1,6 @@
 package ui.controller
 
-import java.io.{File, FileNotFoundException}
+import java.io.File
 import java.util.UUID
 import javafx.application.Platform
 import javafx.event.{ActionEvent, EventHandler}
@@ -11,15 +11,10 @@ import javafx.scene.layout.BorderPane
 import javafx.stage.{FileChooser, Modality, Stage}
 
 import context.Context
-import io.contracts.SaveContract
-import io.fromJson
+import io.contracts.{GlobalConfiguration, GlobalIoConfiguration}
 import sound.audio.channel.MidiChannel
-import ui.controller.mixer.{BusChannelModel, BusMixModel}
 import ui.controller.settings.SettingsController
 import ui.controller.track.TrackModel
-
-import scala.io.Source
-import scala.util.Try
 
 trait MenuBarController {
   @FXML var menu_file_open: MenuItem = _
@@ -28,7 +23,7 @@ trait MenuBarController {
   @FXML var menu_edit_add_midi_channel: MenuItem = _
   @FXML var menu_edit_add_audio_channel: MenuItem = _
 
-  def initializeMenuController() = {
+  def initializeMenuController(mainController: MainStageController) = {
     menu_file_close.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         Platform.exit()
@@ -46,7 +41,27 @@ trait MenuBarController {
         )
         val file = fc.showOpenDialog(Context.primaryStage)
         if(file != null) {
-          context.loadFile(file)
+          Context.projectSession = context.readProjectSession(Some(file.getAbsolutePath))
+          context.loadProjectSession(mainController)
+
+          val ioConfiguration =
+            Context
+              .applicationSession
+              .`global`
+              .flatMap(_.`io`)
+              .getOrElse(GlobalIoConfiguration())
+              .copy(`last-opened-file` = Some(file.getAbsolutePath))
+
+          context.writeApplicationSessionSettings(
+            Context.applicationSession.copy(
+              `global` =
+                Some(
+                  Context.applicationSession.`global`
+                    .getOrElse(GlobalConfiguration())
+                    .copy(`io` = Some(ioConfiguration))
+                )
+            )
+          )
         }
       }
     })

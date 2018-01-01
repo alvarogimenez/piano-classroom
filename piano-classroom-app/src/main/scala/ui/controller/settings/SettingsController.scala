@@ -173,7 +173,7 @@ class SettingsController(dialog: Stage) {
     }
 
     val sessionSettings =
-      Context.sessionSettings.copy(
+      Context.applicationSession.copy(
         `audio-configuration` = model.getSoundAsioDriver match {
           case null => None
           case soundDriverName => Some(AsioConfiguration(
@@ -190,8 +190,8 @@ class SettingsController(dialog: Stage) {
         }
       )
 
-    Context.sessionSettings = sessionSettings
-    context.writeSessionSettings(sessionSettings)
+    Context.applicationSession = sessionSettings
+    context.writeApplicationSessionSettings(sessionSettings)
   }
 
   private def changeAsioController(driver: String) = {

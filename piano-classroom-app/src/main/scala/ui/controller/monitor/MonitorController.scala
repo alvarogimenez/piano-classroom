@@ -15,6 +15,7 @@ import javafx.stage.{Stage, StageStyle}
 
 import context.Context
 import io.contracts._
+import ui.controller.MainStageController
 import ui.controller.component.ScreenSelector
 import ui.controller.monitor.MonitorSource.MonitorSource
 import ui.controller.monitor.drawboard.{CanvasLine, MonitorDrawBoardController, MonitorDrawBoardModel}
@@ -63,7 +64,7 @@ trait MonitorController {
   private val monitorWebCamView = loadWebCamView()
   private val monitorDrawBoardView = loadDrawBoardView()
 
-  def initializeMonitorController() = {
+  def initializeMonitorController(mainController: MainStageController) = {
     toggle_camera.setUserData(MonitorSource.CAMERA)
     toggle_pencil.setUserData(MonitorSource.PENCIL)
     toggle_board.setUserData(MonitorSource.BOARD)
@@ -245,13 +246,11 @@ trait MonitorController {
         )
       )
 
-    context.writeSessionSettings(
-      Context.sessionSettings.copy(
-        `global` =
-          Some(
-            Context.sessionSettings.`global`
-              .getOrElse(GlobalConfiguration())
-              .copy(`monitor` = Some(monitorConfiguration))
+    context.writeProjectSessionSettings(
+      Context.projectSession.copy(
+        `save-state` =
+          Context.projectSession.`save-state`.copy(
+            `monitor`= Some(monitorConfiguration)
           )
       )
     )

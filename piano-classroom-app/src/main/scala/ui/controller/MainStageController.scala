@@ -26,10 +26,10 @@ class MainStageController
 
   def initialize(): Unit = {
     initializeMainStage()
-    initializeMenuController()
-    initializeMixerController()
-    initializeTrackSetController()
-    initializeMonitorController()
+    initializeMenuController(this)
+    initializeMixerController(this)
+    initializeTrackSetController(this)
+    initializeMonitorController(this)
     Context.loadControllerDependantSettings(this)
   }
 

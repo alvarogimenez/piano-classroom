@@ -5,8 +5,8 @@ import org.json4s.{Formats, JValue, Serializer, TypeInfo}
 import org.json4s._
 
 package object contracts {
-  def initializeEmptySesionContract(): SessionContract = {
-    SessionContract(
+  def initializeEmptySesionContract(): ApplicationSessionContract = {
+    ApplicationSessionContract(
       `audio-configuration` = None,
       `vst-configuration` = VstConfiguration(
         `vst-source-directories` = List(".")

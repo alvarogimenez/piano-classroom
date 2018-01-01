@@ -7,6 +7,7 @@ import javafx.fxml.FXML
 import javafx.scene.layout.VBox
 
 import context.Context
+import ui.controller.MainStageController
 
 import scala.collection.JavaConversions._
 
@@ -25,7 +26,7 @@ class TrackSetModel {
 trait TrackSetController {
   @FXML var tracks: VBox = _
 
-  def initializeTrackSetController() = {
+  def initializeTrackSetController(mainController: MainStageController) = {
     Context.trackSetModel.getTrackSetProperty.addListener(new ListChangeListener[TrackModel] {
       override def onChanged(c: Change[_ <: TrackModel]) = {
         while (c.next()) {

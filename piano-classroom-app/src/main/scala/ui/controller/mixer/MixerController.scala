@@ -16,6 +16,7 @@ import javafx.scene.layout.{BorderPane, HBox}
 
 import context.Context
 import sound.audio.mixer.ChannelMix
+import ui.controller.MainStageController
 import ui.controller.component.ProfileButton
 import ui.controller.track.TrackModel
 
@@ -102,7 +103,7 @@ trait MixerController {
 
   var tab_add_bus: Tab = _
 
-  def initializeMixerController() = {
+  def initializeMixerController(mainController: MainStageController) = {
     List("Default", "Broadcast").foreach { i =>
       val b = new ProfileButton(i)
       b.addEventHandler(MouseEvent.ANY, new EventHandler[MouseEvent]() {

@@ -63,7 +63,7 @@ class MidiService {
   }
 
   def getVstSources: List[File] = {
-    Context.sessionSettings.`vst-configuration`.`vst-source-directories`
+    Context.applicationSession.`vst-configuration`.`vst-source-directories`
         .flatMap { directory =>
           val fDir = new File(directory)
           if(fDir.exists() && fDir.isDirectory) {

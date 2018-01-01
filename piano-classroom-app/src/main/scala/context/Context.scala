@@ -28,7 +28,11 @@ object Context {
     Serialization.formats(NoTypeHints) +
       new GlobalMonitorDrawBoardSettingsCanvasShapeSerializer
 
-  var sessionSettings: SessionContract = readSessionSettings()
+  var applicationSession: ApplicationSessionContract = readApplicationSession()
+  var projectSession: ProjectSessionContract =
+    readProjectSession(
+      source = applicationSession.`global`.flatMap(_.`io`.flatMap(_.`last-opened-file`))
+    )
 
   val midiService = new MidiService()
   val channelService = new ChannelService()
@@ -44,7 +48,7 @@ object Context {
 
   var primaryStage: Stage = _
 
-  var updateSessionDisabled = false
+  var updateProjectSessionDisabled = false
 
   mixerModel.addInvalidationListener(new InvalidationListener {
     override def invalidated(observable: Observable) = {
@@ -61,7 +65,7 @@ object Context {
 
   midiService.attach()
 
-  sessionSettings.`audio-configuration` match {
+  applicationSession.`audio-configuration` match {
     case Some(audioConfiguration) =>
       if(asioService.listDriverNames().contains(audioConfiguration.`driver-name`)) {
         println(s"Initialize ASIo Driver '${audioConfiguration.`driver-name`}' from Session Configuration")
@@ -103,145 +107,19 @@ object Context {
   }
 
   def loadControllerDependantSettings(controller: MainStageController): Unit = {
-    updateSessionDisabled = true
-
-    sessionSettings
+    applicationSession
       .`global`
       .foreach { globalSettings =>
         // IO Configuration
         globalSettings.`io` match {
           case Some(ioSettings) =>
             ioSettings.`last-opened-file`.foreach { lastOpenedFile =>
-              loadFile(new File(lastOpenedFile))
-            }
-          case _ =>
-        }
-
-        // Monitor Configuration
-        globalSettings.`monitor` match {
-          case Some(monitorSettings) =>
-            // Configure global Monitor Settings
-            if(monitorSettings.`fullscreen`) {
-              controller.selectMonitorSourceWithIndex(monitorSettings.`source-index`)
-              controller.goMonitorFullScreen()
-            }
-            // Configure active view
-            val activeView = monitorSettings.`active-view`.flatMap(v => Try(MonitorSource.withName(v)).toOption)
-            activeView
-              .foreach { view =>
-                controller.selectMonitorView(view)
-              }
-            // Configure Camera Settings
-            monitorSettings.`camera-settings`.`source` match {
-              case Some(selectedCameraSource) =>
-                val webCamSource = Context.monitorModel.monitorWebCamModel.getSources.find(w => w != null && w.name == selectedCameraSource)
-                webCamSource match {
-                  case Some(w) =>
-                    Context.monitorModel.monitorWebCamModel.setSelectedSource(w)
-                  case _ =>
-                }
-              case _ =>
-            }
-            // Configure Note Display
-            monitorSettings.`camera-settings`.`note-display` match {
-              case Some(noteDisplay) =>
-                noteDisplay.`display` match {
-                  case "FixedDo" => Context.monitorModel.monitorWebCamModel.setDisplayNoteInFixedDo(true)
-                  case "English" => Context.monitorModel.monitorWebCamModel.setDisplayNoteInEnglish(true)
-                  case "NoDisplay" => Context.monitorModel.monitorWebCamModel.setDisplayNoteDisabled(true)
-                  case _ =>
-                }
-                noteDisplay.`source-track-id` match {
-                  case Some(id) =>
-                    println(Context
-                      .monitorModel
-                      .monitorWebCamModel
-                      .getTrackNoteSources)
-                    Context
-                      .monitorModel
-                      .monitorWebCamModel
-                      .getTrackNoteSources
-                      .find(s => s != null && s.id == id)
-                      .foreach { source =>
-                        Context.monitorModel.monitorWebCamModel.setTrackNoteSelectedSource(source)
-                      }
-                  case _ =>
-                }
-
-              case _ =>
-            }
-            // Drawboard Settings
-            monitorSettings.`draw-board-settings`.`pens` match {
-              case Some(pens) =>
-                Context.monitorModel.monitorDrawBoardModel.setAvailableColorButtons(
-                  pens
-                    .map { pen =>
-                      new PaletteColorButton(
-                        new Color(
-                          pen.`r` / 255.0,
-                          pen.`g` / 255.0,
-                          pen.`b` / 255.0,
-                          1.0
-                        ),
-                        pen.`size` / 1000
-                      )
-                    }
-                )
-              case _ =>
-            }
-
-            monitorSettings.`draw-board-settings`.`canvas` match {
-              case Some(canvas) =>
-                Context.monitorModel.monitorDrawBoardModel.setDrawBoardCanvasModels(
-                  canvas
-                    .map { c =>
-                      val m = new DrawBoardCanvasModel()
-                      m.setCanvasData(CanvasData(
-                        name = c.`name`,
-                        aspectRatio = c.`aspect-ratio`,
-                        fullscreenViewport = new Rectangle(0, 0, 100, 100),
-                        shapes =
-                          c.`shapes`
-                            .map {
-                              case x: GlobalMonitorDrawBoardSettingsCanvasLine =>
-                                CanvasLine(
-                                  x.`id`,
-                                  CanvasLine.pathFromString(x.`path`),
-                                  x.`size`,
-                                  new Color(
-                                    x.`color`.`r` / 255.0,
-                                    x.`color`.`g` / 255.0,
-                                    x.`color`.`b` / 255.0,
-                                    1.0
-                                  )
-                                )
-                            }.toSet
-                      ))
-                      m
-                    }
-                )
-              case _ =>
-            }
-            monitorSettings.`draw-board-settings`.`selected-canvas-name` match {
-              case Some(selectedCanvasName) =>
-                Context
-                  .monitorModel
-                  .monitorDrawBoardModel
-                  .getDrawBoardCanvasModels
-                  .find(_.getCanvasData.name == selectedCanvasName)
-                  .foreach { model =>
-                    Context
-                      .monitorModel
-                      .monitorDrawBoardModel
-                      .setSelectedDrawBoardCanvasModel(model)
-                  }
-              case _ =>
+              Context.projectSession = context.readProjectSession(Some(lastOpenedFile))
+              context.loadProjectSession(controller)
             }
           case _ =>
         }
       }
-
-    updateSessionDisabled = false
   }
 }
 

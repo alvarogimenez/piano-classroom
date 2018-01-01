@@ -1,29 +1,60 @@
 package io.contracts
 
-case class AsioChannelEnabled(
-  `channel-number`: Int,
-  enabled: Boolean
+case class ProjectSessionContract(
+  `version`: String,
+  `save-state`: SaveState
 )
 
-case class AsioChannelConfiguration(
-  input: List[AsioChannelEnabled],
-  output: List[AsioChannelEnabled]
+case class SaveState(
+  `tracks`: SaveTracks,
+  `mixer`: SaveMixer,
+  `monitor`: Option[GlobalMonitorConfiguration] = None
 )
 
-case class AsioConfiguration(
-  `driver-name`: String,
-  `channel-configuration`: AsioChannelConfiguration
+/**
+ * Tracks
+ */
+case class SaveTracks(
+  `channel-info`: List[SaveChannelInfo]
 )
 
-case class VstConfiguration(
-  `vst-source-directories`: List[String]
+case class SaveChannelInfo(
+  `id`: String,
+  `name`: String,
+  `midi-input`: String,
+  `vst-i`: String,
+  `piano-enabled`: Boolean,
+  `piano-roll-enabled`: Boolean,
+  `piano-range-start`: SavePianoRange,
+  `piano-range-end`: SavePianoRange
 )
 
-case class GlobalConfiguration(
-  `monitor`: Option[GlobalMonitorConfiguration] = None,
-  `io`: Option[GlobalIoConfiguration] = None
+case class SavePianoRange(
+  `note`: String,
+  index: Int
 )
 
+/**
+  * Mixer
+  */
+case class SaveMixer(
+  `bus-info`: List[SaveBusInfo]
+)
+
+case class SaveBusInfo(
+  `bus`: Int,
+  `master-level`: Double,
+  `bus-mix`: List[SaveBusMix]
+)
+
+case class SaveBusMix(
+  `channel-id`: String,
+  `level`: Option[Double]
+)
+
+/**
+  * Monitor
+  */
 case class GlobalMonitorConfiguration(
   `source-index`: Int,
   `fullscreen`: Boolean,
@@ -76,14 +107,4 @@ case class GlobalMonitorDrawBoardSettingsCanvasColor(
   `r`: Int,
   `g`: Int,
   `b`: Int
-)
-
-case class GlobalIoConfiguration(
-  `last-opened-file`: Option[String] = None
-)
-
-case class SessionContract(
-  `audio-configuration`: Option[AsioConfiguration],
-  `vst-configuration`: VstConfiguration,
-  `global`: Option[GlobalConfiguration]
 )
