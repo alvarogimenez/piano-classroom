@@ -1,6 +1,7 @@
 package ui.controller.mixer
 
 import javafx.beans.property.{SimpleDoubleProperty, SimpleStringProperty}
+import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.fxml.FXML
 import javafx.scene.control.Label
@@ -46,22 +47,26 @@ class BusChannelModel(val id: String) {
   }
 }
 
-class BusChannelController(model: BusChannelModel) {
+class BusChannelController(parentController: MixerController, model: BusChannelModel) {
   @FXML var bpane_mix_channel: BorderPane = _
   @FXML var label_gain: Label = _
   @FXML var label_channel_name: Label = _
 
   def initialize() = {
     val fader = new Fader()
-    fader.setPosition(Fader.dbToFaderPos(model.getChannelAttenuation))
-    fader.setAtenuation(model.getChannelAttenuation)
+    model.setChannelLevelDb(Double.MinValue)
 
     fader.getLevelDbProperty.bindBidirectional(model.getChannelLevelDbProperty)
     label_gain.textProperty().bind(fader.getAtenuationProperty.asString("%.1f"))
 
     bpane_mix_channel.setCenter(fader)
 
-    model.getChannelAttenuationProperty.bindBidirectional(fader.getAtenuationProperty)
+    fader.getAtenuationProperty.bindBidirectional(model.getChannelAttenuationProperty)
+    model.getChannelAttenuationProperty.addListener(new ChangeListener[Number]{
+      override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
+        parentController.updateMixerSession()
+      }
+    })
 
     label_channel_name.textProperty().bind(model.getChannelNameProperty)
   }

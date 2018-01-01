@@ -109,7 +109,7 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
           }
         }
 
-        parentController.updateSession()
+        parentController.updateMonitorSession()
       }
     })
 
@@ -150,7 +150,7 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
           }
         }
 
-        parentController.updateSession()
+        parentController.updateMonitorSession()
       }
     })
 
@@ -163,12 +163,12 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
           model.getDecoratorProperty.bind(newValue.decorator)
           val drawBoardCanvas = new DrawBoardCanvas(newValue)
           drawBoardCanvas.setUpdateHandler(new EventHandler[MouseEvent] {
-            override def handle(event: MouseEvent) = parentController.updateSession()
+            override def handle(event: MouseEvent) = parentController.updateMonitorSession()
           })
           bpane_main.setCenter(drawBoardCanvas)
         }
 
-        parentController.updateSession()
+        parentController.updateMonitorSession()
       }
     })
 

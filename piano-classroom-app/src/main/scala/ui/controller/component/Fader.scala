@@ -25,7 +25,6 @@ class Fader extends Pane {
 
   val minValue = 0.0
   val maxValue = dbToFaderPos(10)
-  val position = new SimpleDoubleProperty()
   val atenuation = new SimpleDoubleProperty()
   val levelDb = new SimpleDoubleProperty()
   var faderRenderArea: Rectangle = _
@@ -33,12 +32,9 @@ class Fader extends Pane {
   var faderCollisionAreaWidth = 100
   var faderDragActive = false
   var faderDragDeltaX = 0.0
+  var position: Double = 0.0
 
   calculateRenderAreas()
-
-  def getPosition: Double = position.get
-  def setPosition(x: Double): Unit = position.set(x)
-  def getPositionProperty: SimpleDoubleProperty = position
 
   def getAtenuation: Double = atenuation.get
   def setAtenuation(x: Double): Unit = atenuation.set(x)
@@ -48,11 +44,14 @@ class Fader extends Pane {
   def setLevelDb(x: Double):Unit = levelDb.set(x)
   def getLevelDbProperty: SimpleDoubleProperty = levelDb
 
-  position.addListener(new ChangeListener[Number]() {
+  setAtenuation(Double.MinValue)
+  setLevelDb(Double.MinValue)
+
+  atenuation.addListener(new ChangeListener[Number]() {
     override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
       calculateRenderAreas()
       draw()
-      atenuation.set(faderPosToDb(getPosition))
+      position = dbToFaderPos(newValue.doubleValue())
     }
   })
   getLevelDbProperty.addListener(new InvalidationListener {
@@ -88,7 +87,8 @@ class Fader extends Pane {
         val minX = faderRenderArea.x + faderCollisionAreaWidth / 2
         val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth / 2
         val validPosition = Math.max(Math.min(maxX, event.getX), minX)
-        setPosition((validPosition - minX) / (maxX - minX).toDouble * (maxValue - minValue))
+        position = (validPosition - minX) / (maxX - minX).toDouble * (maxValue - minValue)
+        setAtenuation(faderPosToDb(position))
       }
     }
   })
@@ -98,7 +98,8 @@ class Fader extends Pane {
         val minX = faderRenderArea.x + faderCollisionAreaWidth/2
         val maxX = faderRenderArea.x + faderRenderArea.width - faderCollisionAreaWidth/2
         val validPosition = Math.max(Math.min(maxX, event.getX - faderDragDeltaX), minX)
-        setPosition((validPosition - minX)/(maxX - minX).toDouble * (maxValue - minValue))
+        position = (validPosition - minX)/(maxX - minX).toDouble * (maxValue - minValue)
+        setAtenuation(faderPosToDb(position))
       }
     }
   })
@@ -118,7 +119,7 @@ class Fader extends Pane {
   }
 
   private def getFaderCenterX() = {
-    getFaderPositionFromValue(getPosition)
+    getFaderPositionFromValue(position)
   }
 
   private def getFaderPositionFromValue(x: Double) = {

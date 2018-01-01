@@ -15,9 +15,11 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox}
 
 import context.Context
-import sound.audio.mixer.ChannelMix
+import io.contracts._
+import sound.audio.mixer.{BusMix, ChannelMix}
 import ui.controller.MainStageController
 import ui.controller.component.ProfileButton
+import ui.controller.monitor.drawboard.CanvasLine
 import ui.controller.track.TrackModel
 
 import scala.collection.JavaConversions._
@@ -36,12 +38,8 @@ class MixerModel {
 
   def addInvalidationListener(l: InvalidationListener): Unit = invalidationListeners = invalidationListeners + l
 
-  def dumpMix: Map[Int, Set[ChannelMix]] = {
-    getBusMixes
-      .map { busMixModel =>
-        busMixModel.channel -> busMixModel.dumpMix
-      }
-      .toMap
+  def dumpMix: List[BusMix] = {
+    getBusMixes.map(_.dumpMix)
   }
 
   def handleMixOutput(channelLevel: Map[String, Float], busLevel: Map[Int, Float]): Unit = {
@@ -102,6 +100,7 @@ trait MixerController {
   @FXML var tabs_bus_mixes: TabPane = _
 
   var tab_add_bus: Tab = _
+  var _self = this
 
   def initializeMixerController(mainController: MainStageController) = {
     List("Default", "Broadcast").foreach { i =>
@@ -161,7 +160,7 @@ trait MixerController {
               .foreach { busMixModel =>
                 val loader = new FXMLLoader()
                 loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/BusPanel.fxml"))
-                loader.setController(new BusMixController(busMixModel))
+                loader.setController(new BusMixController(_self, busMixModel))
 
                 val tab = new Tab()
                 tab.setContent(loader.load().asInstanceOf[BorderPane])
@@ -199,8 +198,37 @@ trait MixerController {
               }
           }
         }
+
+        updateMixerSession()
       }
     })
+  }
+
+  def updateMixerSession(): Unit = {
+    val mixerConfiguration =
+      SaveMixer(
+        `bus-info` = Context.mixerModel.getBusMixes.map { busMix =>
+          SaveBusInfo(
+            `bus` = busMix.channel,
+            `master-level` = busMix.getBusAttenuation,
+            `bus-mix`= busMix.getBusChannels.map { busChannel =>
+              SaveBusMix(
+                `channel-id` = busChannel.id,
+                `level`= Some(busChannel.getChannelAttenuation)
+              )
+            }
+          )
+        }
+      )
+
+    context.writeProjectSessionSettings(
+      Context.projectSession.copy(
+        `save-state` =
+          Context.projectSession.`save-state`.copy(
+            `mixer`= mixerConfiguration
+          )
+      )
+    )
   }
 
   def lastUsefulTabIndex(): Int = {

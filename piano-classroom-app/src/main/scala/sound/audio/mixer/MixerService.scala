@@ -6,39 +6,27 @@ import sound.audio.channel.ChannelOwner
 class MixerService(val channelOwner: ChannelOwner) extends MixerOwner {
   final val DB_MIN_PRECISSION = 0.01
 
-  var mixByOutputChannel: Map[Int, Set[ChannelMix]] = Map.empty
+  var mixByOutputChannel: List[BusMix] = List.empty
   var mixListeners: List[MixListener] = List.empty
   var lastMixListenerUpdate = System.currentTimeMillis()
 
-  def getMixOfOutput(output: Int): Set[ChannelMix] =
-    mixByOutputChannel.getOrElse(output, Set.empty)
-
-  def setChannelInOutput(channelMix: ChannelMix, output: Int): Unit =
-    mixByOutputChannel = mixByOutputChannel.updated(output, mixByOutputChannel.getOrElse(output, Set.empty) + channelMix)
-
-  def setFullMix(m: Map[Int, Set[ChannelMix]]): Unit = mixByOutputChannel = m
-
-  def removeChannelFromAllOutputs(channelIndex: Int): Unit =
-    mixByOutputChannel =
-      mixByOutputChannel
-        .map {case (key, value) =>
-          (key, value.filterNot(_.channel == channelIndex))
-        }
+  def setFullMix(m: List[BusMix]): Unit = mixByOutputChannel = m
 
   def addMixListener(m: MixListener): Unit = mixListeners = mixListeners :+ m
 
-  def clearMix: Unit = mixByOutputChannel = Map.empty
+  def clearMix: Unit = mixByOutputChannel = List.empty
   def clearListeners: Unit = mixListeners = List.empty
 
   def pull(sampleRate: Double, bufferSize: Int): Map[Int, Array[Float]] = {
     val channelData = channelOwner.pull(sampleRate, bufferSize)
     val mixOutputByChannel = mixByOutputChannel
-        .map { case (key, mixes) =>
+        .map { busMix =>
           (
-            key,
-            MixerUtils.mix(mixes.map(m => (channelData.getOrElse(m.channel, Array.fill[Float](bufferSize)(0)), m.mix)).toList)
+            busMix.bus,
+            MixerUtils.mix(busMix.channelMix.map(m => (channelData.getOrElse(m.channel, Array.fill[Float](bufferSize)(0)), m.mix)))
           )
         }
+        .toMap
 
 //    val currentTime = System.currentTimeMillis()
 //    if(currentTime - lastMixListenerUpdate > 200) {

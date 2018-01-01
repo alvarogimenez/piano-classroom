@@ -100,14 +100,14 @@ trait MonitorController {
     button_show_fullscreen.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent) = {
         goMonitorFullScreen()
-        updateSession()
+        updateMonitorSession()
       }
     })
 
     button_hide_fullscreen.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent) = {
         screenStage.hide()
-        updateSession()
+        updateMonitorSession()
       }
     })
 
@@ -160,7 +160,7 @@ trait MonitorController {
           }
         }
 
-        updateSession()
+        updateMonitorSession()
       }
     })
   }
@@ -179,7 +179,7 @@ trait MonitorController {
     loader.load.asInstanceOf[BorderPane]
   }
 
-  def updateSession(): Unit = {
+  def updateMonitorSession(): Unit = {
     val monitorConfiguration =
       GlobalMonitorConfiguration(
         `source-index` = Context.monitorModel.getSelectedTargetMonitor,

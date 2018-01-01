@@ -172,6 +172,7 @@ package object context {
         val model = new BusMixModel(busInfo.`bus`)
         Context.mixerModel.addBusMix(model)
 
+        model.setBusAttenuation(busInfo.`master-level`)
         model.setBusChannels(busInfo.`bus-mix`.map { busMix =>
           val busChannelModel = new BusChannelModel(busMix.`channel-id`)
           busChannelModel.setChannelAttenuation(busMix.`level`.getOrElse(Double.NegativeInfinity))

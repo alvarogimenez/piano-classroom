@@ -148,13 +148,13 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
     toggle_note_display_fixed_do.selectedProperty().bindBidirectional(model.getDisplayNoteInFixedDoProperty)
 
     model.getDisplayNoteDisabledProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateSession()
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateMonitorSession()
     })
     model.getDisplayNoteInEnglishProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateSession()
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateMonitorSession()
     })
     model.getDisplayNoteInFixedDoProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateSession()
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateMonitorSession()
     })
 
     imageview_webcam.imageProperty().bind(model.getSourceImageProperty)
@@ -188,7 +188,7 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
           start()
         }
 
-        parentController.updateSession()
+        parentController.updateMonitorSession()
       }
     })
 
@@ -198,7 +198,7 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
         if(newValue != null) {
           Context.trackSetModel.getTrackSet.find(_.channel.id == newValue.id).foreach(_.addTrackSubscriber(_self))
         }
-        parentController.updateSession()
+        parentController.updateMonitorSession()
       }
     })
   }
