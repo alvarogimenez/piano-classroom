@@ -22,6 +22,7 @@ import ui.controller.component.Keyboard
 import ui.controller.track.pianoRange.{PianoRangeController, PianoRangeModel}
 import util.{KeyboardNote, MusicNote}
 import pianoRange._
+import ui.controller.ProjectSessionUpdating
 
 import scala.collection.JavaConversions._
 
@@ -115,7 +116,7 @@ class TrackModel(val channel: MidiChannel) {
   }
 }
 
-class TrackPanel(parentController: TrackSetController, channel: MidiChannel, model: TrackModel) extends BorderPane {
+class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel, model: TrackModel) extends BorderPane {
   final val SUSTAIN_DAMPER_MIDI_DATA = 0x40
 
   val keyboard = new Keyboard()
@@ -158,7 +159,7 @@ class TrackPanel(parentController: TrackSetController, channel: MidiChannel, mod
           if(result.isPresent) {
             val r = result.get()
             model.setTrackName(r)
-            parentController.updateTrackSession()
+            parentController.updateProjectSession()
           }
         }
       })
@@ -168,7 +169,7 @@ class TrackPanel(parentController: TrackSetController, channel: MidiChannel, mod
       contextMenu_delete.setOnAction(new EventHandler[ActionEvent] {
         override def handle(event: ActionEvent): Unit = {
           println(s"Delete name button pressed on Track (${channel.id})")
-          parentController.updateTrackSession()
+          parentController.updateProjectSession()
         }
       })
 
@@ -200,14 +201,14 @@ class TrackPanel(parentController: TrackSetController, channel: MidiChannel, mod
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         println(s"Link button pressed on Track (${channel.id})")
-        parentController.updateTrackSession()
+        parentController.updateProjectSession()
       }
     })
 
     button_open_vst_settings.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         channel.vstPlugin.foreach(_.openPluginEditor(model.getTrackName))
-        parentController.updateTrackSession()
+        parentController.updateProjectSession()
       }
     })
 
@@ -235,7 +236,7 @@ class TrackPanel(parentController: TrackSetController, channel: MidiChannel, mod
         if(pianoRangeModel.getExitStatus == PIANO_RANGE_MODAL_ACCEPT) {
           model.setTrackPianoStartNote(KeyboardNote(pianoRangeModel.getSelectedFromNote, pianoRangeModel.getSelectedFromIndex))
           model.setTrackPianoEndNote(KeyboardNote(pianoRangeModel.getSelectedToNote, pianoRangeModel.getSelectedToIndex))
-          parentController.updateTrackSession()
+          parentController.updateProjectSession()
         }
       }
     })
@@ -247,10 +248,10 @@ class TrackPanel(parentController: TrackSetController, channel: MidiChannel, mod
     keyboard.getEndNoteProperty.bind(model.getTrackPianoEndNoteProperty)
 
     model.getTrackPianoEnabledProperty().addListener(new InvalidationListener {
-      override def invalidated(observable: Observable) = parentController.updateTrackSession()
+      override def invalidated(observable: Observable) = parentController.updateProjectSession()
     })
     model.getTrackPianoRollEnabledProperty().addListener(new InvalidationListener {
-      override def invalidated(observable: Observable) = parentController.updateTrackSession()
+      override def invalidated(observable: Observable) = parentController.updateProjectSession()
     })
 
     button_show_piano.selectedProperty().bindBidirectional(model.getTrackPianoEnabledProperty())
@@ -290,7 +291,7 @@ class TrackPanel(parentController: TrackSetController, channel: MidiChannel, mod
             }
           }))
         }
-        parentController.updateTrackSession()
+        parentController.updateProjectSession()
       }
     })
 
@@ -301,7 +302,7 @@ class TrackPanel(parentController: TrackSetController, channel: MidiChannel, mod
       override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
         println(s"Midi VST changed from $oldValue to $newValue")
         channel.setVstSource(new File(newValue))
-        parentController.updateTrackSession()
+        parentController.updateProjectSession()
       }
     })
   }

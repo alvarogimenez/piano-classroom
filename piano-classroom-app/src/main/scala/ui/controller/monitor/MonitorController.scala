@@ -15,7 +15,7 @@ import javafx.stage.{Stage, StageStyle}
 
 import context.Context
 import io.contracts._
-import ui.controller.MainStageController
+import ui.controller.{MainStageController, ProjectSessionUpdating}
 import ui.controller.component.ScreenSelector
 import ui.controller.monitor.MonitorSource.MonitorSource
 import ui.controller.monitor.drawboard.{CanvasLine, MonitorDrawBoardController, MonitorDrawBoardModel}
@@ -42,7 +42,7 @@ class MonitorModel {
   def getDecoratorProperty: SimpleObjectProperty[GraphicsDecorator] = decorator
 }
 
-trait MonitorController {
+trait MonitorController {  _ : ProjectSessionUpdating =>
   @FXML var bpane_monitor_screen: BorderPane = _
   @FXML var bpane_monitor: BorderPane = _
   @FXML var button_show_fullscreen: Button = _
@@ -100,14 +100,14 @@ trait MonitorController {
     button_show_fullscreen.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent) = {
         goMonitorFullScreen()
-        updateMonitorSession()
+        updateProjectSession()
       }
     })
 
     button_hide_fullscreen.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent) = {
         screenStage.hide()
-        updateMonitorSession()
+        updateProjectSession()
       }
     })
 
@@ -160,7 +160,7 @@ trait MonitorController {
           }
         }
 
-        updateMonitorSession()
+        updateProjectSession()
       }
     })
   }
@@ -179,8 +179,7 @@ trait MonitorController {
     loader.load.asInstanceOf[BorderPane]
   }
 
-  def updateMonitorSession(): Unit = {
-    val monitorConfiguration =
+  def getMonitorSession(): GlobalMonitorConfiguration =
       GlobalMonitorConfiguration(
         `source-index` = Context.monitorModel.getSelectedTargetMonitor,
         `fullscreen` = screenStage.isShowing,
@@ -245,16 +244,6 @@ trait MonitorController {
           )
         )
       )
-
-    context.writeProjectSessionSettings(
-      Context.projectSession.copy(
-        `save-state` =
-          Context.projectSession.`save-state`.copy(
-            `monitor`= Some(monitorConfiguration)
-          )
-      )
-    )
-  }
 
   def selectMonitorView(view: MonitorSource): Unit = {
     getMonitorAvailableSourceToggles

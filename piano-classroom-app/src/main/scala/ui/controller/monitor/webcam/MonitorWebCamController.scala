@@ -26,6 +26,7 @@ import javafx.scene.text.{Font, TextAlignment}
 import com.github.sarxos.webcam.Webcam
 import com.sun.javafx.tk.Toolkit
 import context.Context
+import ui.controller.ProjectSessionUpdating
 import ui.controller.component.drawboard.CanvasPreview
 import ui.controller.monitor.drawboard.DrawBoardCanvasModel
 import ui.controller.monitor._
@@ -116,7 +117,7 @@ class MonitorWebCamModel {
   }
 }
 
-class MonitorWebCamController(parentController: MonitorController, model: MonitorWebCamModel) extends TrackSubscriber {
+class MonitorWebCamController(parentController: ProjectSessionUpdating, model: MonitorWebCamModel) extends TrackSubscriber {
   @FXML var stackpane: StackPane = _
   @FXML var imageview_webcam: ImageView = _
   @FXML var canvas_overlay: Canvas = _
@@ -148,13 +149,13 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
     toggle_note_display_fixed_do.selectedProperty().bindBidirectional(model.getDisplayNoteInFixedDoProperty)
 
     model.getDisplayNoteDisabledProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateMonitorSession()
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
     })
     model.getDisplayNoteInEnglishProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateMonitorSession()
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
     })
     model.getDisplayNoteInFixedDoProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateMonitorSession()
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
     })
 
     imageview_webcam.imageProperty().bind(model.getSourceImageProperty)
@@ -188,7 +189,7 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
           start()
         }
 
-        parentController.updateMonitorSession()
+        parentController.updateProjectSession()
       }
     })
 
@@ -198,7 +199,7 @@ class MonitorWebCamController(parentController: MonitorController, model: Monito
         if(newValue != null) {
           Context.trackSetModel.getTrackSet.find(_.channel.id == newValue.id).foreach(_.addTrackSubscriber(_self))
         }
-        parentController.updateMonitorSession()
+        parentController.updateProjectSession()
       }
     })
   }

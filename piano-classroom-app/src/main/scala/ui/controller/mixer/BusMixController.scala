@@ -12,6 +12,7 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox, VBox}
 
 import sound.audio.mixer.{BusMix, ChannelMix}
+import ui.controller.ProjectSessionUpdating
 import ui.controller.component.{CompressorPreview, Fader, ProfileButton}
 import ui.controller.track.TrackModel
 
@@ -74,7 +75,7 @@ class BusMixModel(val channel: Int) {
   }
 }
 
-class BusMixController(parentController: MixerController, model: BusMixModel) {
+class BusMixController(parentController: ProjectSessionUpdating, model: BusMixModel) {
   @FXML var hbox_bus_profiles: HBox = _
   @FXML var scrollpane_bus_profiles: ScrollPane = _
   
@@ -111,7 +112,7 @@ class BusMixController(parentController: MixerController, model: BusMixModel) {
     fader.getAtenuationProperty.bindBidirectional(model.getBusAttenuationProperty)
     model.getBusAttenuationProperty.addListener(new ChangeListener[Number]{
       override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
-        parentController.updateMixerSession()
+        parentController.updateProjectSession()
       }
     })
 
@@ -138,7 +139,7 @@ class BusMixController(parentController: MixerController, model: BusMixModel) {
               }
           }
         }
-        parentController.updateMixerSession()
+        parentController.updateProjectSession()
       }
     })
   }

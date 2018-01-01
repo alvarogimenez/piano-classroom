@@ -7,6 +7,7 @@ import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 
+import ui.controller.ProjectSessionUpdating
 import ui.controller.component.Fader
 
 class BusChannelModel(val id: String) {
@@ -47,7 +48,7 @@ class BusChannelModel(val id: String) {
   }
 }
 
-class BusChannelController(parentController: MixerController, model: BusChannelModel) {
+class BusChannelController(parentController: ProjectSessionUpdating, model: BusChannelModel) {
   @FXML var bpane_mix_channel: BorderPane = _
   @FXML var label_gain: Label = _
   @FXML var label_channel_name: Label = _
@@ -64,7 +65,7 @@ class BusChannelController(parentController: MixerController, model: BusChannelM
     fader.getAtenuationProperty.bindBidirectional(model.getChannelAttenuationProperty)
     model.getChannelAttenuationProperty.addListener(new ChangeListener[Number]{
       override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
-        parentController.updateMixerSession()
+        parentController.updateProjectSession()
       }
     })
 

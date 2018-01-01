@@ -17,7 +17,7 @@ import javafx.scene.layout.{BorderPane, HBox}
 import context.Context
 import io.contracts._
 import sound.audio.mixer.{BusMix, ChannelMix}
-import ui.controller.MainStageController
+import ui.controller.{MainStageController, ProjectSessionUpdating}
 import ui.controller.component.ProfileButton
 import ui.controller.monitor.drawboard.CanvasLine
 import ui.controller.track.TrackModel
@@ -94,7 +94,7 @@ class MixerModel {
   })
 }
 
-trait MixerController {
+trait MixerController { _ : ProjectSessionUpdating =>
   @FXML var hbox_mixer_profiles: HBox = _
   @FXML var scrollpane_mixer_profiles: ScrollPane = _
   @FXML var tabs_bus_mixes: TabPane = _
@@ -199,13 +199,12 @@ trait MixerController {
           }
         }
 
-        updateMixerSession()
+        updateProjectSession()
       }
     })
   }
 
-  def updateMixerSession(): Unit = {
-    val mixerConfiguration =
+  def getMixerSession(): SaveMixer = 
       SaveMixer(
         `bus-info` = Context.mixerModel.getBusMixes.map { busMix =>
           SaveBusInfo(
@@ -220,16 +219,6 @@ trait MixerController {
           )
         }
       )
-
-    context.writeProjectSessionSettings(
-      Context.projectSession.copy(
-        `save-state` =
-          Context.projectSession.`save-state`.copy(
-            `mixer`= mixerConfiguration
-          )
-      )
-    )
-  }
 
   def lastUsefulTabIndex(): Int = {
     val firstNotAdd = tabs_bus_mixes.getTabs.filter(_ != tab_add_bus).lastOption

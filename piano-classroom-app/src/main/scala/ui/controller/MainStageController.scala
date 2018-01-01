@@ -15,6 +15,7 @@ import scala.collection.JavaConversions._
 
 class MainStageController
   extends MenuBarController
+    with ProjectSessionUpdating
     with MixerController
     with TrackSetController
     with MonitorController {
@@ -31,6 +32,19 @@ class MainStageController
     initializeTrackSetController(this)
     initializeMonitorController(this)
     Context.loadControllerDependantSettings(this)
+  }
+
+  override def updateProjectSession() = {
+    context.writeProjectSessionSettings(
+      Context.projectSession.copy(
+        `save-state` =
+          Context.projectSession.`save-state`.copy(
+            `tracks`= getTrackSession(),
+            `monitor`= Some(getMonitorSession()),
+            `mixer`= getMixerSession()
+          )
+      )
+    )
   }
 
   private def initializeMainStage() = {

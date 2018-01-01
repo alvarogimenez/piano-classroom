@@ -13,6 +13,7 @@ import javafx.scene.layout.{BorderPane, HBox, VBox}
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 
+import ui.controller.ProjectSessionUpdating
 import ui.controller.component.PaletteColorButton
 import ui.controller.component.drawboard.{CanvasPreview, DrawBoardCanvas, Pen}
 import ui.controller.monitor.{GraphicsDecorator, MonitorController}
@@ -69,7 +70,7 @@ class MonitorDrawBoardModel {
   def getAvailableColorButtonsProperty: SimpleListProperty[PaletteColorButton] = available_color_buttons
 }
 
-class MonitorDrawBoardController(parentController: MonitorController, model: MonitorDrawBoardModel) {
+class MonitorDrawBoardController(parentController: ProjectSessionUpdating, model: MonitorDrawBoardModel) {
   @FXML var hbox_available_canvas: HBox = _
   @FXML var scrollpane_palette: ScrollPane = _
   @FXML var bpane_main: BorderPane = _
@@ -109,7 +110,7 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
           }
         }
 
-        parentController.updateMonitorSession()
+        parentController.updateProjectSession()
       }
     })
 
@@ -150,7 +151,7 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
           }
         }
 
-        parentController.updateMonitorSession()
+        parentController.updateProjectSession()
       }
     })
 
@@ -163,12 +164,12 @@ class MonitorDrawBoardController(parentController: MonitorController, model: Mon
           model.getDecoratorProperty.bind(newValue.decorator)
           val drawBoardCanvas = new DrawBoardCanvas(newValue)
           drawBoardCanvas.setUpdateHandler(new EventHandler[MouseEvent] {
-            override def handle(event: MouseEvent) = parentController.updateMonitorSession()
+            override def handle(event: MouseEvent) = parentController.updateProjectSession()
           })
           bpane_main.setCenter(drawBoardCanvas)
         }
 
-        parentController.updateMonitorSession()
+        parentController.updateProjectSession()
       }
     })
 
