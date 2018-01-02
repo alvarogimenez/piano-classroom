@@ -1,6 +1,6 @@
 package ui.controller.monitor.drawboard
 
-import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.{SimpleBooleanProperty, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
@@ -12,9 +12,14 @@ import ui.controller.monitor.GraphicsDecorator
 import scala.collection.JavaConversions._
 
 class DrawBoardCanvasModel {
+  val selected: SimpleBooleanProperty = new SimpleBooleanProperty()
   val pen: SimpleObjectProperty[Pen] = new SimpleObjectProperty[Pen]()
   val canvas_data: SimpleObjectProperty[CanvasData] = new SimpleObjectProperty[CanvasData]()
   val decorator: SimpleObjectProperty[GraphicsDecorator] = new SimpleObjectProperty[GraphicsDecorator]()
+
+  def isSelected: Boolean = selected.get()
+  def setSelected(s: Boolean): Unit = selected.set(s)
+  def getSelectedProperty: SimpleBooleanProperty = selected
 
   def getPen: Pen = pen.get()
   def setPen(c: Pen): Unit = pen.set(c)

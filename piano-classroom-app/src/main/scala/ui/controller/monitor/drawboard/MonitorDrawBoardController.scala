@@ -1,6 +1,5 @@
 package ui.controller.monitor.drawboard
 
-import java.util.UUID
 import javafx.beans.property.{SimpleListProperty, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.ListChangeListener.Change
@@ -13,10 +12,12 @@ import javafx.scene.layout.{BorderPane, HBox, VBox}
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import ui.controller.ProjectSessionUpdating
 import ui.controller.component.PaletteColorButton
 import ui.controller.component.drawboard.{CanvasPreview, DrawBoardCanvas, Pen}
-import ui.controller.monitor.{GraphicsDecorator, MonitorController}
+import ui.controller.monitor.GraphicsDecorator
 import ui.controller.monitor.drawboard.MonitorDrawBoardModel.PenSizeMillis
 
 import scala.collection.JavaConversions._
@@ -48,7 +49,8 @@ class MonitorDrawBoardModel {
 
   def getDrawBoardCanvasModels: List[DrawBoardCanvasModel] = draw_board_canvas_models.get().toList
   def setDrawBoardCanvasModels(m: List[DrawBoardCanvasModel]) = draw_board_canvas_models_ol.setAll(m)
-  def addDrawBoardCanvasModels(m: DrawBoardCanvasModel) = draw_board_canvas_models_ol.add(m)
+  def addDrawBoardCanvasModel(m: DrawBoardCanvasModel) = draw_board_canvas_models_ol.add(m)
+  def removeDrawBoardCanvasModel(m: DrawBoardCanvasModel) = draw_board_canvas_models_ol.remove(m)
   def getDrawBoardCanvasModelProperty: SimpleListProperty[DrawBoardCanvasModel] = draw_board_canvas_models
 
   def getSelectedDrawBoardCanvasModel: DrawBoardCanvasModel = selected_draw_board_canvas_model.get()
@@ -79,9 +81,25 @@ class MonitorDrawBoardController(parentController: ProjectSessionUpdating, model
   @FXML var choicebox_pen_millis: ChoiceBox[PenSizeMillis] = _
   @FXML var button_add_color: Button = _
   @FXML var button_add_canvas: Button = _
+  @FXML var button_remove_canvas: Button = _
+
+  @FXML var button_action_clear: Button = _
+  @FXML var button_action_undo: Button = _
+  @FXML var button_action_redo: Button = _
 
   def initialize() = {
     model.setSelectedPen(Pen(3.0 / 1000.0, Color.BLACK))
+
+    model.getSelectedDrawBoardCanvasModelProperty.addListener(new ChangeListener[DrawBoardCanvasModel] {
+      override def changed(observable: ObservableValue[_ <: DrawBoardCanvasModel], oldValue: DrawBoardCanvasModel, newValue: DrawBoardCanvasModel) = {
+        if(newValue != null) {
+          newValue.setSelected(true)
+        }
+        if(oldValue != null) {
+          oldValue.setSelected(false)
+        }
+      }
+    })
 
     model.getDrawBoardCanvasModelProperty.addListener(new ListChangeListener[DrawBoardCanvasModel] {
       override def onChanged(c: Change[_ <: DrawBoardCanvasModel]) = {
@@ -186,6 +204,7 @@ class MonitorDrawBoardController(parentController: ProjectSessionUpdating, model
         val colorButton = new PaletteColorButton(selectedColor, selectedSize)
 
         model.addAvailableColorButtons(colorButton)
+        parentController.updateProjectSession()
       }
     })
 
@@ -193,12 +212,31 @@ class MonitorDrawBoardController(parentController: ProjectSessionUpdating, model
       override def handle(event: ActionEvent) = {
         val m = new DrawBoardCanvasModel()
         m.setCanvasData(CanvasData(
-          name = UUID.randomUUID().toString.take(6),
+          name = DateTimeFormat.forPattern("yyyy-MM-dd hh:mm:ss").print(new DateTime()),
           aspectRatio = 4.0/3.0,
           fullscreenViewport = new Rectangle(0, 0, 100, 100),
           shapes = Set.empty
         ))
-        model.addDrawBoardCanvasModels(m)
+        model.addDrawBoardCanvasModel(m)
+      }
+    })
+
+    button_remove_canvas.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent) = {
+        if(model.getSelectedDrawBoardCanvasModel != null) {
+          model.removeDrawBoardCanvasModel(model.getSelectedDrawBoardCanvasModel)
+        }
+      }
+    })
+
+    button_action_clear.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent) = {
+        if(model.getSelectedDrawBoardCanvasModel != null) {
+          model.getSelectedDrawBoardCanvasModel.setCanvasData(
+            model.getSelectedDrawBoardCanvasModel.getCanvasData.copy(shapes = Set.empty)
+          )
+          parentController.updateProjectSession()
+        }
       }
     })
   }

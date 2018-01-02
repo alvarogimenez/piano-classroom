@@ -33,6 +33,7 @@
                   <VBox spacing="4.0" BorderPane.alignment="CENTER">
                      <children>
                         <Button fx:id="button_add_canvas" maxHeight="40.0" maxWidth="40.0" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Add.png')" />
+                        <Button fx:id="button_remove_canvas" maxHeight="40.0" maxWidth="40.0" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Delete.png')" />
                      </children>
                      <padding>
                         <Insets bottom="4.0" left="4.0" right="4.0" top="0.0" />
@@ -47,10 +48,9 @@
                <left>
                   <VBox alignment="TOP_CENTER" prefWidth="40.0" spacing="4.0" BorderPane.alignment="CENTER">
                      <children>
-                        <Button minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Test.png')" />
-                        <Button minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Test.png')" />
-                        <Button minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Test.png')" />
-                        <Button minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Test.png')" />
+                        <Button fx:id="button_action_clear" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Clear.png')" />
+                        <Button fx:id="button_action_undo" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Undo.png')" />
+                        <Button fx:id="button_action_redo" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Redo.png')" />
                      </children>
                      <padding>
                         <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
