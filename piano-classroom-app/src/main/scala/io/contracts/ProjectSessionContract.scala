@@ -23,6 +23,7 @@ case class SaveChannelInfo(
   `name`: String,
   `midi-input`: Option[String],
   `vst-i`: Option[String],
+  `vst-properties`: Option[Map[String, Double]],
   `piano-enabled`: Boolean,
   `piano-roll-enabled`: Boolean,
   `piano-range-start`: SavePianoRange,

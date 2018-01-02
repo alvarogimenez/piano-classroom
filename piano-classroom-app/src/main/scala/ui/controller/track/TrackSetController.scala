@@ -63,6 +63,14 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
           `name` = track.getTrackName,
           `midi-input` = Option(track.getSelectedMidiInterface).map(_.name),
           `vst-i` = Option(track.getSelectedMidiVst),
+          `vst-properties` = track.channel.vstPlugin.flatMap { vst =>
+            vst.vst.map { v =>
+              val n = v.numParameters()
+              (0 until n).map { pIndex =>
+                pIndex.toString -> v.getParameter(pIndex).toDouble
+              }.toMap
+            }
+          },
           `piano-enabled` = track.getTrackPianoEnabled(),
           `piano-roll-enabled` = track.getTrackPianoRollEnabled(),
           `piano-range-start` = SavePianoRange(

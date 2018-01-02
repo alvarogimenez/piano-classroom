@@ -165,6 +165,14 @@ package object context {
           }
         }
 
+        channelInfo.`vst-properties`.foreach { vstProperties =>
+          vstProperties.foreach { case (key, value) =>
+            midiChannel.vstPlugin.flatMap(_.vst).foreach { vst =>
+              vst.setParameter(key.toInt, value.toFloat)
+            }
+          }
+        }
+
         model.setTrackPianoEnabled(channelInfo.`piano-enabled`)
         model.setTrackPianoRollEnabled(channelInfo.`piano-roll-enabled`)
 

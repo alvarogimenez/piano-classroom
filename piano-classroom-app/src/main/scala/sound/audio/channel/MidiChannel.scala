@@ -18,6 +18,7 @@ class MidiChannel(val id: String) extends Channel {
 
   def close(): Unit = {
     vstPlugin.foreach(_.close())
+    vstPlugin = None
   }
 
   def pull(sampleRate: Double, bufferSize: Int): Array[Float] = {

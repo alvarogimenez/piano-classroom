@@ -301,7 +301,11 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
     model.getSelectedMidiVstProperty.addListener(new ChangeListener[String]() {
       override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
         println(s"Midi VST changed from $oldValue to $newValue")
-        channel.setVstSource(new File(newValue))
+        if(newValue != null) {
+          channel.setVstSource(new File(newValue))
+        } else {
+          channel.close()
+        }
         parentController.updateProjectSession()
       }
     })
