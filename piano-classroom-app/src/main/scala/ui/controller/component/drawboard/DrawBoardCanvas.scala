@@ -14,12 +14,9 @@ import ui.controller.monitor.drawboard.{CanvasLine, DrawBoardCanvasModel}
 import scala.collection.JavaConversions._
 
 class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
-  private var _action: Option[DrawBoardAction] = None
   private var _status: Option[ActionStatus] = None
 
   val canvas = new Canvas()
-  _action = Some(DrawBoardAction.FREE_DRAW)
-
   getChildren.add(canvas)
 
   var updateHandler: EventHandler[MouseEvent] = _
@@ -32,9 +29,15 @@ class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
     override def invalidated(observable: Observable): Unit = draw()
   })
 
+  model.getDrawBoardActionProperty.addListener(new InvalidationListener {
+    override def invalidated(observable: Observable) = {
+      _status = None
+    }
+  })
+
   canvas.setOnMousePressed(new EventHandler[MouseEvent] {
     override def handle(event: MouseEvent) = {
-      _action match {
+      model.getDrawBoardAction match {
         case Some(DrawBoardAction.FREE_DRAW) =>
           if(event.getButton == MouseButton.PRIMARY) {
             val path = new Path()
@@ -43,6 +46,8 @@ class DrawBoardCanvas(model: DrawBoardCanvasModel) extends BorderPane {
           } else {
             _status = Some(ActionFreeErase())
           }
+        case Some(DrawBoardAction.ERASE) =>
+          _status = Some(ActionFreeErase())
         case _ =>
       }
     }

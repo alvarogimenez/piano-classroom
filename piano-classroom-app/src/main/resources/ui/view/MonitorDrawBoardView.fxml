@@ -6,6 +6,8 @@
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -51,6 +53,13 @@
                         <Button fx:id="button_action_clear" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Clear.png')" />
                         <Button fx:id="button_action_undo" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Undo.png')" />
                         <Button fx:id="button_action_redo" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Redo.png')" />
+                        <Separator />
+                        <ToggleButton fx:id="button_action_freedraw" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" selected="true" style="-fx-graphic: url('assets/icon/CanvasPencil.png')">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="canvas_action" />
+                           </toggleGroup>
+                        </ToggleButton>
+                        <ToggleButton fx:id="button_action_erase" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/CanvasEraser.png')" toggleGroup="$canvas_action" />
                      </children>
                      <padding>
                         <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
@@ -65,7 +74,7 @@
                               <ColorPicker fx:id="color_picker" minHeight="40.0" />
                               <ChoiceBox fx:id="choicebox_pen_millis" minHeight="30.0" prefWidth="150.0" />
                               <Button fx:id="button_add_color" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="40.0" style="-fx-graphic: url('assets/icon/Add.png')" />
-                              <Separator prefWidth="200.0" />
+                              <Separator />
                            </children>
                            <padding>
                               <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />

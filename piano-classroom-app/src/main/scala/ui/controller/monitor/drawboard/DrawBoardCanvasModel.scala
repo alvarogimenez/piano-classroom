@@ -6,7 +6,8 @@ import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
 import javafx.scene.shape.{LineTo, MoveTo, Rectangle}
 
-import ui.controller.component.drawboard.Pen
+import ui.controller.component.drawboard.DrawBoardAction.DrawBoardAction
+import ui.controller.component.drawboard.{DrawBoardAction, Pen}
 import ui.controller.monitor.GraphicsDecorator
 
 import scala.collection.JavaConversions._
@@ -14,6 +15,7 @@ import scala.collection.JavaConversions._
 class DrawBoardCanvasModel {
   val selected: SimpleBooleanProperty = new SimpleBooleanProperty()
   val pen: SimpleObjectProperty[Pen] = new SimpleObjectProperty[Pen]()
+  val action: SimpleObjectProperty[Option[DrawBoardAction]] = new SimpleObjectProperty[Option[DrawBoardAction]]()
   val canvas_data: SimpleObjectProperty[CanvasData] = new SimpleObjectProperty[CanvasData]()
   val decorator: SimpleObjectProperty[GraphicsDecorator] = new SimpleObjectProperty[GraphicsDecorator]()
 
@@ -24,6 +26,10 @@ class DrawBoardCanvasModel {
   def getPen: Pen = pen.get()
   def setPen(c: Pen): Unit = pen.set(c)
   def getPenProperty: SimpleObjectProperty[Pen] = pen
+
+  def getDrawBoardAction: Option[DrawBoardAction] = action.get()
+  def setDrawBoardAction(c: Option[DrawBoardAction]): Unit = action.set(c)
+  def getDrawBoardActionProperty: SimpleObjectProperty[Option[DrawBoardAction]] = action
 
   def getCanvasData: CanvasData = canvas_data.get()
   def setCanvasData(c: CanvasData): Unit = canvas_data.set(c)
@@ -58,4 +64,6 @@ class DrawBoardCanvasModel {
       )
     }
   })
+
+  setDrawBoardAction(Some(DrawBoardAction.FREE_DRAW))
 }

@@ -16,6 +16,6 @@ package object drawboard {
 
   object DrawBoardAction extends Enumeration {
     type DrawBoardAction = Value
-    val FREE_DRAW = Value
+    val FREE_DRAW, ERASE = Value
   }
 }

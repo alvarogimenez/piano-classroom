@@ -6,7 +6,7 @@ import javafx.collections.ListChangeListener.Change
 import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.FXML
-import javafx.scene.control.{Button, ChoiceBox, ColorPicker, ScrollPane}
+import javafx.scene.control._
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox, VBox}
 import javafx.scene.paint.Color
@@ -16,7 +16,8 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import ui.controller.ProjectSessionUpdating
 import ui.controller.component.PaletteColorButton
-import ui.controller.component.drawboard.{CanvasPreview, DrawBoardCanvas, Pen}
+import ui.controller.component.drawboard.DrawBoardAction.DrawBoardAction
+import ui.controller.component.drawboard.{CanvasPreview, DrawBoardAction, DrawBoardCanvas, Pen}
 import ui.controller.monitor.GraphicsDecorator
 import ui.controller.monitor.drawboard.MonitorDrawBoardModel.PenSizeMillis
 
@@ -87,7 +88,27 @@ class MonitorDrawBoardController(parentController: ProjectSessionUpdating, model
   @FXML var button_action_undo: Button = _
   @FXML var button_action_redo: Button = _
 
+  @FXML var button_action_freedraw: ToggleButton = _
+  @FXML var button_action_erase: ToggleButton = _
+  @FXML var canvas_action: ToggleGroup = _
+
   def initialize() = {
+    button_action_freedraw.setUserData(DrawBoardAction.FREE_DRAW)
+    button_action_erase.setUserData(DrawBoardAction.ERASE)
+
+    canvas_action.selectedToggleProperty().addListener(new ChangeListener[Toggle] {
+      override def changed(observable: ObservableValue[_ <: Toggle], oldValue: Toggle, newValue: Toggle) = {
+        if(model.getSelectedDrawBoardCanvasModel != null) {
+          model
+            .getSelectedDrawBoardCanvasModel
+            .setDrawBoardAction(
+              Option(newValue)
+                .map(_.getUserData.asInstanceOf[DrawBoardAction])
+            )
+        }
+      }
+    })
+
     model.setSelectedPen(Pen(3.0 / 1000.0, Color.BLACK))
 
     model.getSelectedDrawBoardCanvasModelProperty.addListener(new ChangeListener[DrawBoardCanvasModel] {
@@ -185,6 +206,10 @@ class MonitorDrawBoardController(parentController: ProjectSessionUpdating, model
             override def handle(event: MouseEvent) = parentController.updateProjectSession()
           })
           bpane_main.setCenter(drawBoardCanvas)
+          canvas_action
+            .getToggles
+            .find(t => newValue.getDrawBoardAction != null && newValue.getDrawBoardAction.contains(t.getUserData))
+            .foreach(canvas_action.selectToggle)
         }
 
         parentController.updateProjectSession()
