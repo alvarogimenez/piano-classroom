@@ -17,7 +17,7 @@ class MidiService {
     override def send(msg: MidiMessage, timeStamp: Long): Unit = {
       midiSubscriber.getOrElse(sourceId, List.empty)
         .foreach { subscriber =>
-          subscriber.listener.midiReceived(msg, timeStamp)
+          subscriber.listener.midiReceived(msg, timeStamp, sourceId)
         }
     }
     override def close(): Unit = {}
@@ -106,6 +106,7 @@ class MidiService {
 
   def testTask() = new Task[Unit]() {
     override def call(): Unit = {
+      val sources = getHardwareMidiDevices.keys
       while(!isCancelled) {
         //        val sustainOn = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127)
         //        midiSubscriber
@@ -118,19 +119,17 @@ class MidiService {
           .foreach { i =>
             val msgOn = new ShortMessage(ShortMessage.NOTE_ON, i, 64)
             val msgOff = new ShortMessage(ShortMessage.NOTE_OFF, i, 0)
-            midiSubscriber
-              .values
-              .flatten
-              .foreach { s =>
-                s.listener.midiReceived(msgOn, System.currentTimeMillis())
+            sources.foreach {source =>
+              midiSubscriber.getOrElse(source, List.empty).foreach { listener =>
+                listener.listener.midiReceived(msgOn, System.currentTimeMillis(), source)
               }
+            }
             Thread.sleep(200)
-            midiSubscriber
-              .values
-              .flatten
-              .foreach { s =>
-                s.listener.midiReceived(msgOff, System.currentTimeMillis())
+            sources.foreach {source =>
+              midiSubscriber.getOrElse(source, List.empty).foreach { listener =>
+                listener.listener.midiReceived(msgOff, System.currentTimeMillis(), source)
               }
+            }
           }
         //        val sustainOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0)
         //        midiSubscriber

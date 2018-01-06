@@ -22,7 +22,9 @@ import ui.controller.component.Keyboard
 import ui.controller.track.pianoRange.{PianoRangeController, PianoRangeModel}
 import util.{KeyboardNote, MusicNote}
 import pianoRange._
+import midiLink._
 import ui.controller.ProjectSessionUpdating
+import ui.controller.track.midiLink.{MidiLinkController, MidiLinkModel}
 
 import scala.collection.JavaConversions._
 
@@ -201,7 +203,31 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         println(s"Link button pressed on Track (${channel.id})")
-        parentController.updateProjectSession()
+        val dialog = new Stage()
+        val loader = new FXMLLoader()
+        val midiLinkModel = new MidiLinkModel()
+        val controller = new MidiLinkController(dialog, midiLinkModel)
+
+        loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/MidiDiscoverPanel.fxml"))
+        loader.setController(controller)
+
+        dialog.setScene(new Scene(loader.load().asInstanceOf[BorderPane]))
+        dialog.setResizable(false)
+        dialog.setTitle("Select a MIDI source")
+        dialog.initOwner(Context.primaryStage)
+        dialog.initModality(Modality.APPLICATION_MODAL)
+        dialog.showAndWait()
+
+        if(midiLinkModel.getExitStatus == MIDI_LINK_MODAL_ACCEPT) {
+          if(midiLinkModel.getLastMidiSource != null) {
+            if(model.getMidiInterfaceNames.contains(midiLinkModel.getLastMidiSource)) {
+              model.setSelectedMidiInterface(midiLinkModel.getLastMidiSource)
+            }
+          } else {
+            model.setSelectedMidiInterface(null)
+          }
+          parentController.updateProjectSession()
+        }
       }
     })
 
@@ -270,7 +296,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
         if(newValue != null) {
           Context.midiService.unsubscribeOfAllInterfaces(channel.id)
           Context.midiService.addMidiSubscriber(newValue, MidiSubscriber(channel.id, new MidiListener() {
-            override def midiReceived(msg: MidiMessage, timeStamp: Long): Unit = {
+            override def midiReceived(msg: MidiMessage, timeStamp: Long, sourceId: MidiInterfaceIdentifier): Unit = {
               msg match {
                 case smsg: ShortMessage =>
                   channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
