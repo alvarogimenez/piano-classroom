@@ -33,7 +33,7 @@ trait FooterController { _: TrackSetController =>
           val model = new DeviceTestConfigurationModel()
           val controller = new DeviceTestConfigurationController(dialog, model)
 
-          loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/DeviceTestConfigurationPanel.fxml"))
+          loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/dialogs/DeviceTestConfigurationDialog.fxml"))
           loader.setController(controller)
 
           dialog.setScene(new Scene(loader.load().asInstanceOf[BorderPane]))

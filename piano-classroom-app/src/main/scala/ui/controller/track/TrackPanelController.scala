@@ -137,7 +137,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
 
   val loader = new FXMLLoader()
   loader.setController(this)
-  loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/TrackPanel.fxml"))
+  loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/tracks/TrackPanel.fxml"))
   val track = loader.load().asInstanceOf[BorderPane]
   track.prefHeightProperty().bind(model.getTrackHeightProperty())
   this.setCenter(track)
@@ -205,7 +205,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
 
     midiLinkModel.setAutoCloseModal(autoClose)
 
-    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/MidiDiscoverPanel.fxml"))
+    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/dialogs/MidiDiscoverDialog.fxml"))
     loader.setController(controller)
 
     dialog.setScene(new Scene(loader.load().asInstanceOf[BorderPane]))
@@ -255,7 +255,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
         pianoRangeModel.setSelectedToNote(keyboard.getEndNote.note)
         pianoRangeModel.setSelectedToIndex(keyboard.getEndNote.index)
 
-        loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/PianoRangeDialog.fxml"))
+        loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/dialogs/PianoRangeDialog.fxml"))
         loader.setController(controller)
 
         dialog.setScene(new Scene(loader.load().asInstanceOf[BorderPane]))

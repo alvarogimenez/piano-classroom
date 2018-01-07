@@ -16,7 +16,7 @@
            <right>
                <HBox alignment="CENTER" BorderPane.alignment="CENTER">
                    <children>
-                       <Button maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Add.png')" />
+                       <Button fx:id="button_add_profile" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/SaveAs.png')" />
                    </children>
                    <BorderPane.margin>
                        <Insets left="2.0" right="2.0" />

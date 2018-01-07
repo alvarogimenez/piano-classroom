@@ -160,7 +160,7 @@ trait MixerController { _ : ProjectSessionUpdating =>
             c.getAddedSubList
               .foreach { busMixModel =>
                 val loader = new FXMLLoader()
-                loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/BusPanel.fxml"))
+                loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/mixer/BusPanel.fxml"))
                 loader.setController(new BusMixController(_self, busMixModel))
 
                 val tab = new Tab()

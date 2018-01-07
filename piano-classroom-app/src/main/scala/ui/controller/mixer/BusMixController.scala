@@ -126,7 +126,7 @@ class BusMixController(parentController: ProjectSessionUpdating, model: BusMixMo
             c.getAddedSubList
               .foreach { busChannelModel =>
                 val loader = new FXMLLoader()
-                loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/BusChannelMixPanel.fxml"))
+                loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/mixer/BusChannelMixPanel.fxml"))
                 loader.setController(new BusChannelController(parentController, busChannelModel))
                 val channel = loader.load().asInstanceOf[BorderPane]
                 channel.setUserData(busChannelModel)

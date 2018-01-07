@@ -168,14 +168,14 @@ trait MonitorController {  _ : ProjectSessionUpdating =>
 
   private def loadWebCamView() = {
     val loader = new FXMLLoader()
-    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/MonitorWebCamView.fxml"))
+    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/monitor/MonitorWebCamView.fxml"))
     loader.setController(monitorWebCamController)
     loader.load.asInstanceOf[BorderPane]
   }
 
   private def loadDrawBoardView() = {
     val loader = new FXMLLoader()
-    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/MonitorDrawBoardView.fxml"))
+    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/monitor/MonitorDrawBoardView.fxml"))
     loader.setController(monitorDrawBoardController)
     loader.load.asInstanceOf[BorderPane]
   }
