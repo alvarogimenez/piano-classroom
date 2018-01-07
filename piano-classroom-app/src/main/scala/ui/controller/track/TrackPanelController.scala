@@ -23,7 +23,7 @@ import ui.controller.track.pianoRange.{PianoRangeController, PianoRangeModel}
 import util.{KeyboardNote, MusicNote}
 import pianoRange._
 import midiLink._
-import ui.controller.ProjectSessionUpdating
+import ui.controller.global.ProjectSessionUpdating
 import ui.controller.track.midiLink.{MidiLinkController, MidiLinkModel}
 
 import scala.collection.JavaConversions._

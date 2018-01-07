@@ -12,8 +12,8 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox, VBox}
 
 import sound.audio.mixer.{BusMix, ChannelMix}
-import ui.controller.ProjectSessionUpdating
 import ui.controller.component.{CompressorPreview, Fader, ProfileButton}
+import ui.controller.global.ProjectSessionUpdating
 import ui.controller.track.TrackModel
 
 import scala.collection.JavaConversions._

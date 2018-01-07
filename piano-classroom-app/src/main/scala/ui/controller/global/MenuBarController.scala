@@ -1,4 +1,4 @@
-package ui.controller
+package ui.controller.global
 
 import java.io.File
 import java.util.UUID
@@ -13,6 +13,7 @@ import javafx.stage.{FileChooser, Modality, Stage}
 import context.Context
 import io.contracts.{GlobalConfiguration, GlobalIoConfiguration}
 import sound.audio.channel.MidiChannel
+import ui.controller.MainStageController
 import ui.controller.settings.SettingsController
 import ui.controller.track.TrackModel
 

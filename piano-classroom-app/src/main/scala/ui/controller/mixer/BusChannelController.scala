@@ -7,8 +7,8 @@ import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 
-import ui.controller.ProjectSessionUpdating
 import ui.controller.component.Fader
+import ui.controller.global.ProjectSessionUpdating
 
 class BusChannelModel(val id: String) {
   var invalidationListeners: Set[InvalidationListener] = Set.empty[InvalidationListener]

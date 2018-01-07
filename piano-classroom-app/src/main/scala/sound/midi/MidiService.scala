@@ -104,56 +104,51 @@ class MidiService {
   }
 
 
-  def testTask() = new Task[Unit]() {
+  def testTask(sources: List[MidiInterfaceIdentifier], sustain: Boolean) = new Task[Unit]() {
     override def call(): Unit = {
-      val sources = getHardwareMidiDevices.keys
-      while(!isCancelled) {
-        //        val sustainOn = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127)
-        //        midiSubscriber
-        //          .values
-        //          .flatten
-        //          .foreach { s =>
-        //            s.listener.midiReceived(sustainOn, System.currentTimeMillis())
-        //          }
+      def sendAll(sm: ShortMessage) =
+        sources.foreach { source =>
+          midiSubscriber.getOrElse(source, List.empty).foreach { listener =>
+            listener.listener.midiReceived(sm, System.currentTimeMillis(), source)
+          }
+        }
+
+      while (!isCancelled) {
+        val sustainOn = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127)
+        val sustainOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0)
+
+        if (sustain) {
+          sendAll(sustainOn)
+        }
+
         (48 to 72)
           .foreach { i =>
             val msgOn = new ShortMessage(ShortMessage.NOTE_ON, i, 64)
             val msgOff = new ShortMessage(ShortMessage.NOTE_OFF, i, 0)
-            sources.foreach {source =>
-              midiSubscriber.getOrElse(source, List.empty).foreach { listener =>
-                listener.listener.midiReceived(msgOn, System.currentTimeMillis(), source)
-              }
-            }
+            sendAll(msgOn)
             Thread.sleep(200)
-            sources.foreach {source =>
-              midiSubscriber.getOrElse(source, List.empty).foreach { listener =>
-                listener.listener.midiReceived(msgOff, System.currentTimeMillis(), source)
-              }
-            }
+            sendAll(msgOff)
           }
-        //        val sustainOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0)
-        //        midiSubscriber
-        //          .values
-        //          .flatten
-        //          .foreach { s =>
-        //            s.listener.midiReceived(sustainOff, System.currentTimeMillis())
-        //          }
+
+        if (sustain) {
+          sendAll(sustainOff)
+        }
       }
     }
   }
 
-  def startTestTask() = {
+  def startTestTask(sources: List[MidiInterfaceIdentifier], sustainOn: Boolean) = {
     println(s"Starting TestTask...")
 
     if(currentTestTask != null && currentTestTask.isRunning) {
       currentTestTask.cancel()
       currentTestTask.stateProperty.addListener(new ChangeListener[State] {
         override def changed(observable: ObservableValue[_ <: State], oldValue: State, newValue: State) = {
-          runThread()
+          runThread(sources, sustainOn)
         }
       })
     } else {
-      runThread()
+      runThread(sources, sustainOn)
     }
   }
 
@@ -165,9 +160,9 @@ class MidiService {
     }
   }
 
-  private def runThread(): Unit = {
+  private def runThread(sources: List[MidiInterfaceIdentifier], sustainOn: Boolean): Unit = {
     println("Running thread")
-    currentTestTask = testTask()
+    currentTestTask = testTask(sources, sustainOn)
     val thread = new Thread(currentTestTask)
     thread.setDaemon(true)
     thread.start()

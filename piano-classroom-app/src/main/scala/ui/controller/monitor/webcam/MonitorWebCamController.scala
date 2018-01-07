@@ -26,8 +26,8 @@ import javafx.scene.text.{Font, TextAlignment}
 import com.github.sarxos.webcam.Webcam
 import com.sun.javafx.tk.Toolkit
 import context.Context
-import ui.controller.ProjectSessionUpdating
 import ui.controller.component.drawboard.CanvasPreview
+import ui.controller.global.ProjectSessionUpdating
 import ui.controller.monitor.drawboard.DrawBoardCanvasModel
 import ui.controller.monitor._
 import ui.controller.track.TrackModel

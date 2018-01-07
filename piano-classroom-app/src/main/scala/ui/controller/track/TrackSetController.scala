@@ -8,7 +8,8 @@ import javafx.scene.layout.VBox
 
 import context.Context
 import io.contracts.{SaveChannelInfo, SavePianoRange, SaveTracks}
-import ui.controller.{MainStageController, ProjectSessionUpdating}
+import ui.controller.MainStageController
+import ui.controller.global.ProjectSessionUpdating
 
 import scala.collection.JavaConversions._
 

@@ -15,8 +15,9 @@ import javafx.stage.{Stage, StageStyle}
 
 import context.Context
 import io.contracts._
-import ui.controller.{MainStageController, ProjectSessionUpdating}
+import ui.controller.MainStageController
 import ui.controller.component.ScreenSelector
+import ui.controller.global.ProjectSessionUpdating
 import ui.controller.monitor.MonitorSource.MonitorSource
 import ui.controller.monitor.drawboard.{CanvasLine, MonitorDrawBoardController, MonitorDrawBoardModel}
 import ui.controller.monitor.webcam.{MonitorWebCamController, MonitorWebCamModel}

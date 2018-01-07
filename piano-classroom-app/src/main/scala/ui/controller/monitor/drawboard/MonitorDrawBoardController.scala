@@ -14,10 +14,10 @@ import javafx.scene.shape.Rectangle
 
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import ui.controller.ProjectSessionUpdating
 import ui.controller.component.PaletteColorButton
 import ui.controller.component.drawboard.DrawBoardAction.DrawBoardAction
 import ui.controller.component.drawboard.{CanvasPreview, DrawBoardAction, DrawBoardCanvas, Pen}
+import ui.controller.global.ProjectSessionUpdating
 import ui.controller.monitor.GraphicsDecorator
 import ui.controller.monitor.drawboard.MonitorDrawBoardModel.PenSizeMillis
 

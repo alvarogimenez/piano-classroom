@@ -17,8 +17,9 @@ import javafx.scene.layout.{BorderPane, HBox}
 import context.Context
 import io.contracts._
 import sound.audio.mixer.{BusMix, ChannelMix}
-import ui.controller.{MainStageController, ProjectSessionUpdating}
+import ui.controller.MainStageController
 import ui.controller.component.ProfileButton
+import ui.controller.global.ProjectSessionUpdating
 import ui.controller.monitor.drawboard.CanvasLine
 import ui.controller.track.TrackModel
 
