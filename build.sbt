@@ -1,9 +1,6 @@
 name in ThisBuild := "piano-classroom"
 
-version in ThisBuild:= "1.0"
-
 scalaVersion in ThisBuild := "2.11.8"
-
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
