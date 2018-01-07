@@ -39,18 +39,46 @@ case class SavePianoRange(
   * Mixer
   */
 case class SaveMixer(
-  `bus-info`: List[SaveBusInfo]
+  `bus-info`: List[SaveBusInfo],
+  `mixer-profiles`: List[SaveMixerProfile]
 )
 
 case class SaveBusInfo(
   `bus`: Int,
   `master-level`: Double,
-  `bus-mix`: List[SaveBusMix]
+  `bus-mix`: List[SaveBusMix],
+  `bus-profiles`: List[SaveBusMixProfile]
 )
 
 case class SaveBusMix(
   `channel-id`: String,
   `level`: Option[Double]
+)
+
+case class SaveMixerProfile(
+  `name`: String,
+  `color`: String,
+  `bus-profiles`: List[SaveBusProfile]
+)
+
+case class SaveBusProfile(
+  `bus`: Int,
+  `bus-level`: Double,
+  `bus-mixes`: List[SaveBusChannelMixProfile]
+)
+
+case class SaveBusMixProfile(
+  `name`: String,
+  `color`: String,
+  `bus-level`: Double,
+  `bus-mixes`: List[SaveBusChannelMixProfile]
+)
+
+case class SaveBusChannelMixProfile(
+  `channel`: String,
+  `mix`: Double,
+  `active`: Boolean,
+  `solo`: Boolean
 )
 
 /**

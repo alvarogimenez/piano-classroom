@@ -1,21 +1,39 @@
 package ui.controller.component
 
-import javafx.scene.control.Button
+import javafx.event.{ActionEvent, EventHandler}
+import javafx.scene.control._
+import javafx.scene.input.ContextMenuEvent
 import javafx.scene.paint.Color
 
-import scala.util.Random
+import util._
 
-
-class ProfileButton(name: String) extends Button {
+class ProfileButton(name: String, color: Color) extends Button {
   setText(name)
   getStyleClass.add("profile-button")
 
-  val backgroundColor = new Color(Random.nextDouble(), Random.nextDouble(), Random.nextDouble(), 1).desaturate()
-  val textColor = if(backgroundColor.grayscale().getRed < 0.5) Color.WHITE else Color.BLACK
+  private val _self: Button = this
+  private val textColor: Color = if(color.grayscale().getRed < 0.5) Color.WHITE else Color.BLACK
+  private var onDelete: EventHandler[ActionEvent] = _
 
-  setStyle(s"-fx-background-color: ${getHexColor(backgroundColor)}; -fx-text-fill: ${getHexColor(textColor)}")
+  setStyle(s"-fx-background-color: ${colorToWebHex(color)}; -fx-text-fill: ${colorToWebHex(textColor)}")
 
-  def getHexColor(c: Color) = {
-    "#%02X%02X%02X".format((c.getRed * 255).toInt, (c.getGreen * 255).toInt, (c.getBlue * 255).toInt)
+  setOnContextMenuRequested(new EventHandler[ContextMenuEvent] {
+    override def handle(event: ContextMenuEvent) = {
+      val contextMenu = new ContextMenu()
+      val contextMenu_delete = new MenuItem("Delete")
+      contextMenu_delete.setOnAction(new EventHandler[ActionEvent] {
+        override def handle(event: ActionEvent): Unit = {
+          if(onDelete != null) {
+            onDelete.handle(event)
+          }
+        }
+      })
+      contextMenu.getItems.add(contextMenu_delete)
+      contextMenu.show(_self, event.getScreenX, event.getScreenY)
+    }
+  })
+
+  def setOnDelete(eventHandler: EventHandler[ActionEvent]): Unit = {
+    onDelete = eventHandler
   }
 }

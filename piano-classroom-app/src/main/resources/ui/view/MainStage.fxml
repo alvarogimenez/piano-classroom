@@ -80,7 +80,7 @@
                            <right>
                               <HBox alignment="CENTER" BorderPane.alignment="CENTER">
                                  <children>
-                                    <Button maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Add.png')" />
+                                    <Button fx:id="button_add_mixer_profile" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Add.png')" />
                                  </children>
                                  <BorderPane.margin>
                                     <Insets left="2.0" right="2.0" />
@@ -146,8 +146,8 @@
                                           <ToggleGroup fx:id="toggle_monitor_source" />
                                        </toggleGroup></ToggleButton>
                                     <ToggleButton fx:id="toggle_pencil" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Pencil.png')" toggleGroup="$toggle_monitor_source" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-                                    <ToggleButton fx:id="toggle_board" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Board.png')" toggleGroup="$toggle_monitor_source" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
-                                    <ToggleButton fx:id="toggle_music" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Music.png')" toggleGroup="$toggle_monitor_source" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_board" disable="true" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Board.png')" toggleGroup="$toggle_monitor_source" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                                    <ToggleButton fx:id="toggle_music" disable="true" maxHeight="60.0" maxWidth="60.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="60.0" style="-fx-graphic: url('assets/icon/Music.png')" toggleGroup="$toggle_monitor_source" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
                                  </children>
                               </GridPane>
                            </right>
@@ -170,11 +170,11 @@
          <top>
             <HBox alignment="CENTER_RIGHT" prefHeight="40.0" spacing="4.0" BorderPane.alignment="CENTER">
                <children>
-                  <Button fx:id="button_link_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/LinkAll.png')"  />
-                  <ToggleButton fx:id="button_test" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Test.png')"  />
-                  <Button fx:id="button_refresh_rendering" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Refresh.png')"  />
-                  <Button fx:id="button_clear_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Trash.png')"  />
-                  <Button fx:id="button_panic" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Warning.png')"  />
+                  <Button fx:id="button_link_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/LinkAll.png')" text="" />
+                  <ToggleButton fx:id="button_test" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/Test.png')" text="" />
+                  <Button fx:id="button_refresh_rendering" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/Refresh.png')" text="" />
+                  <Button fx:id="button_clear_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/Trash.png')" text="" />
+                  <Button fx:id="button_panic" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/Warning.png')" text="" />
                </children>
                <BorderPane.margin>
                   <Insets />

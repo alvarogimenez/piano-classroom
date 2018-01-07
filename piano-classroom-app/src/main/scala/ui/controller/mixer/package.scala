@@ -4,25 +4,26 @@ import javafx.scene.paint.Color
 
 
 package object mixer {
-  case class MixerGlobalProfile(
+  case class MixerProfile(
     name: String,
     color: Color,
-    busMixes: List[MixerBusMixProfile]
+    busMixes: List[BusProfile]
   )
 
-  case class MixerBusProfile(
+  case class BusProfile(
     bus: Int,
+    busLevel: Float,
+    busMixes: List[BusChannelMixProfile]
+  )
+
+  case class BusMixProfile(
     name: String,
     color: Color,
-    mixes: MixerBusMixProfile
+    busLevel: Float,
+    busMixes: List[BusChannelMixProfile]
   )
 
-  case class MixerBusMixProfile(
-    bus: Int,
-    mixes: List[MixerChannelMixProfile]
-  )
-
-  case class MixerChannelMixProfile(
+  case class BusChannelMixProfile(
     channel: String,
     mix: Float,
     active: Boolean,

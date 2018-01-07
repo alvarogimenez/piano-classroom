@@ -31,20 +31,21 @@
          </padding>
          <children>
             <Label text="Select one of the following options:" />
-            <RadioButton mnemonicParsing="false" text="Override an existing Profile">
+            <RadioButton fx:id="radiobutton_override" mnemonicParsing="false" text="Override an existing Profile">
                <toggleGroup>
                   <ToggleGroup fx:id="profile_creation_group" />
-               </toggleGroup></RadioButton>
-            <ScrollPane hbarPolicy="NEVER" prefHeight="220.0">
+               </toggleGroup>
+            </RadioButton>
+            <ScrollPane hbarPolicy="NEVER" prefHeight="220.0" vbarPolicy="ALWAYS">
                <content>
-                  <ListView prefWidth="380.0" />
+                  <ListView fx:id="listview_override_names" prefHeight="220.0" prefWidth="380.0" />
                </content>
             </ScrollPane>
-            <RadioButton mnemonicParsing="false" text="Create a new Profile" />
+            <RadioButton fx:id="radiobutton_new" mnemonicParsing="false" selected="true" text="Create a new Profile" toggleGroup="$profile_creation_group" />
             <HBox spacing="10.0">
                <children>
                   <Label prefHeight="26.0" prefWidth="38.0" text="Name: " />
-                  <TextField prefHeight="25.0" prefWidth="317.0" />
+                  <TextField fx:id="textfield_name" prefHeight="25.0" prefWidth="317.0" />
                </children>
                <padding>
                   <Insets left="10.0" />

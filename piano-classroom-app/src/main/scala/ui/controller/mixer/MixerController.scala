@@ -7,29 +7,35 @@ import javafx.collections.ListChangeListener.Change
 import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
 import javafx.event.{ActionEvent, Event, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
-import javafx.scene.Group
+import javafx.scene.{Group, Scene}
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control._
 import javafx.scene.image.ImageView
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox}
+import javafx.scene.paint.Color
+import javafx.stage.{Modality, Stage}
 
 import context.Context
 import io.contracts._
 import sound.audio.mixer.{BusMix, ChannelMix}
-import ui.controller.MainStageController
+import ui.controller.{MainStageController, global}
 import ui.controller.component.ProfileButton
 import ui.controller.global.ProjectSessionUpdating
+import ui.controller.global.profileSave.{ProfileSaveAction, ProfileSaveController, ProfileSaveModel}
 import ui.controller.monitor.drawboard.CanvasLine
 import ui.controller.track.TrackModel
 
 import scala.collection.JavaConversions._
+import scala.util.Random
 
 class MixerModel {
   var invalidationListeners: Set[InvalidationListener] = Set.empty[InvalidationListener]
   val bus_mixes_ol: ObservableList[BusMixModel] = FXCollections.observableArrayList[BusMixModel]
   val bus_mixes: SimpleListProperty[BusMixModel] = new SimpleListProperty[BusMixModel](bus_mixes_ol)
-
+  val mixer_profiles_ol: ObservableList[MixerProfile] = FXCollections.observableArrayList[MixerProfile]
+  val mixer_profiles: SimpleListProperty[MixerProfile] = new SimpleListProperty[MixerProfile](mixer_profiles_ol)
+  
   def getBusMixes: List[BusMixModel] = bus_mixes_ol.toList
   def setBusMixes(l: List[BusMixModel]): Unit = bus_mixes.setAll(l)
   def addBusMix(m: BusMixModel): Unit = bus_mixes_ol.add(m)
@@ -39,6 +45,12 @@ class MixerModel {
 
   def addInvalidationListener(l: InvalidationListener): Unit = invalidationListeners = invalidationListeners + l
 
+  def getMixerProfiles: List[MixerProfile] = mixer_profiles_ol.toList
+  def setMixerProfiles(l: List[MixerProfile]): Unit = mixer_profiles.setAll(l)
+  def addMixerProfile(m: MixerProfile): Unit = mixer_profiles_ol.add(m)
+  def removeMixerProfile(m: MixerProfile): Unit = mixer_profiles_ol.remove(m)
+  def getMixerProfilesProperty: SimpleListProperty[MixerProfile] = mixer_profiles
+  
   def dumpMix: List[BusMix] = {
     getBusMixes.map(_.dumpMix)
   }
@@ -99,27 +111,12 @@ trait MixerController { _ : ProjectSessionUpdating =>
   @FXML var hbox_mixer_profiles: HBox = _
   @FXML var scrollpane_mixer_profiles: ScrollPane = _
   @FXML var tabs_bus_mixes: TabPane = _
+  @FXML var button_add_mixer_profile: Button = _
 
   var tab_add_bus: Tab = _
   private val _self = this
 
   def initializeMixerController(mainController: MainStageController) = {
-    List("Default", "Broadcast").foreach { i =>
-      val b = new ProfileButton(i)
-      b.addEventHandler(MouseEvent.ANY, new EventHandler[MouseEvent]() {
-        override def handle(event: MouseEvent): Unit = {
-          scrollpane_mixer_profiles.fireEvent(event)
-          hbox_mixer_profiles.fireEvent(event)
-        }
-      })
-      b.setOnAction(new EventHandler[ActionEvent] {
-        override def handle(event: ActionEvent) = {
-          println(s"Button $i pressed")
-        }
-      })
-      hbox_mixer_profiles.getChildren.add(b)
-    }
-
     tab_add_bus = new Tab()
     val group = new Group()
     val graphic = new ImageView("assets/icon/Add.png")
@@ -150,6 +147,45 @@ trait MixerController { _ : ProjectSessionUpdating =>
             busChannelModel
           })
         }
+      }
+    })
+
+    Context.mixerModel.getMixerProfilesProperty.addListener(new ListChangeListener[MixerProfile] {
+      override def onChanged(c: Change[_ <: MixerProfile]) = {
+        while (c.next()) {
+          if (c.getAddedSize != 0) {
+            c.getAddedSubList
+              .foreach { mixerProfile =>
+                val b = new ProfileButton(mixerProfile.name, mixerProfile.color)
+                b.addEventHandler(MouseEvent.ANY, new EventHandler[MouseEvent]() {
+                  override def handle(event: MouseEvent): Unit = {
+                    scrollpane_mixer_profiles.fireEvent(event)
+                    hbox_mixer_profiles.fireEvent(event)
+                  }
+                })
+                b.setOnAction(new EventHandler[ActionEvent] {
+                  override def handle(event: ActionEvent) = {
+                    applyProfile(mixerProfile)
+                  }
+                })
+                b.setOnDelete(new EventHandler[ActionEvent] {
+                  override def handle(event: ActionEvent) = {
+                    Context.mixerModel.removeMixerProfile(mixerProfile)
+                  }
+                })
+                b.setUserData(mixerProfile)
+                hbox_mixer_profiles.getChildren.add(b)
+              }
+          } else if (c.getRemovedSize != 0) {
+            c.getRemoved
+              .foreach { busChannelModel =>
+                hbox_mixer_profiles.getChildren.find(_.getUserData == busChannelModel).foreach { c =>
+                  hbox_mixer_profiles.getChildren.remove(c)
+                }
+              }
+          }
+        }
+        updateProjectSession()
       }
     })
 
@@ -203,6 +239,79 @@ trait MixerController { _ : ProjectSessionUpdating =>
         updateProjectSession()
       }
     })
+
+    button_add_mixer_profile.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        import global.profileSave._
+
+        val dialog = new Stage()
+        val loader = new FXMLLoader()
+        val m = new ProfileSaveModel()
+        val controller = new ProfileSaveController(dialog, m)
+
+        m.setProfileNames(Context.mixerModel.getMixerProfiles.map(_.name))
+
+        loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/dialogs/ProfileSaveDialog.fxml"))
+        loader.setController(controller)
+
+        dialog.setScene(new Scene(loader.load().asInstanceOf[BorderPane]))
+        dialog.setResizable(false)
+        dialog.setTitle("Save Profile")
+        dialog.initOwner(Context.primaryStage)
+        dialog.initModality(Modality.APPLICATION_MODAL)
+        dialog.showAndWait()
+
+        if (m.getExitStatus == PROFILE_SAVE_MODAL_ACCEPT) {
+          def mixerProfileFromModel = {
+            val r = new Random(m.getResultName.hashCode)
+            MixerProfile(
+              name = m.getResultName,
+              color = new Color(r.nextDouble(), r.nextDouble(), r.nextDouble(), 1).desaturate(),
+              busMixes = Context.mixerModel.getBusMixes.map { busMixModel =>
+                BusProfile(
+                  bus = busMixModel.channel,
+                  busLevel = busMixModel.getBusAttenuation.toFloat,
+                  busMixes = busMixModel.getBusChannels.map { busChannel =>
+                    // TODO Set active and solo values
+                    BusChannelMixProfile(
+                      channel = busChannel.id,
+                      mix = busChannel.getChannelAttenuation.toFloat,
+                      active = true,
+                      solo = false
+                    )
+                  }
+                )
+              }
+            )
+          }
+
+          m.getResultAction match {
+            case ProfileSaveAction.OVERRIDE =>
+              Context.mixerModel.getMixerProfiles.find(_.name == m.getResultName).foreach { removeMixProfile =>
+                Context.mixerModel.removeMixerProfile(removeMixProfile)
+              }
+              Context.mixerModel.addMixerProfile(mixerProfileFromModel)
+            case ProfileSaveAction.NEW =>
+              Context.mixerModel.addMixerProfile(mixerProfileFromModel)
+            case _ =>
+          }
+        }
+      }
+    })
+  }
+
+  def applyProfile(p: MixerProfile) = {
+    p.busMixes.foreach { busMixProfile =>
+      Context.mixerModel.getBusMixes.find(_.channel == busMixProfile.bus).foreach { busMixModel =>
+        busMixModel.setBusAttenuation(busMixProfile.busLevel)
+        busMixProfile.busMixes.foreach { busChannelMix =>
+          busMixModel.getBusChannels.find(_.id == busChannelMix.channel).foreach { busChannel =>
+            busChannel.setChannelAttenuation(busChannelMix.mix)
+            //TODO Set active and solo values
+          }
+        }
+      }
+    }
   }
 
   def getMixerSession(): SaveMixer = 
@@ -215,6 +324,41 @@ trait MixerController { _ : ProjectSessionUpdating =>
               SaveBusMix(
                 `channel-id` = busChannel.id,
                 `level`= Some(busChannel.getChannelAttenuation)
+              )
+            },
+            `bus-profiles` = busMix.getBusMixProfiles.map { busMixProfile =>
+              SaveBusMixProfile(
+                `name` = busMixProfile.name,
+                `color`= util.colorToWebHex(busMixProfile.color),
+                `bus-level` = busMixProfile.busLevel,
+                `bus-mixes` = busMixProfile.busMixes.map { busChannelMix =>
+                  SaveBusChannelMixProfile(
+                    `channel` = busChannelMix.channel,
+                    `mix` = busChannelMix.mix,
+                    `active` = busChannelMix.active,
+                    `solo` = busChannelMix.solo
+                  )
+                }
+              )
+            }
+          )
+        },
+        `mixer-profiles`= Context.mixerModel.getMixerProfiles.map { mixerProfile =>
+          SaveMixerProfile(
+            `name` = mixerProfile.name,
+            `color`= util.colorToWebHex(mixerProfile.color),
+            `bus-profiles` = mixerProfile.busMixes.map { bus =>
+              SaveBusProfile(
+                `bus` = bus.bus,
+                `bus-level` = bus.busLevel,
+                `bus-mixes` = bus.busMixes.map { busChannelMix =>
+                  SaveBusChannelMixProfile(
+                    `channel` = busChannelMix.channel,
+                    `mix` = busChannelMix.mix,
+                    `active` = busChannelMix.active,
+                    `solo` = busChannelMix.solo
+                  )
+                }
               )
             }
           )

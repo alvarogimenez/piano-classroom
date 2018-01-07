@@ -1,7 +1,9 @@
 package ui.controller.track.midiLink
 
 import java.util.UUID
+import java.util.concurrent.Callable
 import javafx.application.Platform
+import javafx.beans.binding.Bindings
 import javafx.beans.property.{SimpleBooleanProperty, SimpleObjectProperty, SimpleStringProperty}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.FXML
@@ -76,9 +78,30 @@ class MidiLinkController(dialog: Stage, model: MidiLinkModel) {
 
     checkbox_auto_close.selectedProperty().bindBidirectional(model.getAutoCloseModalProperty) 
     
-    label_last_event.textProperty().bind(model.getLastMidiEventProperty)
-    label_last_source.textProperty().bind(model.getLastMidiSourceProperty.asString())
-    
+    label_last_event.textProperty().bind(Bindings.createStringBinding(
+      new Callable[String] {
+        override def call(): String = {
+          if(model.getLastMidiEvent != null) {
+            model.getLastMidiEvent
+          } else {
+            "No events received"
+          }
+        }
+      },
+      model.getLastMidiEventProperty))
+
+    label_last_source.textProperty().bind(Bindings.createStringBinding(
+      new Callable[String] {
+        override def call(): String = {
+          if(model.getLastMidiSource != null) {
+            model.getLastMidiSource.name
+          } else {
+            "No sources detected"
+          }
+        }
+      },
+      model.getLastMidiSourceProperty))
+
     button_cancel.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         model.setExitStatus(MIDI_LINK_MODAL_CANCEL)

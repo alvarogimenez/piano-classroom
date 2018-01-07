@@ -49,9 +49,9 @@ class Fader extends Pane {
 
   atenuation.addListener(new ChangeListener[Number]() {
     override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
+      position = dbToFaderPos(newValue.doubleValue())
       calculateRenderAreas()
       draw()
-      position = dbToFaderPos(newValue.doubleValue())
     }
   })
   getLevelDbProperty.addListener(new InvalidationListener {

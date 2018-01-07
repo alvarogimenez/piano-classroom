@@ -7,7 +7,7 @@ import io.{fromJson, toJson}
 import sound.audio.channel.MidiChannel
 import ui.controller.MainStageController
 import ui.controller.component.PaletteColorButton
-import ui.controller.mixer.{BusChannelModel, BusMixModel}
+import ui.controller.mixer._
 import ui.controller.monitor.MonitorSource
 import ui.controller.monitor.drawboard.{CanvasData, CanvasLine, DrawBoardCanvasModel}
 import ui.controller.track.TrackModel
@@ -75,7 +75,8 @@ package object context {
               `channel-info` = List.empty
             ),
             `mixer` = SaveMixer(
-              `bus-info` = List.empty
+              `bus-info` = List.empty,
+              `mixer-profiles`= List.empty
             ),
             `monitor` = None
           )
@@ -212,7 +213,50 @@ package object context {
           }
           busChannelModel
         })
+
+        model.setBusMixProfiles(busInfo.`bus-profiles`.map { busMixProfile =>
+          BusMixProfile(
+            name = busMixProfile.name,
+            color = Color.web(busMixProfile.`color`),
+            busLevel = busMixProfile.`bus-level`.toFloat,
+            busMixes = busMixProfile.`bus-mixes`.map { busMix =>
+              BusChannelMixProfile(
+                channel = busMix.`channel`,
+                mix = busMix.`mix`.toFloat,
+                active = busMix.`active`,
+                solo = busMix.`solo`
+              )
+            }
+          )
+        })
       }
+
+    Context.mixerModel.setMixerProfiles(
+      Context.projectSession
+        .`save-state`
+        .`mixer`
+        .`mixer-profiles`
+        .map { mixerProfile =>
+          MixerProfile(
+            name = mixerProfile.name,
+            color = Color.web(mixerProfile.`color`),
+            busMixes = mixerProfile.`bus-profiles`.map { busProfile =>
+              BusProfile(
+                bus = busProfile.`bus`,
+                busLevel = busProfile.`bus-level`.toFloat,
+                busMixes = busProfile.`bus-mixes`.map { busMix =>
+                  BusChannelMixProfile(
+                    channel = busMix.`channel`,
+                    mix = busMix.`mix`.toFloat,
+                    active = busMix.`active`,
+                    solo = busMix.`solo`
+                  )
+                }
+              )
+            }
+          )
+        }
+    )
 
     // Monitor Configuration
     Context.projectSession
