@@ -170,6 +170,7 @@
          <top>
             <HBox alignment="CENTER_RIGHT" prefHeight="40.0" spacing="4.0" BorderPane.alignment="CENTER">
                <children>
+                  <Button fx:id="button_link_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/LinkAll.png')"  />
                   <ToggleButton fx:id="button_test" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Test.png')"  />
                   <Button fx:id="button_refresh_rendering" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Refresh.png')"  />
                   <Button fx:id="button_clear_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" text="" style="-fx-graphic: url('assets/icon/Trash.png')"  />

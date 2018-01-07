@@ -56,6 +56,10 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
     })
   }
 
+  def linkAllMidiDevices() = {
+    tracks.getChildren.foreach { track => track.asInstanceOf[TrackPanel].linkMidiDeviceModal(true) }
+  }
+
   def getTrackSession(): SaveTracks =
     SaveTracks(
       `channel-info` = Context.trackSetModel.getTrackSet.map { track =>

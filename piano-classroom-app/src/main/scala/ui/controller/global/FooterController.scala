@@ -20,6 +20,7 @@ trait FooterController { _: TrackSetController =>
   @FXML var button_refresh_rendering: Button = _
   @FXML var button_clear_all: Button = _
   @FXML var button_panic: Button = _
+  @FXML var button_link_all: Button = _
 
   def initializeFooterController(mainController: MainStageController) = {
     button_test.selectedProperty().addListener(new ChangeListener[Boolean] {
@@ -60,6 +61,13 @@ trait FooterController { _: TrackSetController =>
           println(s"-------------------------------")
           Context.midiService.stopTestTask()
         }
+      }
+    })
+
+    button_link_all.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        println(s"Link all MIDI Devices...")
+        linkAllMidiDevices()
       }
     })
 
