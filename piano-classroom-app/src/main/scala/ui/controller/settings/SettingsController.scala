@@ -1,6 +1,8 @@
 package ui.controller.settings
 
+import java.io.File
 import java.lang.Boolean
+import javafx.beans.binding.Bindings
 import javafx.beans.property._
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.{FXCollections, ObservableList}
@@ -8,10 +10,10 @@ import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.FXML
 import javafx.scene.control._
 import javafx.scene.layout.{BorderPane, HBox, VBox}
-import javafx.stage.Stage
+import javafx.stage.{DirectoryChooser, Stage}
 
 import context.Context
-import io.contracts.{AsioChannelConfiguration, AsioChannelEnabled, AsioConfiguration}
+import io.contracts.{AsioChannelConfiguration, AsioChannelEnabled, AsioConfiguration, VstConfiguration}
 
 import scala.collection.JavaConversions._
 
@@ -23,7 +25,9 @@ class SettingsModel {
   var sound_asio_output_channel_config: Map[Int, BooleanProperty] = Map.empty
   var sound_asio_sample_rate: SimpleStringProperty = new SimpleStringProperty()
   var sound_asio_buffer_size: SimpleStringProperty = new SimpleStringProperty()
-
+  val vst_folder_paths_ol: ObservableList[String] = FXCollections.observableArrayList[String]
+  val vst_folder_paths: SimpleListProperty[String] = new SimpleListProperty[String](vst_folder_paths_ol)
+  
   def setSoundAsioDriver(d: String): Unit = sound_asio_driver.set(d)
   def getSoundAsioDriver: String = sound_asio_driver.get()
   def getSoundAsioDriverProperty: SimpleStringProperty = sound_asio_driver
@@ -52,6 +56,12 @@ class SettingsModel {
   def getSoundAsioBufferSize: Int = sound_asio_buffer_size.get().toInt
   def getSoundAsioBufferSizeProperty: SimpleStringProperty = sound_asio_buffer_size
 
+  def setVstFolderPaths(l: List[String]): Unit = vst_folder_paths_ol.setAll(l)
+  def addVstFolderPath(l: String): Unit = vst_folder_paths_ol.add(l)
+  def removeVstFolderPath(l: String): Unit = vst_folder_paths_ol.remove(l)
+  def getVstFolderPaths: List[String] = vst_folder_paths.get().toList
+  def getVstFolderPathsProperty: SimpleListProperty[String] = vst_folder_paths
+
   def initializeFromContext(): Unit = {
     val asioDriverNames = Context.asioService.listDriverNames()
     setSoundAsioDriverNames(List(null) ++ asioDriverNames)
@@ -74,6 +84,8 @@ class SettingsModel {
       case _ =>
         setSoundAsioDriver(null)
     }
+
+    setVstFolderPaths(Context.applicationSession.`vst-configuration`.`vst-source-directories`)
   }
 }
 
@@ -86,6 +98,9 @@ class SettingsController(dialog: Stage) {
   @FXML var vbox_driver_output_channel_config: VBox = _
   @FXML var button_enable_all: Button = _
   @FXML var button_disable_all: Button = _
+  @FXML var listview_vst_folders: ListView[String] = _
+  @FXML var button_vst_add_folder: Button = _
+  @FXML var button_vst_delete_folder: Button = _
 
   @FXML var button_close: Button = _
   @FXML var button_apply: Button = _
@@ -159,6 +174,29 @@ class SettingsController(dialog: Stage) {
 
     // Initialize component state
     updateAudioSettingsForSelectedDriver()
+
+    // VSTi
+    listview_vst_folders.itemsProperty().bind(model.getVstFolderPathsProperty)
+    button_vst_add_folder.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        val directoryChooser = new DirectoryChooser()
+        directoryChooser.showDialog(dialog) match {
+          case s: File if s != null =>
+            model.addVstFolderPath(s.getAbsolutePath)
+          case _ =>
+        }
+      }
+    })
+    button_vst_delete_folder.disableProperty().bind(Bindings.isEmpty(listview_vst_folders.getSelectionModel.getSelectedItems))
+    button_vst_delete_folder.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        listview_vst_folders.getSelectionModel.getSelectedItems.foreach { i =>
+          if(model.getVstFolderPaths.contains(i)) {
+            model.removeVstFolderPath(i)
+          }
+        }
+      }
+    })
   }
 
   private def save() = {
@@ -173,22 +211,26 @@ class SettingsController(dialog: Stage) {
     }
 
     val sessionSettings =
-      Context.applicationSession.copy(
-        `audio-configuration` = model.getSoundAsioDriver match {
-          case null => None
-          case soundDriverName => Some(AsioConfiguration(
-            `driver-name` = soundDriverName,
-            `channel-configuration` = AsioChannelConfiguration(
-              input = model.getSoundAsioInputChannelConfig.map {
-                case (key, value) => AsioChannelEnabled(key, value.get)
-              }.toList,
-              output = model.getSoundAsioOutputChannelConfig.map {
-                case (key, value) => AsioChannelEnabled(key, value.get)
-              }.toList
-            )
-          ))
-        }
-      )
+      Context.applicationSession
+        .copy(
+          `audio-configuration` = model.getSoundAsioDriver match {
+            case null => None
+            case soundDriverName => Some(AsioConfiguration(
+              `driver-name` = soundDriverName,
+              `channel-configuration` = AsioChannelConfiguration(
+                input = model.getSoundAsioInputChannelConfig.map {
+                  case (key, value) => AsioChannelEnabled(key, value.get)
+                }.toList,
+                output = model.getSoundAsioOutputChannelConfig.map {
+                  case (key, value) => AsioChannelEnabled(key, value.get)
+                }.toList
+              )
+            ))
+          }
+        )
+        .copy(`vst-configuration` = VstConfiguration(
+          `vst-source-directories` = model.getVstFolderPaths
+        ))
 
     Context.applicationSession = sessionSettings
     context.writeApplicationSessionSettings(sessionSettings)

@@ -17,7 +17,7 @@ import javax.sound.midi.{MidiMessage, ShortMessage}
 
 import context.Context
 import sound.audio.channel.MidiChannel
-import sound.midi.{MidiInterfaceIdentifier, MidiListener, MidiSubscriber}
+import sound.midi.{MidiInterfaceIdentifier, MidiListener, MidiSubscriber, MidiVstSource}
 import ui.controller.component.Keyboard
 import ui.controller.track.pianoRange.{PianoRangeController, PianoRangeModel}
 import util.{KeyboardNote, MusicNote}
@@ -38,10 +38,10 @@ class TrackModel(val channel: MidiChannel) {
   var track_name = new SimpleStringProperty()
   val midi_interface_names_ol: ObservableList[MidiInterfaceIdentifier] = FXCollections.observableArrayList[MidiInterfaceIdentifier]
   val midi_interface_names: SimpleListProperty[MidiInterfaceIdentifier] = new SimpleListProperty[MidiInterfaceIdentifier](midi_interface_names_ol)
-  val midi_vst_source_names_ol: ObservableList[String] = FXCollections.observableArrayList[String]
-  val midi_vst_source_names: SimpleListProperty[String] = new SimpleListProperty[String](midi_vst_source_names_ol)
+  val midi_vst_source_names_ol: ObservableList[MidiVstSource] = FXCollections.observableArrayList[MidiVstSource]
+  val midi_vst_sources: SimpleListProperty[MidiVstSource] = new SimpleListProperty[MidiVstSource](midi_vst_source_names_ol)
   val selected_midi_interface: Property[MidiInterfaceIdentifier] = new SimpleObjectProperty[MidiInterfaceIdentifier]()
-  val selected_midi_vst: SimpleStringProperty = new SimpleStringProperty()
+  val selected_midi_vst: Property[MidiVstSource] = new SimpleObjectProperty[MidiVstSource]()
   val track_height: SimpleIntegerProperty = new SimpleIntegerProperty()
   val track_piano_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val track_piano_roll_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
@@ -60,18 +60,18 @@ class TrackModel(val channel: MidiChannel) {
   def setMidiInterfaceNames(m: List[MidiInterfaceIdentifier]): Unit = midi_interface_names_ol.setAll(m)
   def getMidiInterfaceNamesProperty: SimpleListProperty[MidiInterfaceIdentifier] = midi_interface_names
 
-  def getMidiVstSourceNames: List[String] = midi_vst_source_names.get().toList
-  def setMidiVstSourceNames(s: List[String]): Unit = midi_vst_source_names_ol.setAll(s)
-  def getMidiVstSourceNamesProperty: SimpleListProperty[String] = midi_vst_source_names
+  def getMidiVstSources: List[MidiVstSource] = midi_vst_sources.get().toList
+  def setMidiVstSources(s: List[MidiVstSource]): Unit = midi_vst_source_names_ol.setAll(s)
+  def getMidiVstSourcesProperty: SimpleListProperty[MidiVstSource] = midi_vst_sources
 
   def getSelectedMidiInterface: MidiInterfaceIdentifier = selected_midi_interface.getValue
   def setSelectedMidiInterface(s: MidiInterfaceIdentifier): Unit = selected_midi_interface.setValue(s)
   def getSelectedMidiInterfaceProperty: Property[MidiInterfaceIdentifier] = selected_midi_interface
 
-  def getSelectedMidiVst: String = selected_midi_vst.get()
-  def setSelectedMidiVst(v: String): Unit = selected_midi_vst.set(v)
-  def getSelectedMidiVstProperty: SimpleStringProperty = selected_midi_vst
-  
+  def getSelectedMidiVst: MidiVstSource = selected_midi_vst.getValue
+  def setSelectedMidiVst(v: MidiVstSource): Unit = selected_midi_vst.setValue(v)
+  def getSelectedMidiVstProperty: Property[MidiVstSource] = selected_midi_vst
+
   def getTrackHeight(): Int = track_height.get
   def setTrackHeight(h: Int): Unit = track_height.set(h)
   def getTrackHeightProperty(): SimpleIntegerProperty = track_height
@@ -91,7 +91,7 @@ class TrackModel(val channel: MidiChannel) {
   def getTrackPianoEndNote: KeyboardNote = track_piano_end_note.get
   def setTrackPianoEndNote(n: KeyboardNote): Unit = track_piano_end_note.set(n)
   def getTrackPianoEndNoteProperty: SimpleObjectProperty[KeyboardNote] = track_piano_end_note
-  
+
   val heightListener = new ChangeListener[Boolean] {
     override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = {
       val sumHeight =
@@ -109,12 +109,12 @@ class TrackModel(val channel: MidiChannel) {
   setTrackPianoRollEnabled(true)
   setTrackPianoStartNote(KeyboardNote(MusicNote.C, 2))
   setTrackPianoEndNote(KeyboardNote(MusicNote.C, 6))
-  
+
   def initFromContext() = {
     val midiInterfaceNames = Context.midiService.getHardwareMidiDevices
     setMidiInterfaceNames(List(null) ++ midiInterfaceNames.keys.toList)
     val vstSources = Context.midiService.getVstSources
-    setMidiVstSourceNames(List(null) ++ vstSources.map(_.getName()))
+    setMidiVstSources(List(null) ++ vstSources)
   }
 }
 
@@ -130,7 +130,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
   @FXML var button_piano_range: Button = _
   @FXML var panel_track_main: BorderPane = _
   @FXML var combobox_midi_input: ComboBox[MidiInterfaceIdentifier] = _
-  @FXML var combobox_vst_input: ComboBox[String] = _
+  @FXML var combobox_vst_input: ComboBox[MidiVstSource] = _
   @FXML var label_track_name: Label = _
 
   model.addTrackSubscriber(keyboard)
@@ -327,14 +327,14 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
       }
     })
 
-    combobox_vst_input.itemsProperty().bindBidirectional(model.getMidiVstSourceNamesProperty)
+    combobox_vst_input.itemsProperty().bindBidirectional(model.getMidiVstSourcesProperty)
     combobox_vst_input.valueProperty().bindBidirectional(model.getSelectedMidiVstProperty)
 
-    model.getSelectedMidiVstProperty.addListener(new ChangeListener[String]() {
-      override def changed(observable: ObservableValue[_ <: String], oldValue: String, newValue: String): Unit = {
+    model.getSelectedMidiVstProperty.addListener(new ChangeListener[MidiVstSource]() {
+      override def changed(observable: ObservableValue[_ <: MidiVstSource], oldValue: MidiVstSource, newValue: MidiVstSource): Unit = {
         println(s"Midi VST changed from $oldValue to $newValue")
         if(newValue != null) {
-          channel.setVstSource(new File(newValue))
+          channel.setVstSource(new File(newValue.path))
         } else {
           channel.close()
         }

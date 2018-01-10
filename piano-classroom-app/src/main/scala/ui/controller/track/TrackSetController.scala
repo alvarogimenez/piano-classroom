@@ -67,7 +67,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
           `id` = track.channel.id,
           `name` = track.getTrackName,
           `midi-input` = Option(track.getSelectedMidiInterface).map(_.name),
-          `vst-i` = Option(track.getSelectedMidiVst),
+          `vst-i` = Option(track.getSelectedMidiVst).map(_.path),
           `vst-properties` = track.channel.vstPlugin.flatMap { vst =>
             vst.vst.map { v =>
               val n = v.numParameters()

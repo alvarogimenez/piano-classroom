@@ -159,7 +159,7 @@ package object context {
         }
 
         channelInfo.`vst-i`.foreach { vst =>
-          model.getMidiVstSourceNames.find(_ == vst) match {
+          model.getMidiVstSources.find(i => i != null && i.path == vst) match {
             case Some(v) =>
               model.setSelectedMidiVst(v)
             case _ =>

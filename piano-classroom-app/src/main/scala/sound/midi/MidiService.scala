@@ -62,7 +62,7 @@ class MidiService {
         .toMap
   }
 
-  def getVstSources: List[File] = {
+  def getVstSources: List[MidiVstSource] = {
     Context.applicationSession.`vst-configuration`.`vst-source-directories`
         .flatMap { directory =>
           val fDir = new File(directory)
@@ -71,6 +71,10 @@ class MidiService {
             .listFiles()
               .toList
               .filter(f => f.isFile && f.getName.endsWith(".dll"))
+              .map { f => MidiVstSource(
+                name = f.getName,
+                path = f.getAbsolutePath
+              )}
           } else {
             List.empty
           }
