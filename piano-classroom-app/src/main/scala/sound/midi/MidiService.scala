@@ -137,6 +137,8 @@ class MidiService {
         if (sustain) {
           sendAll(sustainOff)
         }
+
+        Thread.sleep(1000)
       }
     }
   }

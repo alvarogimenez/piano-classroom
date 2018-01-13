@@ -168,7 +168,7 @@ trait MonitorController {  _ : ProjectSessionUpdating =>
 
   private def loadWebCamView() = {
     val loader = new FXMLLoader()
-    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/monitor/MonitorWebCamView.fxml"))
+    loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/monitor/MonitorWebcamView.fxml"))
     loader.setController(monitorWebCamController)
     loader.load.asInstanceOf[BorderPane]
   }
@@ -197,7 +197,8 @@ trait MonitorController {  _ : ProjectSessionUpdating =>
               } else {
                 "NoDisplay"
               }
-          ))
+          )),
+          `sustain-active`= Some(Context.monitorModel.monitorWebCamModel.isSustainActive)
         ),
         `draw-board-settings` = GlobalMonitorDrawBoardSettings(
           `pens` = Some(

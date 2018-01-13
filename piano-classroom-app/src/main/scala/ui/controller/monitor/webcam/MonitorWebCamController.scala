@@ -15,7 +15,7 @@ import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.geometry.VPos
 import javafx.scene.canvas.{Canvas, GraphicsContext}
-import javafx.scene.control.{ComboBox, ToggleButton}
+import javafx.scene.control.{CheckBox, ComboBox, ToggleButton}
 import javafx.scene.image.{Image, ImageView, WritableImage}
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.StackPane
@@ -49,6 +49,7 @@ class MonitorWebCamModel {
   val displayNoteDisabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val displayNoteInEnglish: SimpleBooleanProperty = new SimpleBooleanProperty()
   val displayNoteInFixedDo: SimpleBooleanProperty = new SimpleBooleanProperty()
+  val sustain_visble: SimpleBooleanProperty = new SimpleBooleanProperty()
 
   def getSources: List[WebCamSource] = sources.get().toList
   def setSources(l: List[WebCamSource]) = sources_ol.setAll(l)
@@ -85,6 +86,10 @@ class MonitorWebCamModel {
   def isDisplayNoteInFixedDo: Boolean = displayNoteInFixedDo.get
   def setDisplayNoteInFixedDo(d: Boolean): Unit = displayNoteInFixedDo.set(d)
   def getDisplayNoteInFixedDoProperty: SimpleBooleanProperty = displayNoteInFixedDo
+
+  def isSustainActive: Boolean = sustain_visble.get
+  def setSustainActive(d: Boolean): Unit = sustain_visble.set(d)
+  def getSustainActiveProperty: SimpleBooleanProperty = sustain_visble
 
   setDisplayNoteDisabled(true)
   setTrackNoteSources(List(null))
@@ -127,7 +132,8 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
   @FXML var toggle_note_display_no_display: ToggleButton = _ 
   @FXML var toggle_note_display_english: ToggleButton = _ 
   @FXML var toggle_note_display_fixed_do: ToggleButton = _ 
-  
+  @FXML var checkbox_sustain_visible: CheckBox = _
+
   var currentWebCamTask: Task[Unit] = _
   var _self = this
 
@@ -148,6 +154,8 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
     toggle_note_display_english.selectedProperty().bindBidirectional(model.getDisplayNoteInEnglishProperty)
     toggle_note_display_fixed_do.selectedProperty().bindBidirectional(model.getDisplayNoteInFixedDoProperty)
 
+    checkbox_sustain_visible.selectedProperty().bindBidirectional(model.getSustainActiveProperty)
+
     model.getDisplayNoteDisabledProperty.addListener(new ChangeListener[Boolean] {
       override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
     })
@@ -155,6 +163,9 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
       override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
     })
     model.getDisplayNoteInFixedDoProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getSustainActiveProperty.addListener(new ChangeListener[Boolean] {
       override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
     })
 
@@ -245,6 +256,9 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
 
         val imageRef = new AtomicReference[WritableImage]()
         val decoratorRef = new AtomicReference[GraphicsDecorator]()
+        val sustainOff = new Image(getClass.getResourceAsStream("/assets/icon/SustainUp.png"))
+        val sustainOn = new Image(getClass.getResourceAsStream("/assets/icon/SustainDown.png"))
+
         while (!isCancelled) {
           val img = cam.getImage
           if (img != null) {
@@ -258,6 +272,7 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
                 gc.setTextAlign(TextAlignment.CENTER)
                 gc.setTextBaseline(VPos.CENTER)
 
+                // Show currently pressed notes
                 if (!model.isDisplayNoteDisabled) {
                   val textPositionY = r.getY + r.getHeight / 2 - gridSizeY * 2
                   val textCenterX = r.getX + r.getWidth / 2
@@ -309,6 +324,23 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
                         gc.strokeText(text(note.note), textPositionX(i), textPositionY.toInt)
                       case _ =>
                     }
+                }
+
+                // Show current sustain pedal status
+                if(model.isSustainActive) {
+                  val img =
+                    if(sustainActive ){
+                      sustainOn
+                    } else {
+                      sustainOff
+                    }
+
+                  gc.drawImage(
+                    img,
+                    r.getX + gridSizeX * 5.5,
+                    r.getY + gridSizeY * 1,
+                    gridSizeX * 4,
+                    (gridSizeX * 4) *sustainOff.getHeight / sustainOff.getWidth)
                 }
               })
             )

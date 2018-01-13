@@ -296,10 +296,6 @@ package object context {
             }
             noteDisplay.`source-track-id` match {
               case Some(id) =>
-                println(Context
-                  .monitorModel
-                  .monitorWebCamModel
-                  .getTrackNoteSources)
                 Context
                   .monitorModel
                   .monitorWebCamModel
@@ -311,6 +307,15 @@ package object context {
               case _ =>
             }
 
+          case _ =>
+        }
+        // Configure sustain dispay
+        monitorSettings.`camera-settings`.`sustain-active` match {
+          case Some(sustainActive) =>
+            Context
+                .monitorModel
+                .monitorWebCamModel
+                .setSustainActive(sustainActive)
           case _ =>
         }
         // Drawboard Settings

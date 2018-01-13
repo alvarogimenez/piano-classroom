@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ToggleButton?>
@@ -41,6 +42,12 @@
                   <Label layoutX="35.0" layoutY="49.0" text="Type:" />
                   <Label layoutX="36.0" layoutY="84.0" text="Source:" />
                   <ComboBox fx:id="combobox_note_helper_source" layoutX="94.0" layoutY="80.0" prefHeight="25.0" prefWidth="213.0" promptText="Select..." />
+                  <Label layoutX="14.0" layoutY="117.0" text="Sustain">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <CheckBox fx:id="checkbox_sustain_visible" layoutX="39.0" layoutY="148.0" mnemonicParsing="false" text="Sustain visible" />
                </children>
             </AnchorPane>
          </children>

@@ -94,7 +94,8 @@ case class GlobalMonitorConfiguration(
 
 case class GlobalMonitorCameraSettings(
   `source`: Option[String],
-  `note-display`: Option[GlobalMonitorCameraNoteDisplaySettings]
+  `note-display`: Option[GlobalMonitorCameraNoteDisplaySettings],
+  `sustain-active`: Option[Boolean]
 )
 
 case class GlobalMonitorCameraNoteDisplaySettings(
