@@ -24,6 +24,7 @@ object MusicNote extends Enumeration {
     override def toString(): String = {
       string
     }
+    def isUpperNote: Boolean = List(1, 3, 6, 8, 10).contains(index)
   }
 
   implicit def valueToVal(x: Value) = x.asInstanceOf[Val]

@@ -11,6 +11,7 @@ import ui.controller.mixer._
 import ui.controller.monitor.MonitorSource
 import ui.controller.monitor.drawboard.{CanvasData, CanvasLine, DrawBoardCanvasModel}
 import ui.controller.track.TrackModel
+import util.KeyboardLayoutUtils.{KeyBoundingBox, KeyboardLayout}
 import util.{KeyboardNote, MusicNote}
 
 import scala.io.Source
@@ -318,6 +319,42 @@ package object context {
                 .setSustainActive(sustainActive)
           case _ =>
         }
+        // Configure highlighter
+        monitorSettings.`camera-settings`.`highlighter-enabled` match {
+          case Some(highlighterEnabled) =>
+            Context
+              .monitorModel
+              .monitorWebCamModel
+              .setHighlightEnabled(highlighterEnabled)
+          case _ =>
+        }
+
+        monitorSettings.`camera-settings`.`keyboard-layout` match {
+          case Some(keyboardLayout) =>
+            Context
+              .monitorModel
+              .monitorWebCamModel
+              .setKeyboardLayout(
+                KeyboardLayout(
+                  brightnessThreshold = keyboardLayout.`brightness-threshold`,
+                  smoothAverage = keyboardLayout.`smooth-average`,
+                  cutY = keyboardLayout.`cut-y`,
+                  layout = keyboardLayout.`layout-data`.map { layoutData =>
+                    KeyBoundingBox(
+                      key = KeyboardNote(MusicNote.withName(layoutData.`note`), layoutData.`note-index`),
+                      left = layoutData.`left`,
+                      right = layoutData.`right`,
+                      top = layoutData.`top`,
+                      bottom = layoutData.`bottom`,
+                      mask = layoutData.`mask`.map { mask =>
+                        mask.split("\\|").map(_.split("\\;").map(_.toInt))
+                      }
+                    )
+                  }
+                )
+              )
+        }
+
         // Drawboard Settings
         monitorSettings.`draw-board-settings`.`pens` match {
           case Some(pens) =>

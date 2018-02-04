@@ -198,7 +198,28 @@ trait MonitorController {  _ : ProjectSessionUpdating =>
                 "NoDisplay"
               }
           )),
-          `sustain-active`= Some(Context.monitorModel.monitorWebCamModel.isSustainActive)
+          `sustain-active`= Some(Context.monitorModel.monitorWebCamModel.isSustainActive),
+          `highlighter-enabled` = Some(Context.monitorModel.monitorWebCamModel.isHighlightEnabled),
+          `keyboard-layout`= Option(Context.monitorModel.monitorWebCamModel.getKeyboardLayout).map { kl =>
+            GlobalMonitorKeyboardLayout(
+            `layout-data` = kl.layout.map { k =>
+              GlobalMonitorKeyboardLayoutData(
+                `note`= k.key.note.toString,
+                `note-index`=k.key.index,
+                `left`= k.left,
+                `right`= k.right,
+                `top`= k.top,
+                `bottom`= k.bottom,
+                `mask`= k.mask.map { m =>
+                  m.map(_.mkString(";")).mkString("|")
+                }
+              )
+            },
+            `brightness-threshold` = kl.brightnessThreshold,
+            `smooth-average`= kl.smoothAverage,
+            `cut-y`= kl.cutY
+            )
+          }
         ),
         `draw-board-settings` = GlobalMonitorDrawBoardSettings(
           `pens` = Some(

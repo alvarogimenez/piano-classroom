@@ -92,10 +92,29 @@ case class GlobalMonitorConfiguration(
   `draw-board-settings`: GlobalMonitorDrawBoardSettings
 )
 
+case class GlobalMonitorKeyboardLayoutData(
+  `note`: String,
+  `note-index`: Int,
+  `left`: Int,
+  `right`: Int,
+  `top`: Int,
+  `bottom`: Int,
+  `mask`: Option[String]
+)
+
+case class GlobalMonitorKeyboardLayout(
+  `layout-data`: List[GlobalMonitorKeyboardLayoutData],
+  `brightness-threshold`: Double,
+  `smooth-average`: Double,
+  `cut-y`: Int
+)
+
 case class GlobalMonitorCameraSettings(
   `source`: Option[String],
   `note-display`: Option[GlobalMonitorCameraNoteDisplaySettings],
-  `sustain-active`: Option[Boolean]
+  `sustain-active`: Option[Boolean],
+  `highlighter-enabled`: Option[Boolean],
+  `keyboard-layout`: Option[GlobalMonitorKeyboardLayout]
 )
 
 case class GlobalMonitorCameraNoteDisplaySettings(

@@ -1,39 +1,43 @@
 package ui.controller.monitor.webcam
 
+import java.awt.image.BufferedImage
+import java.io.File
 import java.lang.Boolean
 import java.util.concurrent.atomic.AtomicReference
 import javafx.application.Platform
-import javafx.beans.{InvalidationListener, Observable}
-import javafx.beans.property.{SimpleBooleanProperty, SimpleListProperty, SimpleObjectProperty}
+import javafx.beans.property.{ObjectProperty, SimpleBooleanProperty, SimpleListProperty, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.beans.{InvalidationListener, Observable}
 import javafx.collections.ListChangeListener.Change
 import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
 import javafx.concurrent.Task
 import javafx.concurrent.Worker.State
 import javafx.embed.swing.SwingFXUtils
-import javafx.event.EventHandler
-import javafx.fxml.FXML
+import javafx.event.{ActionEvent, EventHandler}
+import javafx.fxml.{FXML, FXMLLoader}
 import javafx.geometry.VPos
+import javafx.scene.Scene
 import javafx.scene.canvas.{Canvas, GraphicsContext}
-import javafx.scene.control.{CheckBox, ComboBox, ToggleButton}
+import javafx.scene.control.{Button, CheckBox, ComboBox, ToggleButton}
 import javafx.scene.image.{Image, ImageView, WritableImage}
-import javafx.scene.input.MouseEvent
-import javafx.scene.layout.StackPane
+import javafx.scene.layout.{BorderPane, StackPane}
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.{Font, TextAlignment}
+import javafx.stage.{Modality, Stage}
 
 import com.github.sarxos.webcam.Webcam
+import com.sksamuel.scrimage
 import com.sun.javafx.tk.Toolkit
 import context.Context
-import ui.controller.component.drawboard.CanvasPreview
 import ui.controller.global.ProjectSessionUpdating
-import ui.controller.monitor.drawboard.DrawBoardCanvasModel
 import ui.controller.monitor._
+import ui.controller.monitor.highlighterConfiguration.{HighlighterConfigurationController, HighlighterConfigurationModel, _}
 import ui.controller.track.TrackModel
 import ui.controller.track.pianoRange.TrackSubscriber
-import util.KeyboardNote
+import util.KeyboardLayoutUtils.KeyboardLayout
 import util.MusicNote.MusicNote
+import util.{KeyboardLayoutUtils, KeyboardNote}
 
 import scala.collection.JavaConversions._
 
@@ -45,11 +49,14 @@ class MonitorWebCamModel {
   val track_note_sources: SimpleListProperty[ChannelSource] = new SimpleListProperty[ChannelSource](track_note_sources_ol)
   val track_note_selected_source: SimpleObjectProperty[ChannelSource] = new SimpleObjectProperty[ChannelSource]()
   val source_image: SimpleObjectProperty[Image] = new SimpleObjectProperty[Image]()
+  val source_raw_image: SimpleObjectProperty[BufferedImage] = new SimpleObjectProperty[BufferedImage]()
   val decorator: SimpleObjectProperty[GraphicsDecorator] = new SimpleObjectProperty[GraphicsDecorator]()
   val displayNoteDisabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val displayNoteInEnglish: SimpleBooleanProperty = new SimpleBooleanProperty()
   val displayNoteInFixedDo: SimpleBooleanProperty = new SimpleBooleanProperty()
   val sustain_visble: SimpleBooleanProperty = new SimpleBooleanProperty()
+  val highlight_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
+  var keyboard_layout: ObjectProperty[KeyboardLayout] = new SimpleObjectProperty[KeyboardLayout]()
 
   def getSources: List[WebCamSource] = sources.get().toList
   def setSources(l: List[WebCamSource]) = sources_ol.setAll(l)
@@ -71,6 +78,10 @@ class MonitorWebCamModel {
   def setSourceImage(i: Image): Unit = source_image.set(i)
   def getSourceImageProperty: SimpleObjectProperty[Image] = source_image
 
+  def getSourceRawImage: BufferedImage = source_raw_image.get()
+  def setSourceRawImage(i: BufferedImage): Unit = source_raw_image.set(i)
+  def getSourceRawImageProperty: SimpleObjectProperty[BufferedImage] = source_raw_image
+
   def getDecorator: GraphicsDecorator = decorator.get
   def setDecorator(d: GraphicsDecorator): Unit = decorator.set(d)
   def getDecoratorProperty: SimpleObjectProperty[GraphicsDecorator] = decorator
@@ -90,6 +101,14 @@ class MonitorWebCamModel {
   def isSustainActive: Boolean = sustain_visble.get
   def setSustainActive(d: Boolean): Unit = sustain_visble.set(d)
   def getSustainActiveProperty: SimpleBooleanProperty = sustain_visble
+
+  def isHighlightEnabled: Boolean = highlight_enabled.get
+  def setHighlightEnabled(d: Boolean): Unit = highlight_enabled.set(d)
+  def getHighlightEnabledProperty: SimpleBooleanProperty = highlight_enabled
+  
+  def getKeyboardLayout: KeyboardLayout = keyboard_layout.get
+  def setKeyboardLayout(b: KeyboardLayout): Unit = keyboard_layout.set(b)
+  def getKeyboardLayoutProperty: ObjectProperty[KeyboardLayout] = keyboard_layout
 
   setDisplayNoteDisabled(true)
   setTrackNoteSources(List(null))
@@ -134,6 +153,9 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
   @FXML var toggle_note_display_fixed_do: ToggleButton = _ 
   @FXML var checkbox_sustain_visible: CheckBox = _
 
+  @FXML var checkbox_key_highlighter_enabled: CheckBox = _
+  @FXML var button_key_highlighter: Button = _
+
   var currentWebCamTask: Task[Unit] = _
   var _self = this
 
@@ -141,8 +163,8 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
   case object NoteActive extends NoteStatus
   case object NoteSustained extends NoteStatus
 
-  var activeNotes: Map[KeyboardNote, NoteStatus] = Map.empty
-  var sustainActive = false
+  @volatile var activeNotes: Map[KeyboardNote, NoteStatus] = Map.empty
+  @volatile var sustainActive = false
 
   def initialize() = {
     imageview_webcam.setPreserveRatio(true)
@@ -155,6 +177,32 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
     toggle_note_display_fixed_do.selectedProperty().bindBidirectional(model.getDisplayNoteInFixedDoProperty)
 
     checkbox_sustain_visible.selectedProperty().bindBidirectional(model.getSustainActiveProperty)
+    checkbox_key_highlighter_enabled.selectedProperty().bindBidirectional(model.getHighlightEnabledProperty)
+
+    button_key_highlighter.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent) = {
+        val dialog = new Stage()
+        val loader = new FXMLLoader()
+        val _model = new HighlighterConfigurationModel()
+        val _controller = new HighlighterConfigurationController(dialog, _model)
+
+        _model.getImageProperty.bind(model.getSourceRawImageProperty)
+        loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/dialogs/MonitorKeyboardLayout.fxml"))
+        loader.setController(_controller)
+
+        dialog.setScene(new Scene(loader.load().asInstanceOf[BorderPane]))
+        dialog.setResizable(false)
+        dialog.setTitle("Configure Key Highlighter")
+        dialog.initOwner(Context.primaryStage)
+        dialog.initModality(Modality.APPLICATION_MODAL)
+        dialog.showAndWait()
+
+        if(_model.getExitStatus == HIGHLIGHTER_CONFIGURATION_MODAL_ACCEPT) {
+          model.setKeyboardLayout(_model.getKeyboardLayout)
+          parentController.updateProjectSession()
+        }
+      }
+    })
 
     model.getDisplayNoteDisabledProperty.addListener(new ChangeListener[Boolean] {
       override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
@@ -167,6 +215,12 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
     })
     model.getSustainActiveProperty.addListener(new ChangeListener[Boolean] {
       override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getHighlightEnabledProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getKeyboardLayoutProperty.addListener(new ChangeListener[Any] {
+      override def changed(observable: ObservableValue[_ <: Any], oldValue: Any, newValue: Any) = parentController.updateProjectSession()
     })
 
     imageview_webcam.imageProperty().bind(model.getSourceImageProperty)
@@ -255,14 +309,28 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
         cam.open()
 
         val imageRef = new AtomicReference[WritableImage]()
+        val rawImageRef = new AtomicReference[BufferedImage]()
         val decoratorRef = new AtomicReference[GraphicsDecorator]()
         val sustainOff = new Image(getClass.getResourceAsStream("/assets/icon/SustainUp.png"))
         val sustainOn = new Image(getClass.getResourceAsStream("/assets/icon/SustainDown.png"))
 
         while (!isCancelled) {
-          val img = cam.getImage
+          val img: BufferedImage = cam.getImage
+
           if (img != null) {
-            imageRef.set(SwingFXUtils.toFXImage(img, imageRef.get()))
+            if(model.isHighlightEnabled) {
+              imageRef.set(
+                SwingFXUtils.toFXImage(
+                  KeyboardLayoutUtils.paintLayoutActiveNotes(img, model.getKeyboardLayout, activeNotes.keys.toList), imageRef.get())
+              )
+            } else {
+              imageRef.set(
+                SwingFXUtils.toFXImage(img, imageRef.get())
+              )
+            }
+
+            rawImageRef.set(img)
+
             decoratorRef.set(
               GraphicsDecorator({ case (gc: GraphicsContext, r: Rectangle) =>
                 val gridSizeY = r.getHeight * 0.1
@@ -348,6 +416,7 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
 
             Platform.runLater(new Runnable() {
               def run(): Unit = {
+                model.setSourceRawImage(rawImageRef.get())
                 model.setSourceImage(imageRef.get())
                 model.setDecorator(decoratorRef.get())
               }
