@@ -10,8 +10,8 @@ import javafx.scene.layout.BorderPane
 import javafx.stage.{Modality, Stage}
 
 import context.Context
-import ui.controller.{MainStageController, global}
 import ui.controller.track.{TrackPanel, TrackSetController}
+import ui.controller.{MainStageController, global}
 
 import scala.collection.JavaConversions._
 
@@ -21,6 +21,7 @@ trait FooterController { _: TrackSetController =>
   @FXML var button_clear_all: Button = _
   @FXML var button_panic: Button = _
   @FXML var button_link_all: Button = _
+  @FXML var button_reopen_devices: Button = _
 
   def initializeFooterController(mainController: MainStageController) = {
     button_test.selectedProperty().addListener(new ChangeListener[Boolean] {
@@ -68,6 +69,14 @@ trait FooterController { _: TrackSetController =>
       override def handle(event: ActionEvent): Unit = {
         println(s"Link all MIDI Devices...")
         linkAllMidiDevices()
+      }
+    })
+
+    button_reopen_devices.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        println(s"Reopen all devices...")
+        Context.midiService.detach()
+        Context.midiService.attach()
       }
     })
 
