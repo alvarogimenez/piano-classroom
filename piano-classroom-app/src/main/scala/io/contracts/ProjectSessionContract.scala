@@ -114,6 +114,8 @@ case class GlobalMonitorCameraSettings(
   `note-display`: Option[GlobalMonitorCameraNoteDisplaySettings],
   `sustain-active`: Option[Boolean],
   `highlighter-enabled`: Option[Boolean],
+  `highlighter-subtractive`: Option[Boolean],
+  `highlighter-subtractive-sensibility`: Option[Double],
   `keyboard-layout`: Option[GlobalMonitorKeyboardLayout]
 )
 

@@ -2,10 +2,12 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -33,24 +35,52 @@
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </padding>
                <children>
+                  <Label layoutX="20.0" layoutY="20.0" text="Visualization">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <HBox alignment="CENTER_LEFT" prefHeight="35.0" prefWidth="560.0" spacing="10.0">
+                     <children>
+                        <Button fx:id="button_refresh_image" mnemonicParsing="false" text="Refresh Image" />
+                        <ProgressBar fx:id="progressbar_refresh_image" prefHeight="18.0" prefWidth="440.0" progress="0.0" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="35.0" prefWidth="560.0" spacing="10.0">
+                     <children>
+                        <RadioButton fx:id="radiobutton_preview_original_image" mnemonicParsing="false" text="Original Image" />
+                        <RadioButton fx:id="radiobutton_preview_threshold_image" mnemonicParsing="false" text="Threshold Image">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="visualization_group" />
+                           </toggleGroup></RadioButton>
+                        <RadioButton fx:id="radiobutton_preview_calculated_layout" mnemonicParsing="false" text="Calculated Layout" toggleGroup="$visualization_group" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="35.0" prefWidth="560.0" spacing="10.0">
+                     <children>
+                        <Label prefHeight="17.0" prefWidth="101.0" text="Layout Mode:" />
+                        <RadioButton fx:id="radiobutton_layout_subtractive" mnemonicParsing="false" prefHeight="17.0" prefWidth="109.0" text="Subtractive">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="layout_mode" />
+                           </toggleGroup></RadioButton>
+                        <RadioButton fx:id="radiobutton_layout_full" mnemonicParsing="false" text="Full Layout" toggleGroup="$layout_mode" />
+                     </children>
+                  </HBox>
                   <Label text="Automatic Layout">
                      <font>
                         <Font name="System Bold" size="12.0" />
                      </font>
                   </Label>
-                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                  <HBox spacing="10.0">
                      <children>
                         <Label prefHeight="17.0" prefWidth="120.0" text="Brightness threshold:" />
-                        <Spinner fx:id="spinner_brightness_threshold" editable="true" />
-                        <Label text="\%" />
-                        <CheckBox fx:id="checkbox_preview_brightness_threshold" mnemonicParsing="false" text="Preview" />
+                        <Slider fx:id="slider_brightness_threshold" blockIncrement="1.0" prefHeight="14.0" prefWidth="410.0" showTickLabels="true" showTickMarks="true" />
                      </children>
                   </HBox>
-                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                  <HBox spacing="10.0">
                      <children>
                         <Label prefHeight="17.0" prefWidth="120.0" text="Smooth average:" />
-                        <Spinner fx:id="spinner_smooth_average" editable="true" />
-                        <Label text="\%" />
+                        <Slider fx:id="slider_smooth_average" blockIncrement="1.0" prefHeight="14.0" prefWidth="410.0" showTickLabels="true" showTickMarks="true" />
                      </children>
                   </HBox>
                   <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="276.0">
@@ -60,11 +90,6 @@
                               <Insets right="245.0" />
                            </HBox.margin>
                         </Button>
-                        <CheckBox fx:id="checkbox_preview_keyboard_layout" mnemonicParsing="false" text="Preview">
-                           <HBox.margin>
-                              <Insets />
-                           </HBox.margin>
-                        </CheckBox>
                      </children>
                   </HBox>
                   <Label fx:id="label_calculate_error" prefHeight="17.0" prefWidth="568.0" textFill="#c32e2e" />
