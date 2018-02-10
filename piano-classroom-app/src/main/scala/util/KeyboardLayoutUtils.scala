@@ -2,9 +2,11 @@ package util
 
 import java.awt.Color
 import java.awt.image.BufferedImage
+import java.io.{FileOutputStream, FileWriter}
 
 import com.sksamuel.scrimage.Image
 import com.sksamuel.scrimage.filter.ThresholdFilter
+import util.KeyboardLayoutUtils.LayoutMode.LayoutMode
 import util.MusicNote.MusicNote
 
 import scala.collection.mutable.ArrayBuffer
@@ -15,6 +17,11 @@ object KeyboardLayoutUtils {
   case class KeyHBoundingBox(key: KeyboardNote, left: Int, right: Int)
   case class KeyBoundingBox(key: KeyboardNote, left: Int, right: Int, top: Int, bottom: Int, mask: Option[Array[Array[Int]]] = None)
   case class KeyboardLayout(brightnessThreshold: Double, smoothAverage: Double, cutY: Int, layout: List[KeyBoundingBox])
+
+  object LayoutMode extends Enumeration {
+    type LayoutMode = Value
+    val Subtractive, FullLayout = Value
+  }
 
   def extractLayoutFromImage(
     src: BufferedImage,
@@ -45,15 +52,29 @@ object KeyboardLayoutUtils {
     KeyboardLayout(brightnessThreshold, smoothAverage, cutY, kbWithMask)
   }
 
-  def paintLayoutActiveNotes(img: BufferedImage, keyboardLayout: KeyboardLayout, activeNotes: List[KeyboardNote]): BufferedImage = {
+  def paintLayoutActiveNotes(
+    img: BufferedImage,
+    keyboardLayout: KeyboardLayout,
+    activeNotes: Map[KeyboardNote, NoteStatus],
+    mode: LayoutMode,
+    sensibility: Double
+  ): BufferedImage = {
     if(keyboardLayout != null) {
-      val c = new Color(100, 100, 255, 128)
-
       keyboardLayout
         .layout
-        .filter(kl => activeNotes.contains(kl.key))
+        .filter(kl => activeNotes.keys.toList.contains(kl.key))
         .foreach { k =>
-          paintNoteDifferential(img, img, k, c)
+          val c = activeNotes(k.key) match {
+            case NoteActive => new Color(112, 235, 255, 100)
+            case NoteSustained => new Color(171, 255, 112, 100)
+            case _ => new Color(255, 0, 0, 100)
+          }
+          mode match {
+            case LayoutMode.Subtractive =>
+              paintNoteDifferential(img, img, k, c, sensibility)
+            case LayoutMode.FullLayout =>
+              paintNoteFull(img, img, k, c)
+          }
         }
     }
     img
@@ -62,44 +83,90 @@ object KeyboardLayoutUtils {
   def paintFullLayout(
     src: BufferedImage,
     dst: BufferedImage,
-    keyboarLayout: KeyboardLayout
+    keyboarLayout: KeyboardLayout,
+    mode: LayoutMode,
+    sensibility: Double
   ): Unit = {
     keyboarLayout.layout.foreach { bound =>
-      paintNoteDifferential(
-        src = src,
-        dst = dst,
-        k = bound,
-        c = bound.key.note match {
-          case MusicNote.C => new Color(255, 0, 0, 128)
-//          case MusicNote.`C#-Db` => new Color(50, 0, 0, 128)
-          case MusicNote.D => new Color(0, 255, 0, 128)
-//          case MusicNote.`D#-Eb` => new Color(0, 50, 0, 128)
-          case MusicNote.E => new Color(0, 0, 255, 128)
-          case MusicNote.F => new Color(255, 255, 0, 128)
-//          case MusicNote.`F#-Gb` => new Color(50, 50, 0, 128)
-          case MusicNote.G => new Color(0, 255, 255, 128)
-//          case MusicNote.`G#-Ab` => new Color(0, 50, 50, 128)
-          case MusicNote.A => new Color(255, 0, 255, 128)
-//          case MusicNote.`A#-Bb` => new Color(50, 0, 50, 128)
-          case MusicNote.B => new Color(255, 255, 255, 128)
-          case _ => new Color(0, 0, 0, 0)
-        }
-      )
+      val c = bound.key.note match {
+        case MusicNote.C => new Color(255, 0, 0, 64)
+        case MusicNote.`C#-Db` => new Color(50, 0, 0, 64)
+        case MusicNote.D => new Color(0, 255, 0, 64)
+        case MusicNote.`D#-Eb` => new Color(0, 50, 0, 64)
+        case MusicNote.E => new Color(0, 0, 255, 64)
+        case MusicNote.F => new Color(255, 255, 0, 64)
+        case MusicNote.`F#-Gb` => new Color(50, 50, 0, 64)
+        case MusicNote.G => new Color(0, 255, 255, 64)
+        case MusicNote.`G#-Ab` => new Color(0, 50, 50, 64)
+        case MusicNote.A => new Color(255, 0, 255, 64)
+        case MusicNote.`A#-Bb` => new Color(50, 0, 50, 64)
+        case MusicNote.B => new Color(255, 255, 255, 64)
+        case _ => new Color(0, 0, 0, 0)
+      }
+      mode match {
+        case LayoutMode.Subtractive =>
+          paintNoteDifferential(src, dst, bound, c, sensibility)
+        case LayoutMode.FullLayout =>
+          paintNoteFull(src, dst, bound, c)
+      }
     }
   }
 
-  private def paintNoteDifferential(src: BufferedImage, dst: BufferedImage, k: KeyBoundingBox, c: Color) = {
+  private def add(c1: Int, c2: Int) = {
+    val a1 = (c1 >> 24 & 0xFF)/255.0
+    val a2 = (c2 >> 24 & 0xFF)/255.0
+
+    (0xFF << 24) |
+      (((c1 >> 16 & 0xFF)*a1 + (c2 >> 16 & 0xFF)*a2)/2).toInt << 16 |
+      (((c1 >> 8 & 0xFF)*a1 + (c2 >> 8 & 0xFF)*a2)/2).toInt << 8 |
+      (((c1 & 0xFF)*a1 + (c2 & 0xFF)*a2)/2).toInt
+  }
+
+  private def paintNoteDifferential(
+    src: BufferedImage,
+    dst: BufferedImage,
+    k: KeyBoundingBox,
+    c: Color,
+    sensibility: Double
+  ) = {
+    def awayFromGray(c: Int) = {
+      val r = c >> 16 & 0xFF
+      val g = c >> 8 & 0xFF
+      val b = c & 0xFF
+      val m = (r + g + b)/3
+      (Math.abs(r - m) + Math.abs(g - m) + Math.abs(b - m))/3
+    }
+
+    val grayDisplacementMargin = sensibility*128
+    val cRgb = c.getRGB
     k.mask.foreach { mask =>
       (k.left until k.right).foreach { x =>
         (k.top until k.bottom).foreach { y =>
           if (x > 0 && x < dst.getWidth && y > 0 && y < dst.getHeight) {
             val m = mask(x - k.left)(y - k.top)
-            if(m != -1) {
+            if(m != Int.MinValue) {
               val rgb = src.getRGB(x, y)
-              val grayScale = ((rgb >> 16 & 0xFF) + (rgb >> 8 & 0xFF) + (rgb & 0xFF)) / 3
-              if (Math.abs(grayScale - m) < 50) {
-                dst.setRGB(x, y, c.getRGB)
+              val afgRgb = awayFromGray(rgb)
+              val afgM = awayFromGray(m)
+              if (afgRgb > (afgM - grayDisplacementMargin/2) && afgRgb < (afgM + grayDisplacementMargin/2)) {
+                dst.setRGB(x, y, add(cRgb, rgb))
               }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private def paintNoteFull(src: BufferedImage, dst: BufferedImage, k: KeyBoundingBox, c: Color) = {
+    val cRgb = c.getRGB
+    k.mask.foreach { mask =>
+      (k.left until k.right).foreach { x =>
+        (k.top until k.bottom).foreach { y =>
+          if (x > 0 && x < dst.getWidth && y > 0 && y < dst.getHeight) {
+            val m = mask(x - k.left)(y - k.top)
+            if(m != Int.MinValue) {
+              dst.setRGB(x, y, add(cRgb, src.getRGB(x, y)))
             }
           }
         }
@@ -110,18 +177,17 @@ object KeyboardLayoutUtils {
   private def applyMask(img: Image, brightnessThreshold: Int, kb: List[KeyBoundingBox]) = {
     val binImage = img.filter(ThresholdFilter(brightnessThreshold))
     kb.map { k =>
-      val mask = ArrayBuffer.fill[Int](k.right - k.left + 1, k.bottom - k.top + 1)(-1)
+      val mask = ArrayBuffer.fill[Int](k.right - k.left + 1, k.bottom - k.top + 1)(Int.MinValue)
       (k.left to k.right).foreach {x =>
         (k.top to k.bottom).foreach { y =>
           if(x > 0 && x < binImage.width && y > 0 && y < binImage.height) {
             val binPixel = binImage.pixel(x, y)
             val grayScale = (binPixel.red + binPixel.blue + binPixel.green)/3
-            val srcPixel = img.pixel(x, y)
-            val srcGayScale = (srcPixel.red + srcPixel.blue + srcPixel.green)/3
+            val srcPixel = img.pixel(x, y).argb
             if (k.key.note.isUpperNote && grayScale < 200) {
-              mask(x - k.left)(y - k.top) = srcGayScale
+              mask(x - k.left)(y - k.top) = srcPixel
             } else if (!k.key.note.isUpperNote && grayScale > 200) {
-              mask(x - k.left)(y - k.top) = srcGayScale
+              mask(x - k.left)(y - k.top) = srcPixel
             }
           }
         }

@@ -329,6 +329,24 @@ package object context {
           case _ =>
         }
 
+        monitorSettings.`camera-settings`.`highlighter-subtractive` match {
+          case Some(highlighterSubtractive) =>
+            Context
+              .monitorModel
+              .monitorWebCamModel
+              .setHighlightSubtractive(highlighterSubtractive)
+          case _ =>
+        }
+
+        monitorSettings.`camera-settings`.`highlighter-subtractive-sensibility` match {
+          case Some(highlighterSubtractiveSensibility) =>
+            Context
+              .monitorModel
+              .monitorWebCamModel
+              .setHighlightSubtractiveSensibility(highlighterSubtractiveSensibility)
+          case _ =>
+        }
+
         monitorSettings.`camera-settings`.`keyboard-layout` match {
           case Some(keyboardLayout) =>
             Context

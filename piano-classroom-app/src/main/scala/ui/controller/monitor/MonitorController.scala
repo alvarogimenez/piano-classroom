@@ -200,6 +200,8 @@ trait MonitorController {  _ : ProjectSessionUpdating =>
           )),
           `sustain-active`= Some(Context.monitorModel.monitorWebCamModel.isSustainActive),
           `highlighter-enabled` = Some(Context.monitorModel.monitorWebCamModel.isHighlightEnabled),
+          `highlighter-subtractive` = Some(Context.monitorModel.monitorWebCamModel.isHighlightSubtractive),
+          `highlighter-subtractive-sensibility` = Some(Context.monitorModel.monitorWebCamModel.getHighlightSubtractiveSensibility),
           `keyboard-layout`= Option(Context.monitorModel.monitorWebCamModel.getKeyboardLayout).map { kl =>
             GlobalMonitorKeyboardLayout(
             `layout-data` = kl.layout.map { k =>

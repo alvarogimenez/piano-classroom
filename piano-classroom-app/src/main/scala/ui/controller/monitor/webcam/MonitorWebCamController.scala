@@ -1,11 +1,14 @@
 package ui.controller.monitor.webcam
 
+import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.io.File
 import java.lang.Boolean
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
 import javafx.application.Platform
-import javafx.beans.property.{ObjectProperty, SimpleBooleanProperty, SimpleListProperty, SimpleObjectProperty}
+import javafx.beans.binding.Bindings
+import javafx.beans.property._
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.beans.{InvalidationListener, Observable}
 import javafx.collections.ListChangeListener.Change
@@ -18,7 +21,7 @@ import javafx.fxml.{FXML, FXMLLoader}
 import javafx.geometry.VPos
 import javafx.scene.Scene
 import javafx.scene.canvas.{Canvas, GraphicsContext}
-import javafx.scene.control.{Button, CheckBox, ComboBox, ToggleButton}
+import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView, WritableImage}
 import javafx.scene.layout.{BorderPane, StackPane}
 import javafx.scene.paint.Color
@@ -35,9 +38,9 @@ import ui.controller.monitor._
 import ui.controller.monitor.highlighterConfiguration.{HighlighterConfigurationController, HighlighterConfigurationModel, _}
 import ui.controller.track.TrackModel
 import ui.controller.track.pianoRange.TrackSubscriber
-import util.KeyboardLayoutUtils.KeyboardLayout
+import util.KeyboardLayoutUtils.{KeyboardLayout, LayoutMode}
 import util.MusicNote.MusicNote
-import util.{KeyboardLayoutUtils, KeyboardNote}
+import util._
 
 import scala.collection.JavaConversions._
 
@@ -56,6 +59,8 @@ class MonitorWebCamModel {
   val displayNoteInFixedDo: SimpleBooleanProperty = new SimpleBooleanProperty()
   val sustain_visble: SimpleBooleanProperty = new SimpleBooleanProperty()
   val highlight_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
+  val highlight_subtractive: SimpleBooleanProperty = new SimpleBooleanProperty()
+  val highlight_subtractive_sensibility: DoubleProperty = new SimpleDoubleProperty()
   var keyboard_layout: ObjectProperty[KeyboardLayout] = new SimpleObjectProperty[KeyboardLayout]()
 
   def getSources: List[WebCamSource] = sources.get().toList
@@ -105,7 +110,15 @@ class MonitorWebCamModel {
   def isHighlightEnabled: Boolean = highlight_enabled.get
   def setHighlightEnabled(d: Boolean): Unit = highlight_enabled.set(d)
   def getHighlightEnabledProperty: SimpleBooleanProperty = highlight_enabled
-  
+
+  def isHighlightSubtractive: Boolean = highlight_subtractive.get
+  def setHighlightSubtractive(d: Boolean): Unit = highlight_subtractive.set(d)
+  def getHighlightSubtractiveProperty: SimpleBooleanProperty = highlight_subtractive
+
+  def getHighlightSubtractiveSensibility: Double = highlight_subtractive_sensibility.get
+  def setHighlightSubtractiveSensibility(h: Double): Unit = highlight_subtractive_sensibility.set(h)
+  def getHighlightSubtractiveSensibilityProperty: DoubleProperty = highlight_subtractive_sensibility
+
   def getKeyboardLayout: KeyboardLayout = keyboard_layout.get
   def setKeyboardLayout(b: KeyboardLayout): Unit = keyboard_layout.set(b)
   def getKeyboardLayoutProperty: ObjectProperty[KeyboardLayout] = keyboard_layout
@@ -154,14 +167,13 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
   @FXML var checkbox_sustain_visible: CheckBox = _
 
   @FXML var checkbox_key_highlighter_enabled: CheckBox = _
+  @FXML var checkbox_key_highlighter_subtractive: CheckBox = _
   @FXML var button_key_highlighter: Button = _
+  @FXML var slider_key_highlighter_sensibility: Slider = _
 
   var currentWebCamTask: Task[Unit] = _
   var _self = this
 
-  trait NoteStatus
-  case object NoteActive extends NoteStatus
-  case object NoteSustained extends NoteStatus
 
   @volatile var activeNotes: Map[KeyboardNote, NoteStatus] = Map.empty
   @volatile var sustainActive = false
@@ -178,15 +190,45 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
 
     checkbox_sustain_visible.selectedProperty().bindBidirectional(model.getSustainActiveProperty)
     checkbox_key_highlighter_enabled.selectedProperty().bindBidirectional(model.getHighlightEnabledProperty)
+    checkbox_key_highlighter_subtractive.selectedProperty().bindBidirectional(model.getHighlightSubtractiveProperty)
+    slider_key_highlighter_sensibility.valueProperty().bindBidirectional(model.getHighlightSubtractiveSensibilityProperty)
+    slider_key_highlighter_sensibility.disableProperty().bind(
+      Bindings.createBooleanBinding(
+        new Callable[Boolean] {
+          override def call() = {
+            !model.isHighlightEnabled || !model.isHighlightSubtractive
+          }
+        },
+        model.getHighlightEnabledProperty,
+        model.getHighlightSubtractiveProperty
+      )
+    )
+    checkbox_key_highlighter_subtractive.disableProperty().bind(
+      Bindings.createBooleanBinding(
+        new Callable[Boolean] {
+          override def call() = {
+            !model.isHighlightEnabled
+          }
+        },
+        model.getHighlightEnabledProperty
+      )
+    )
 
     button_key_highlighter.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent) = {
         val dialog = new Stage()
         val loader = new FXMLLoader()
         val _model = new HighlighterConfigurationModel()
-        val _controller = new HighlighterConfigurationController(dialog, _model)
-
         _model.getImageProperty.bind(model.getSourceRawImageProperty)
+        _model.setPreview(model.getSourceRawImage)
+        if(model.getKeyboardLayout != null) {
+          _model.setKeyboardLayout(model.getKeyboardLayout)
+          _model.setBrightnessThreshold(model.getKeyboardLayout.brightnessThreshold * 100)
+          _model.setSmoothAverage(model.getKeyboardLayout.smoothAverage * 100)
+          _model.setCutY(model.getKeyboardLayout.cutY)
+        }
+
+        val _controller = new HighlighterConfigurationController(dialog, _model)
         loader.setLocation(Thread.currentThread.getContextClassLoader.getResource("ui/view/dialogs/MonitorKeyboardLayout.fxml"))
         loader.setController(_controller)
 
@@ -202,25 +244,6 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
           parentController.updateProjectSession()
         }
       }
-    })
-
-    model.getDisplayNoteDisabledProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
-    })
-    model.getDisplayNoteInEnglishProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
-    })
-    model.getDisplayNoteInFixedDoProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
-    })
-    model.getSustainActiveProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
-    })
-    model.getHighlightEnabledProperty.addListener(new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
-    })
-    model.getKeyboardLayoutProperty.addListener(new ChangeListener[Any] {
-      override def changed(observable: ObservableValue[_ <: Any], oldValue: Any, newValue: Any) = parentController.updateProjectSession()
     })
 
     imageview_webcam.imageProperty().bind(model.getSourceImageProperty)
@@ -267,11 +290,35 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
         parentController.updateProjectSession()
       }
     })
+
+    model.getDisplayNoteDisabledProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getDisplayNoteInEnglishProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getDisplayNoteInFixedDoProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getSustainActiveProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getHighlightEnabledProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getHighlightSubtractiveProperty.addListener(new ChangeListener[Boolean] {
+      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = parentController.updateProjectSession()
+    })
+    model.getHighlightSubtractiveSensibilityProperty.addListener(new ChangeListener[Any] {
+      override def changed(observable: ObservableValue[_ <: Any], oldValue: Any, newValue: Any) = parentController.updateProjectSession()
+    })
+    model.getKeyboardLayoutProperty.addListener(new ChangeListener[Any] {
+      override def changed(observable: ObservableValue[_ <: Any], oldValue: Any, newValue: Any) = parentController.updateProjectSession()
+    })
   }
 
   def start() = {
     println(s"Starting WebCam with source '${model.getSelectedSource}'...")
-
     if(currentWebCamTask != null && currentWebCamTask.isRunning) {
       currentWebCamTask.cancel()
       currentWebCamTask.stateProperty.addListener(new ChangeListener[State] {
@@ -286,7 +333,6 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
 
   def stop() = {
     println(s"Stopping active WebCam...")
-
     if(currentWebCamTask != null && currentWebCamTask.isRunning) {
       currentWebCamTask.cancel()
     }
@@ -306,7 +352,10 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
     override def call(): Unit = {
       try {
         val cam = Webcam.getWebcams.get(index)
-        cam.open()
+        if(!cam.isOpen) {
+          cam.setViewSize(new Dimension(640, 480))
+          cam.open()
+        }
 
         val imageRef = new AtomicReference[WritableImage]()
         val rawImageRef = new AtomicReference[BufferedImage]()
@@ -321,7 +370,19 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
             if(model.isHighlightEnabled) {
               imageRef.set(
                 SwingFXUtils.toFXImage(
-                  KeyboardLayoutUtils.paintLayoutActiveNotes(img, model.getKeyboardLayout, activeNotes.keys.toList), imageRef.get())
+                  KeyboardLayoutUtils.paintLayoutActiveNotes(
+                    img = img,
+                    keyboardLayout = model.getKeyboardLayout,
+                    activeNotes = activeNotes,
+                    mode = if(model.isHighlightSubtractive) {
+                      LayoutMode.Subtractive
+                    } else {
+                      LayoutMode.FullLayout
+                    },
+                    sensibility = model.getHighlightSubtractiveSensibility / 100
+                  ),
+                  imageRef.get()
+                )
               )
             } else {
               imageRef.set(
@@ -448,7 +509,7 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
       activeNotes =
         activeNotes
           .map {
-            case (note, NoteActive) => note -> NoteSustained
+            case (note, NoteActive) if note == kn => note -> NoteSustained
             case (note, status) => note -> status
           }
     } else {

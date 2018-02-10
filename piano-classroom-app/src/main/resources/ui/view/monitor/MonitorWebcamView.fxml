@@ -6,6 +6,7 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.image.ImageView?>
@@ -26,7 +27,7 @@
                   <Canvas fx:id="canvas_overlay" />
                </children>
             </StackPane>
-            <AnchorPane maxWidth="400.0" minHeight="300.0" minWidth="400.0" prefWidth="400.0">
+            <AnchorPane maxWidth="400.0" minHeight="300.0" minWidth="400.0" prefHeight="354.0" prefWidth="400.0">
                <children>
                   <ToggleButton fx:id="toggle_note_display_no_display" layoutX="94.0" layoutY="45.0" mnemonicParsing="false" text="No display">
                      <toggleGroup>
@@ -55,7 +56,9 @@
                      </font>
                   </Label>
                   <CheckBox fx:id="checkbox_key_highlighter_enabled" layoutX="37.0" layoutY="207.0" mnemonicParsing="false" text="Highligh enabled" />
-                  <Button fx:id="button_key_highlighter" layoutX="37.0" layoutY="232.0" mnemonicParsing="false" text="Configure..." />
+                  <Button fx:id="button_key_highlighter" layoutX="37.0" layoutY="308.0" mnemonicParsing="false" text="Configure..." />
+                  <CheckBox fx:id="checkbox_key_highlighter_subtractive" layoutX="37.0" layoutY="236.0" mnemonicParsing="false" text="Subtractive highlighting" />
+                  <Slider fx:id="slider_key_highlighter_sensibility" blockIncrement="1.0" layoutX="38.0" layoutY="265.0" prefHeight="38.0" prefWidth="317.0" showTickLabels="true" showTickMarks="true" value="25.0" />
                </children>
             </AnchorPane>
          </children>
