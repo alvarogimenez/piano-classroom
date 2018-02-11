@@ -102,28 +102,28 @@ package object context {
   }
 
   def writeProjectSessionSettings(session: ProjectSessionContract): Unit = {
-    import Context._
-
-    Context.applicationSession.`global` match {
-      case Some(global) =>
-        global.`io` match {
-          case Some(io) =>
-            io.`last-opened-file` foreach { lastOpenedFile =>
-              if(!Context.updateProjectSessionDisabled) {
-                try {
-                  val w = new PrintWriter(new File(lastOpenedFile))
-                  w.write(toJson(session))
-                  w.close()
-                } catch {
-                  case e: Exception =>
-                    println(s"Error writing '$lastOpenedFile' file: '${e.getMessage}'")
-                }
-              }
-            }
-          case None =>
-        }
-      case None =>
+    if(!Context.updateProjectSessionDisabled) {
+      Context.projectSession.set(session)
+      Context.projectSessionDirty.set(true)
     }
+  }
+
+  def loadControllerDependantSettings(controller: MainStageController): Unit = {
+    Context.
+      applicationSession
+      .get()
+      .`global`
+      .foreach { globalSettings =>
+        // IO Configuration
+        globalSettings.`io` match {
+          case Some(ioSettings) =>
+            ioSettings.`last-opened-file`.foreach { lastOpenedFile =>
+              Context.projectSession.set(context.readProjectSession(Some(lastOpenedFile)))
+              context.loadProjectSession(controller)
+            }
+          case _ =>
+        }
+      }
   }
 
   def loadProjectSession(controller: MainStageController): Unit = {
@@ -137,6 +137,7 @@ package object context {
     Context.channelService.closeAndRemoveChannels()
 
     Context.projectSession
+      .get()
       .`save-state`
       .`tracks`
       .`channel-info`
@@ -194,6 +195,7 @@ package object context {
       }
 
     Context.projectSession
+      .get()
       .`save-state`
       .`mixer`
       .`bus-info`
@@ -234,6 +236,7 @@ package object context {
 
     Context.mixerModel.setMixerProfiles(
       Context.projectSession
+        .get()
         .`save-state`
         .`mixer`
         .`mixer-profiles`
@@ -261,6 +264,7 @@ package object context {
 
     // Monitor Configuration
     Context.projectSession
+      .get()
       .`save-state`
       .`monitor` match {
       case Some(monitorSettings) =>

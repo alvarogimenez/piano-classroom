@@ -48,11 +48,12 @@
                   </HBox>
                   <HBox alignment="CENTER_LEFT" prefHeight="35.0" prefWidth="560.0" spacing="10.0">
                      <children>
-                        <RadioButton fx:id="radiobutton_preview_original_image" mnemonicParsing="false" text="Original Image" />
-                        <RadioButton fx:id="radiobutton_preview_threshold_image" mnemonicParsing="false" text="Threshold Image">
+                        <RadioButton fx:id="radiobutton_preview_original_image" mnemonicParsing="false" text="Original Image">
                            <toggleGroup>
                               <ToggleGroup fx:id="visualization_group" />
-                           </toggleGroup></RadioButton>
+                           </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="radiobutton_preview_threshold_image" mnemonicParsing="false" text="Threshold Image"  toggleGroup="$visualization_group"/>
                         <RadioButton fx:id="radiobutton_preview_calculated_layout" mnemonicParsing="false" text="Calculated Layout" toggleGroup="$visualization_group" />
                      </children>
                   </HBox>

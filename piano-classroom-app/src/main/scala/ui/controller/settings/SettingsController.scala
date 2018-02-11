@@ -85,7 +85,7 @@ class SettingsModel {
         setSoundAsioDriver(null)
     }
 
-    setVstFolderPaths(Context.applicationSession.`vst-configuration`.`vst-source-directories`)
+    setVstFolderPaths(Context.applicationSession.get().`vst-configuration`.`vst-source-directories`)
   }
 }
 
@@ -211,7 +211,7 @@ class SettingsController(dialog: Stage) {
     }
 
     val sessionSettings =
-      Context.applicationSession
+      Context.applicationSession.get()
         .copy(
           `audio-configuration` = model.getSoundAsioDriver match {
             case null => None
@@ -232,7 +232,7 @@ class SettingsController(dialog: Stage) {
           `vst-source-directories` = model.getVstFolderPaths
         ))
 
-    Context.applicationSession = sessionSettings
+    Context.applicationSession.set(sessionSettings)
     context.writeApplicationSessionSettings(sessionSettings)
   }
 

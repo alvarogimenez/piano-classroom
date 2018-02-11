@@ -1,11 +1,14 @@
 package ui.controller.global
 
+import java.io.File
 import java.lang.Boolean
+import java.util.concurrent.Callable
+import javafx.beans.binding.Bindings
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
 import javafx.scene.Scene
-import javafx.scene.control.{Button, ToggleButton}
+import javafx.scene.control.{Button, Label, ProgressIndicator, ToggleButton}
 import javafx.scene.layout.BorderPane
 import javafx.stage.{Modality, Stage}
 
@@ -22,8 +25,23 @@ trait FooterController { _: TrackSetController =>
   @FXML var button_panic: Button = _
   @FXML var button_link_all: Button = _
   @FXML var button_reopen_devices: Button = _
+  @FXML var label_open_project: Label = _
+  @FXML var progress_saving: ProgressIndicator = _
 
   def initializeFooterController(mainController: MainStageController) = {
+    progress_saving.visibleProperty().bind(Context.projectSessionSaving)
+    label_open_project.textProperty().bind(Bindings.createStringBinding(new Callable[String] {
+      override def call() = {
+        Context
+          .applicationSession
+          .get()
+          .`global`
+          .flatMap(_.`io`.flatMap(_.`last-opened-file`))
+          .map(f => new File(f).getName)
+          .getOrElse("No file opened")
+      }
+    }, Context.applicationSession))
+
     button_test.selectedProperty().addListener(new ChangeListener[Boolean] {
       override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean) = {
         if (newValue) {

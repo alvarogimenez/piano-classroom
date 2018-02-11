@@ -42,22 +42,23 @@ trait MenuBarController {
         )
         val file = fc.showOpenDialog(Context.primaryStage)
         if(file != null) {
-          Context.projectSession = context.readProjectSession(Some(file.getAbsolutePath))
+          Context.projectSession.set(context.readProjectSession(Some(file.getAbsolutePath)))
           context.loadProjectSession(mainController)
 
           val ioConfiguration =
             Context
               .applicationSession
+              .get()
               .`global`
               .flatMap(_.`io`)
               .getOrElse(GlobalIoConfiguration())
               .copy(`last-opened-file` = Some(file.getAbsolutePath))
 
           context.writeApplicationSessionSettings(
-            Context.applicationSession.copy(
+            Context.applicationSession.get().copy(
               `global` =
                 Some(
-                  Context.applicationSession.`global`
+                  Context.applicationSession.get().`global`
                     .getOrElse(GlobalConfiguration())
                     .copy(`io` = Some(ioConfiguration))
                 )

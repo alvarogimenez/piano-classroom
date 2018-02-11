@@ -5,6 +5,7 @@ import ui.controller.global.{FooterController, MenuBarController, ProjectSession
 import ui.controller.mixer.MixerController
 import ui.controller.monitor.MonitorController
 import ui.controller.track._
+import context._
 
 class MainStageController
   extends MenuBarController
@@ -20,14 +21,14 @@ class MainStageController
     initializeTrackSetController(this)
     initializeMonitorController(this)
     initializeFooterController(this)
-    Context.loadControllerDependantSettings(this)
+    loadControllerDependantSettings(this)
   }
 
   override def updateProjectSession() = {
     context.writeProjectSessionSettings(
-      Context.projectSession.copy(
+      Context.projectSession.get().copy(
         `save-state` =
-          Context.projectSession.`save-state`.copy(
+          Context.projectSession.get().`save-state`.copy(
             `tracks`= getTrackSession(),
             `monitor`= Some(getMonitorSession()),
             `mixer`= getMixerSession()

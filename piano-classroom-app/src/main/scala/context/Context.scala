@@ -1,38 +1,38 @@
 package context
 
-import java.io.File
+import javafx.beans.property.{BooleanProperty, ObjectProperty, SimpleBooleanProperty, SimpleObjectProperty}
 import javafx.beans.{InvalidationListener, Observable}
-import javafx.scene.paint.Color
-import javafx.scene.shape.Rectangle
 import javafx.stage.Stage
 
+import io.autoSave.AutoSave
 import io.contracts._
-import org.json4s.{Formats, NoTypeHints}
 import org.json4s.native.Serialization
+import org.json4s.{Formats, NoTypeHints}
 import sound.audio.asio.AsioService
 import sound.audio.channel.ChannelService
 import sound.audio.mixer.{MixListener, MixerService}
 import sound.midi.MidiService
-import ui.controller.MainStageController
-import ui.controller.component.PaletteColorButton
 import ui.controller.mixer.MixerModel
-import ui.controller.monitor.drawboard.{CanvasData, CanvasLine, DrawBoardCanvasModel}
-import ui.controller.monitor.{MonitorModel, MonitorSource}
+import ui.controller.monitor.MonitorModel
 import ui.controller.track.TrackSetModel
 import ui.renderer.GlobalRenderer
-
-import scala.util.Try
 
 object Context {
   implicit val formats: Formats =
     Serialization.formats(NoTypeHints) +
       new GlobalMonitorDrawBoardSettingsCanvasShapeSerializer
 
-  var applicationSession: ApplicationSessionContract = readApplicationSession()
-  var projectSession: ProjectSessionContract =
-    readProjectSession(
-      source = applicationSession.`global`.flatMap(_.`io`.flatMap(_.`last-opened-file`))
-    )
+  val applicationSession: ObjectProperty[ApplicationSessionContract] = new SimpleObjectProperty[ApplicationSessionContract]()
+  val projectSession: ObjectProperty[ProjectSessionContract] =  new SimpleObjectProperty[ProjectSessionContract]()
+  val projectSessionDirty: BooleanProperty = new SimpleBooleanProperty()
+  val projectSessionSaving: BooleanProperty = new SimpleBooleanProperty()
+
+  applicationSession.set(readApplicationSession())
+  projectSession.set(readProjectSession(
+    source = applicationSession.get().`global`.flatMap(_.`io`.flatMap(_.`last-opened-file`))
+  ))
+  projectSessionDirty.set(false)
+  projectSessionSaving.set(false)
 
   val midiService = new MidiService()
   val channelService = new ChannelService()
@@ -45,6 +45,9 @@ object Context {
 
   val globalRenderer = new GlobalRenderer()
   globalRenderer.startThread()
+
+  val autoSave = new AutoSave()
+  autoSave.startThread()
 
   var primaryStage: Stage = _
 
@@ -65,7 +68,7 @@ object Context {
 
   midiService.attach()
 
-  applicationSession.`audio-configuration` match {
+  applicationSession.get().`audio-configuration` match {
     case Some(audioConfiguration) =>
       if(asioService.listDriverNames().contains(audioConfiguration.`driver-name`)) {
         println(s"Initialize ASIo Driver '${audioConfiguration.`driver-name`}' from Session Configuration")
@@ -104,22 +107,6 @@ object Context {
       }
     case _ =>
       println(s"No ASIO Driver found on configuration. Skiping ASIO Driver initialization phase")
-  }
-
-  def loadControllerDependantSettings(controller: MainStageController): Unit = {
-    applicationSession
-      .`global`
-      .foreach { globalSettings =>
-        // IO Configuration
-        globalSettings.`io` match {
-          case Some(ioSettings) =>
-            ioSettings.`last-opened-file`.foreach { lastOpenedFile =>
-              Context.projectSession = context.readProjectSession(Some(lastOpenedFile))
-              context.loadProjectSession(controller)
-            }
-          case _ =>
-        }
-      }
   }
 }
 
