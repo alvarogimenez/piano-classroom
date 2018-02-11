@@ -15,7 +15,34 @@ case class SaveState(
  * Tracks
  */
 case class SaveTracks(
-  `channel-info`: List[SaveChannelInfo]
+  `channel-info`: List[SaveChannelInfo],
+  `channel-profiles`: List[SaveChannelProfile]
+)
+
+case class SaveChannelProfile(
+  `name`: String,
+  `color`: String,
+  `channel-profiles`: List[SaveChannelProfileInfo]
+)
+
+case class SaveChannelProfileInfo(
+  `id`: String,
+  `midi-input`: Option[SaveChannelProfileMidiInput],
+  `vst-input`: Option[SaveChannelProfileVstInput],
+  `vst-properties`: Option[Map[String, Double]],
+  `piano-enabled`: Boolean,
+  `piano-roll-enabled`: Boolean,
+  `piano-range-start`: SavePianoRange,
+  `piano-range-end`: SavePianoRange
+)
+
+case class SaveChannelProfileMidiInput(
+  `name`: String
+)
+
+case class SaveChannelProfileVstInput(
+  `name`: String,
+  `path`: String
 )
 
 case class SaveChannelInfo(

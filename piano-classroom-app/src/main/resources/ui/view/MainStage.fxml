@@ -65,12 +65,41 @@
                 <Tab text="Tracks">
                <content>
                   <BorderPane>
+                      <top>
+                          <BorderPane maxHeight="30.0" prefHeight="30.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                              <right>
+                                  <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+                                      <children>
+                                          <Button fx:id="button_add_track_profile" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-graphic: url('assets/icon/Add.png')" />
+                                      </children>
+                                      <BorderPane.margin>
+                                          <Insets left="2.0" right="2.0" />
+                                      </BorderPane.margin>
+                                  </HBox>
+                              </right>
+                              <center>
+                                  <ScrollPane fx:id="scrollpane_track_profiles" hbarPolicy="NEVER" maxHeight="35.0" minHeight="35.0" pannable="true" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+                                      <content>
+                                          <HBox fx:id="hbox_track_profiles" alignment="TOP_CENTER" maxHeight="30.0" minHeight="30.0" prefHeight="30.0" spacing="10.0">
+                                              <padding>
+                                                  <Insets left="10.0" right="10.0" top="4.0" />
+                                              </padding>
+                                          </HBox>
+                                      </content>
+                                  </ScrollPane>
+                              </center>
+                          </BorderPane>
+                      </top>
                      <center>
-                        <VBox fx:id="tracks" alignment="TOP_CENTER" spacing="10.0" />
+                        <BorderPane>
+                           <center>
+                              <VBox fx:id="tracks" alignment="TOP_CENTER" spacing="10.0" />
+                           </center>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </BorderPane>
                      </center>
-                     <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </padding>
                   </BorderPane>
                </content>
                 </Tab>

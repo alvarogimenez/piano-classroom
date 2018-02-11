@@ -5,10 +5,11 @@ import javafx.scene.shape.Rectangle
 import io.contracts._
 import io.{fromJson, toJson}
 import sound.audio.channel.MidiChannel
+import sound.midi.{MidiInterfaceIdentifier, MidiVstSource}
 import ui.controller.MainStageController
 import ui.controller.component.PaletteColorButton
 import ui.controller.mixer._
-import ui.controller.monitor.MonitorSource
+import ui.controller.monitor.{MonitorSource, TrackProfile, TrackProfileInfo}
 import ui.controller.monitor.drawboard.{CanvasData, CanvasLine, DrawBoardCanvasModel}
 import ui.controller.track.TrackModel
 import util.KeyboardLayoutUtils.{KeyBoundingBox, KeyboardLayout}
@@ -73,7 +74,8 @@ package object context {
           `version`= "1.0.0",
           `save-state` = SaveState(
             `tracks` = SaveTracks(
-              `channel-info` = List.empty
+              `channel-info` = List.empty,
+              `channel-profiles` = List.empty
             ),
             `mixer` = SaveMixer(
               `bus-info` = List.empty,
@@ -193,6 +195,47 @@ package object context {
           )
         )
       }
+
+    Context.trackSetModel.setTrackProfiles(
+      Context.projectSession
+        .get()
+        .`save-state`
+        .`tracks`
+        .`channel-profiles`
+        .map { channelProfile =>
+          TrackProfile(
+            name = channelProfile.`name`,
+            color = Color.web(channelProfile.`color`),
+            tracks = channelProfile.`channel-profiles`.map { channelProfileInfo =>
+              TrackProfileInfo(
+                id = channelProfileInfo.id,
+                midiInput = channelProfileInfo.`midi-input`.map {channelProfileInfoMidiInput =>
+                  MidiInterfaceIdentifier(
+                    name = channelProfileInfoMidiInput.`name`
+                  )
+                },
+                vstInput = channelProfileInfo.`vst-input`.map { channelProfileInfoVstInput =>
+                  MidiVstSource(
+                    path = channelProfileInfoVstInput.`path`,
+                    name = channelProfileInfoVstInput.`name`
+                  )
+                },
+                vstProperties = channelProfileInfo.`vst-properties`,
+                pianoEnabled = channelProfileInfo.`piano-enabled`,
+                pianoRollEnabled = channelProfileInfo.`piano-roll-enabled`,
+                pianoRangeStart = KeyboardNote(
+                  note = MusicNote.withName(channelProfileInfo.`piano-range-start`.`note`),
+                  index = channelProfileInfo.`piano-range-start`.index
+                ),
+                pianoRangeEnd = KeyboardNote(
+                  note = MusicNote.withName(channelProfileInfo.`piano-range-end`.`note`),
+                  index = channelProfileInfo.`piano-range-end`.index
+                )
+              )
+            }
+          )
+        }
+    )
 
     Context.projectSession
       .get()
