@@ -284,6 +284,7 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
     model.getTrackNoteSelectedSourceProperty.addListener(new ChangeListener[ChannelSource] {
       override def changed(observable: ObservableValue[_ <: ChannelSource], oldValue: ChannelSource, newValue: ChannelSource) = {
         Context.trackSetModel.getTrackSet.foreach(_.removeTrackSubscriber(_self))
+        activeNotes = Map.empty
         if(newValue != null) {
           Context.trackSetModel.getTrackSet.find(_.channel.id == newValue.id).foreach(_.addTrackSubscriber(_self))
         }

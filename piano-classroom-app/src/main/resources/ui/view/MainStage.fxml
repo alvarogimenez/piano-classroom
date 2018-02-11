@@ -8,6 +8,7 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
@@ -21,7 +22,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="700" minWidth="600" prefHeight="700.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.controller.MainStageController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600" minWidth="600" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.controller.MainStageController">
     <top>
         <MenuBar BorderPane.alignment="CENTER">
             <menus>
@@ -201,6 +202,7 @@
          <right>
             <HBox alignment="CENTER_RIGHT" prefHeight="40.0" spacing="4.0" BorderPane.alignment="CENTER">
                <children>
+                  <Separator orientation="VERTICAL" prefHeight="200.0" />
                   <Button fx:id="button_reopen_devices" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/Connection.png')" text="" />
                   <Button fx:id="button_link_all" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/LinkAll.png')" text="" />
                   <ToggleButton fx:id="button_test" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/Test.png')" text="" />
@@ -217,13 +219,18 @@
             </HBox>
          </right>
          <left>
-            <HBox alignment="CENTER_LEFT" prefHeight="40.0" prefWidth="200.0" spacing="4.0" BorderPane.alignment="CENTER">
+            <HBox alignment="CENTER_LEFT" prefHeight="40.0" prefWidth="359.0" spacing="4.0" BorderPane.alignment="CENTER">
                <padding>
                   <Insets bottom="4.0" left="10.0" right="4.0" top="4.0" />
                </padding>
                <children>
-                  <Label fx:id="label_open_project" text="ProjectName.json" />
-                  <ProgressIndicator fx:id="progress_saving" maxHeight="20.0" maxWidth="20.0" prefHeight="20.0" prefWidth="20.0" />
+                  <Label fx:id="label_open_project" maxWidth="130.0" minWidth="130.0" prefHeight="17.0" prefWidth="130.0" text="ProjectName.json" />
+                  <ProgressIndicator fx:id="progress_saving" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0" />
+                  <Separator orientation="VERTICAL" prefHeight="200.0" />
+                  <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/PencilSmall.png')" />
+                  <Button contentDisplay="RIGHT" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/CameraSmall.png')" textAlignment="RIGHT" />
+                  <Button disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/BoardSmall.png')" />
+                  <Button disable="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="30.0" style="-fx-graphic: url('assets/icon/MusicSmall.png')" />
                </children>
             </HBox>
          </left>

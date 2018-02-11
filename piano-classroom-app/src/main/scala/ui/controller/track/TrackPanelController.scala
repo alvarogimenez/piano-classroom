@@ -128,6 +128,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
   @FXML var button_show_piano: ToggleButton = _
   @FXML var button_show_piano_roll: ToggleButton = _
   @FXML var button_piano_range: Button = _
+  @FXML var button_become_source: Button = _
   @FXML var panel_track_main: BorderPane = _
   @FXML var combobox_midi_input: ComboBox[MidiInterfaceIdentifier] = _
   @FXML var combobox_vst_input: ComboBox[MidiVstSource] = _
@@ -229,6 +230,14 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
 
   def initialize(): Unit = {
     Context.globalRenderer.addSlave(keyboard)
+
+    button_become_source.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = {
+        Context.monitorModel.monitorWebCamModel.getTrackNoteSources.find(s => s != null && s.id == model.channel.id).foreach { source =>
+          Context.monitorModel.monitorWebCamModel.setTrackNoteSelectedSource(source)
+        }
+      }
+    })
 
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
