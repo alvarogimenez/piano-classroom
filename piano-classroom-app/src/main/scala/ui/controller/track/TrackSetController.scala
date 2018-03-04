@@ -144,7 +144,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
               color = new Color(r.nextDouble(), r.nextDouble(), r.nextDouble(), 1).desaturate(),
               tracks = Context.trackSetModel.getTrackSet.map { trackModel =>
                 TrackProfileInfo(
-                  id = trackModel.channel.id,
+                  id = trackModel.channel.getId,
                   midiInput = Option(trackModel.getSelectedMidiInterface),
                   vstInput = Option(trackModel.getSelectedMidiVst),
                   vstProperties = extractProperties(trackModel),
@@ -178,7 +178,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
 
   def applyProfile(p: TrackProfile): Unit = {
     p.tracks.foreach { trackProfileInfo =>
-      Context.trackSetModel.getTrackSet.find(_.channel.id == trackProfileInfo.id).foreach { trackModel =>
+      Context.trackSetModel.getTrackSet.find(_.channel.getId == trackProfileInfo.id).foreach { trackModel =>
         trackProfileInfo.midiInput.foreach { profileMidiInput =>
           if(trackModel.getMidiInterfaceNames.contains(profileMidiInput)) {
             trackModel.setSelectedMidiInterface(profileMidiInput)
@@ -191,7 +191,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
         }
         trackProfileInfo.vstProperties.foreach { profileVstProperties =>
           profileVstProperties.foreach { case (key, value) =>
-            trackModel.channel.vstPlugin.flatMap(_.vst).foreach { vst =>
+            trackModel.channel.getVstPlugin.flatMap(_.vst).foreach { vst =>
               vst.setParameter(key.toInt, value.toFloat)
             }
           }
@@ -208,7 +208,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
     SaveTracks(
       `channel-info` = Context.trackSetModel.getTrackSet.map { track =>
         SaveChannelInfo(
-          `id` = track.channel.id,
+          `id` = track.channel.getId,
           `name` = track.getTrackName,
           `midi-input` = Option(track.getSelectedMidiInterface).map(_.name),
           `vst-i` = Option(track.getSelectedMidiVst).map(_.path),
@@ -261,7 +261,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
     )
 
   private def extractProperties(t: TrackModel) = {
-    t.channel.vstPlugin.flatMap { vst =>
+    t.channel.getVstPlugin.flatMap { vst =>
       vst.vst.map { v =>
         val n = v.numParameters()
         (0 until n).map { pIndex =>

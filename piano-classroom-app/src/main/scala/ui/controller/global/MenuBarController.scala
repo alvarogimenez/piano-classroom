@@ -87,12 +87,13 @@ trait MenuBarController {
 
     menu_edit_add_midi_channel.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
-        val midiChannel = new MidiChannel(UUID.randomUUID().toString)
+        val id = UUID.randomUUID().toString
+        val midiChannel = new MidiChannel(id, s"Track ${id.take(4)}")
         val model = new TrackModel(midiChannel)
-        model.setTrackName(s"Track ${midiChannel.id.take(4)}")
+        model.getTrackNameProperty.bindBidirectional(midiChannel.getNameProperty)
         model.initFromContext()
-        Context.channelService.addChannel(midiChannel)
         Context.trackSetModel.addTrack(model)
+        Context.channelService.addChannel(midiChannel)
       }
     })
   }

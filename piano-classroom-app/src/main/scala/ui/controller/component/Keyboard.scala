@@ -12,12 +12,12 @@ import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 
 import com.sun.javafx.geom.Rectangle
-import ui.controller.track.pianoRange.TrackSubscriber
+import ui.controller.track.pianoRange.MidiEventSubscriber
 import ui.renderer.RendererSlave
 import util.MusicNote.MusicNote
 import util.{KeyboardNote, MusicNote}
 
-class Keyboard extends Pane with TrackSubscriber with RendererSlave {
+class Keyboard extends Pane with MidiEventSubscriber with RendererSlave {
   val piano_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val piano_roll_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val start_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()

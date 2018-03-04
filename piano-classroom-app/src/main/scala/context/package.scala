@@ -146,13 +146,13 @@ package object context {
       .foreach { channelInfo =>
         println(s"Creating channel '${channelInfo.`name`}' with id '${channelInfo.`id`}'")
 
-        val midiChannel = new MidiChannel(channelInfo.`id`)
+        val midiChannel = new MidiChannel(channelInfo.`id`, channelInfo.`name`)
         val model = new TrackModel(midiChannel)
 
         Context.channelService.addChannel(midiChannel)
         Context.trackSetModel.addTrack(model)
 
-        model.setTrackName(channelInfo.`name`)
+        model.getTrackNameProperty.bindBidirectional(midiChannel.getNameProperty)
         model.initFromContext()
         channelInfo.`midi-input`.foreach { midiInput =>
           model.getMidiInterfaceNames.find(i => i!= null && i.name == midiInput) match {
@@ -172,7 +172,7 @@ package object context {
 
         channelInfo.`vst-properties`.foreach { vstProperties =>
           vstProperties.foreach { case (key, value) =>
-            midiChannel.vstPlugin.flatMap(_.vst).foreach { vst =>
+            midiChannel.getVstPlugin.flatMap(_.vst).foreach { vst =>
               vst.setParameter(key.toInt, value.toFloat)
             }
           }
@@ -251,9 +251,9 @@ package object context {
           val busChannelModel = new BusChannelModel(busMix.`channel-id`)
           busChannelModel.setChannelAttenuation(busMix.`level`.getOrElse(Double.NegativeInfinity))
           println(s"Set channel mix ${busMix.`level`.getOrElse(Double.NegativeInfinity)} to bus ${busMix.`channel-id`}")
-          Context.trackSetModel.getTrackSet.find(_.channel.id == busMix.`channel-id`) match {
+          Context.channelService.getChannels.find(_.getId == busMix.`channel-id`) match {
             case Some(channelModel) =>
-              busChannelModel.getChannelNameProperty.bind(channelModel.getTrackNameProperty)
+              busChannelModel.getChannelNameProperty.bind(channelModel.getNameProperty)
             case _ =>
               throw new Exception(s"Reference to non-existing channel '${busMix.`channel-id`}' in Bus '${busInfo.`bus`}")
           }

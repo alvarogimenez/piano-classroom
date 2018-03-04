@@ -1,30 +1,27 @@
 package ui.controller.mixer
 
-import javafx.beans.{InvalidationListener, Observable}
 import javafx.beans.property.SimpleListProperty
-import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.beans.{InvalidationListener, Observable}
 import javafx.collections.ListChangeListener.Change
 import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
 import javafx.event.{ActionEvent, Event, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
-import javafx.scene.{Group, Scene}
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control._
 import javafx.scene.image.ImageView
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{BorderPane, HBox}
 import javafx.scene.paint.Color
+import javafx.scene.{Group, Scene}
 import javafx.stage.{Modality, Stage}
 
 import context.Context
 import io.contracts._
-import sound.audio.mixer.{BusMix, ChannelMix}
-import ui.controller.{MainStageController, global}
+import sound.audio.channel.Channel
+import sound.audio.mixer.BusMix
 import ui.controller.component.ProfileButton
 import ui.controller.global.ProjectSessionUpdating
-import ui.controller.global.profileSave.{ProfileSaveAction, ProfileSaveController, ProfileSaveModel}
-import ui.controller.monitor.drawboard.CanvasLine
-import ui.controller.track.TrackModel
+import ui.controller.{MainStageController, global}
 
 import scala.collection.JavaConversions._
 import scala.util.Random
@@ -79,20 +76,20 @@ class MixerModel {
           c.getAddedSubList
             .foreach { busMixModel =>
               // When a new channel is created or removed, notify the BusMixModel with the changes
-              Context.trackSetModel.getTrackSetProperty.addListener(new ListChangeListener[TrackModel] {
-                override def onChanged(c: Change[_ <: TrackModel]) = {
+              Context.channelService.getChannelsProperty.addListener(new ListChangeListener[Channel] {
+                override def onChanged(c: Change[_ <: Channel]) = {
                   while(c.next()) {
                     if (c.getAddedSize != 0) {
                       c.getAddedSubList
-                        .foreach { trackModel =>
-                          val busChannelModel = new BusChannelModel(trackModel.channel.id)
-                          busChannelModel.getChannelNameProperty.bind(trackModel.getTrackNameProperty)
+                        .foreach { channel =>
+                          val busChannelModel = new BusChannelModel(channel.getId)
+                          busChannelModel.getChannelNameProperty.bind(channel.getNameProperty)
                           busMixModel.addBusChannel(busChannelModel)
                         }
                     } else if (c.getRemovedSize != 0) {
                       c.getRemoved
-                        .foreach { trackModel =>
-                          busMixModel.getBusChannels.find(_.id == trackModel.channel.id).foreach(busMixModel.removeBusChannel)
+                        .foreach { channel =>
+                          busMixModel.getBusChannels.find(_.id == channel.getId).foreach(busMixModel.removeBusChannel)
                         }
                     }
                   }
@@ -141,9 +138,9 @@ trait MixerController { _ : ProjectSessionUpdating =>
           val model = new BusMixModel(result.get())
           Context.mixerModel.addBusMix(model)
 
-          model.setBusChannels(Context.trackSetModel.getTrackSet.map { t =>
-            val busChannelModel = new BusChannelModel(t.channel.id)
-            busChannelModel.getChannelNameProperty.bind(t.getTrackNameProperty)
+          model.setBusChannels(Context.channelService.getChannels.map { c =>
+            val busChannelModel = new BusChannelModel(c.getId)
+            busChannelModel.getChannelNameProperty.bind(c.getNameProperty)
             busChannelModel
           })
         }

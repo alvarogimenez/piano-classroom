@@ -2,7 +2,6 @@ package ui.controller.monitor.webcam
 
 import java.awt.Dimension
 import java.awt.image.BufferedImage
-import java.io.File
 import java.lang.Boolean
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicReference
@@ -30,14 +29,13 @@ import javafx.scene.text.{Font, TextAlignment}
 import javafx.stage.{Modality, Stage}
 
 import com.github.sarxos.webcam.Webcam
-import com.sksamuel.scrimage
 import com.sun.javafx.tk.Toolkit
 import context.Context
+import sound.audio.channel.{Channel, MidiChannel}
 import ui.controller.global.ProjectSessionUpdating
 import ui.controller.monitor._
 import ui.controller.monitor.highlighterConfiguration.{HighlighterConfigurationController, HighlighterConfigurationModel, _}
-import ui.controller.track.TrackModel
-import ui.controller.track.pianoRange.TrackSubscriber
+import ui.controller.track.pianoRange.MidiEventSubscriber
 import util.KeyboardLayoutUtils.{KeyboardLayout, LayoutMode}
 import util.MusicNote.MusicNote
 import util._
@@ -126,14 +124,14 @@ class MonitorWebCamModel {
   setDisplayNoteDisabled(true)
   setTrackNoteSources(List(null))
 
-  Context.trackSetModel.getTrackSetProperty.addListener(new ListChangeListener[TrackModel] {
-    override def onChanged(c: Change[_ <: TrackModel]) = {
+  Context.channelService.getChannelsProperty.addListener(new ListChangeListener[Channel] {
+    override def onChanged(c: Change[_ <: Channel]) = {
       while (c.next()) {
         if (c.getAddedSize != 0) {
           c.getAddedSubList
-            .foreach { trackModel =>
+            .foreach { channel =>
               recreateSourcesFromModel()
-              trackModel.getTrackNameProperty.addListener(new InvalidationListener {
+              channel.getNameProperty.addListener(new InvalidationListener {
                 override def invalidated(observable: Observable) = {
                   recreateSourcesFromModel()
                 }
@@ -141,7 +139,7 @@ class MonitorWebCamModel {
             }
         } else if (c.getRemovedSize != 0) {
           c.getRemoved
-            .map { trackModel =>
+            .map { channel =>
               recreateSourcesFromModel()
             }
         }
@@ -150,11 +148,11 @@ class MonitorWebCamModel {
   })
 
   def recreateSourcesFromModel() = {
-    setTrackNoteSources(List(null) ++ Context.trackSetModel.getTrackSet.map(t => ChannelSource(t.getTrackName, t.channel.id)))
+    setTrackNoteSources(List(null) ++ Context.channelService.getChannels.map(c => ChannelSource(c.getName, c.getId)))
   }
 }
 
-class MonitorWebCamController(parentController: ProjectSessionUpdating, model: MonitorWebCamModel) extends TrackSubscriber {
+class MonitorWebCamController(parentController: ProjectSessionUpdating, model: MonitorWebCamModel) extends MidiEventSubscriber {
   @FXML var stackpane: StackPane = _
   @FXML var imageview_webcam: ImageView = _
   @FXML var canvas_overlay: Canvas = _
@@ -283,10 +281,25 @@ class MonitorWebCamController(parentController: ProjectSessionUpdating, model: M
 
     model.getTrackNoteSelectedSourceProperty.addListener(new ChangeListener[ChannelSource] {
       override def changed(observable: ObservableValue[_ <: ChannelSource], oldValue: ChannelSource, newValue: ChannelSource) = {
-        Context.trackSetModel.getTrackSet.foreach(_.removeTrackSubscriber(_self))
+        Context
+          .channelService
+          .getChannels
+          .find(_.getId == newValue.id)
+          .collect {
+            case channel: MidiChannel => channel
+          }
+          .foreach(_.removeMidiSubscriber(_self))
+
         activeNotes = Map.empty
         if(newValue != null) {
-          Context.trackSetModel.getTrackSet.find(_.channel.id == newValue.id).foreach(_.addTrackSubscriber(_self))
+          Context
+            .channelService
+            .getChannels
+            .find(_.getId == newValue.id)
+            .collect {
+              case channel: MidiChannel => channel
+            }
+            .foreach(_.addMidiSubscriber(_self))
         }
         parentController.updateProjectSession()
       }

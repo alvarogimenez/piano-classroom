@@ -2,9 +2,9 @@ package ui.controller.track
 
 import java.io.File
 import java.lang.Boolean
-import javafx.beans.{InvalidationListener, Observable}
 import javafx.beans.property._
 import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.beans.{InvalidationListener, Observable}
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
@@ -13,18 +13,16 @@ import javafx.scene.control._
 import javafx.scene.input.ContextMenuEvent
 import javafx.scene.layout.BorderPane
 import javafx.stage.{Modality, Stage}
-import javax.sound.midi.{MidiMessage, ShortMessage}
+import javax.sound.midi.ShortMessage
 
 import context.Context
 import sound.audio.channel.MidiChannel
-import sound.midi.{MidiInterfaceIdentifier, MidiListener, MidiSubscriber, MidiVstSource}
+import sound.midi.{MidiInterfaceIdentifier, MidiVstSource}
 import ui.controller.component.Keyboard
-import ui.controller.track.pianoRange.{PianoRangeController, PianoRangeModel}
-import util.{KeyboardNote, MusicNote}
-import pianoRange._
-import midiLink._
 import ui.controller.global.ProjectSessionUpdating
-import ui.controller.track.midiLink.{MidiLinkController, MidiLinkModel}
+import ui.controller.track.midiLink.{MidiLinkController, MidiLinkModel, _}
+import ui.controller.track.pianoRange.{PianoRangeController, PianoRangeModel, _}
+import util.{KeyboardNote, MidiData, MusicNote}
 
 import scala.collection.JavaConversions._
 
@@ -32,8 +30,6 @@ class TrackModel(val channel: MidiChannel) {
   final val DEFAULT_TRACK_HEIGHT = 90
   final val PIANO_ROLL_DEFAULT_HEIGHT = 160
   final val PIANO_DEFAULT_HEIGHT = 90
-
-  var track_subscribers: List[TrackSubscriber] = List.empty
 
   var track_name = new SimpleStringProperty()
   val midi_interface_names_ol: ObservableList[MidiInterfaceIdentifier] = FXCollections.observableArrayList[MidiInterfaceIdentifier]
@@ -47,10 +43,6 @@ class TrackModel(val channel: MidiChannel) {
   val track_piano_roll_enabled: SimpleBooleanProperty = new SimpleBooleanProperty()
   val track_piano_start_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()
   val track_piano_end_note: SimpleObjectProperty[KeyboardNote] = new SimpleObjectProperty[KeyboardNote]()
-
-  def addTrackSubscriber(s: TrackSubscriber): Unit = track_subscribers = track_subscribers.+:(s)
-  def removeTrackSubscriber(s: TrackSubscriber): Unit = track_subscribers = track_subscribers.filterNot(_ == s)
-  def clearTrackSubscribers(): Unit = track_subscribers = List.empty
 
   def getTrackName: String = track_name.get
   def setTrackName(t: String): Unit = track_name.set(t)
@@ -119,7 +111,6 @@ class TrackModel(val channel: MidiChannel) {
 }
 
 class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel, model: TrackModel) extends BorderPane {
-  final val SUSTAIN_DAMPER_MIDI_DATA = 0x40
 
   val keyboard = new Keyboard()
   @FXML var button_link_midi: Button = _
@@ -134,7 +125,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
   @FXML var combobox_vst_input: ComboBox[MidiVstSource] = _
   @FXML var label_track_name: Label = _
 
-  model.addTrackSubscriber(keyboard)
+  channel.addMidiSubscriber(keyboard)
 
   val loader = new FXMLLoader()
   loader.setController(this)
@@ -152,7 +143,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
       val contextMenu_change_name = new MenuItem("Change name")
       contextMenu_change_name.setOnAction(new EventHandler[ActionEvent] {
         override def handle(event: ActionEvent): Unit = {
-          println(s"Change name button pressed on Track (${channel.id})")
+          println(s"Change name button pressed on Track (${channel.getId})")
           val dialog = new TextInputDialog("walter")
           dialog.setTitle("Text Input Dialog")
           dialog.setHeaderText("Look, a Text Input Dialog")
@@ -171,7 +162,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
       val contextMenu_delete = new MenuItem("Delete")
       contextMenu_delete.setOnAction(new EventHandler[ActionEvent] {
         override def handle(event: ActionEvent): Unit = {
-          println(s"Delete name button pressed on Track (${channel.id})")
+          println(s"Delete name button pressed on Track (${channel.getId})")
           parentController.updateProjectSession()
         }
       })
@@ -194,7 +185,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
         val msg = new ShortMessage(ShortMessage.NOTE_OFF, note, 0x00)
         channel.queueMidiMessage(msg)
       }
-    val msg = new ShortMessage(ShortMessage.CONTROL_CHANGE, SUSTAIN_DAMPER_MIDI_DATA, 0x00)
+    val msg = new ShortMessage(ShortMessage.CONTROL_CHANGE, MidiData.SUSTAIN_DAMPER_MIDI_DATA, 0x00)
     channel.queueMidiMessage(msg)
   }
 
@@ -233,7 +224,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
 
     button_become_source.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
-        Context.monitorModel.monitorWebCamModel.getTrackNoteSources.find(s => s != null && s.id == model.channel.id).foreach { source =>
+        Context.monitorModel.monitorWebCamModel.getTrackNoteSources.find(s => s != null && s.id == model.channel.getId).foreach { source =>
           Context.monitorModel.monitorWebCamModel.setTrackNoteSelectedSource(source)
         }
       }
@@ -241,14 +232,14 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
 
     button_link_midi.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
-        println(s"Link button pressed on Track (${channel.id})")
+        println(s"Link button pressed on Track (${channel.getId})")
         linkMidiDeviceModal()
       }
     })
 
     button_open_vst_settings.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
-        channel.vstPlugin.foreach(_.openPluginEditor(model.getTrackName))
+        channel.getVstPlugin.foreach(_.openPluginEditor(model.getTrackName))
         parentController.updateProjectSession()
       }
     })
@@ -309,28 +300,8 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
       override def changed(observable: ObservableValue[_ <: MidiInterfaceIdentifier], oldValue: MidiInterfaceIdentifier, newValue: MidiInterfaceIdentifier): Unit = {
         println(s"Midi Input changed from $oldValue to $newValue")
         if(newValue != null) {
-          Context.midiService.unsubscribeOfAllInterfaces(channel.id)
-          Context.midiService.addMidiSubscriber(newValue, MidiSubscriber(channel.id, new MidiListener() {
-            override def midiReceived(msg: MidiMessage, timeStamp: Long, sourceId: MidiInterfaceIdentifier): Unit = {
-              msg match {
-                case smsg: ShortMessage =>
-                  channel.queueMidiMessage(msg.asInstanceOf[ShortMessage])
-                  if(smsg.getCommand == ShortMessage.NOTE_ON && smsg.getData2 > 0) {
-                    model.track_subscribers.foreach(_.noteOn(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12)))
-                  } else if(smsg.getCommand == ShortMessage.NOTE_OFF || (smsg.getCommand == ShortMessage.NOTE_ON && smsg.getData2 == 0)) {
-                    model.track_subscribers.foreach(_.noteOff(KeyboardNote.widthAbsoluteIndex(smsg.getData1 - 12)))
-                  } else if(smsg.getCommand == ShortMessage.CONTROL_CHANGE && smsg.getData1 == SUSTAIN_DAMPER_MIDI_DATA) {
-                    if(smsg.getData2 < 64) {
-                      model.track_subscribers.foreach(_.sustainOff())
-                    } else {
-                      model.track_subscribers.foreach(_.sustainOn())
-                    }
-                  }
-                case _ =>
-                  println(s"Unknown MIDI message type [$msg] [${msg.getClass.getName}]")
-              }
-            }
-          }))
+          channel.stopListening()
+          channel.listen(newValue)
         }
         parentController.updateProjectSession()
       }

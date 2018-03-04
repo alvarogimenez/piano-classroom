@@ -1,19 +1,28 @@
 package sound.audio.channel
 
-class ChannelService() extends ChannelOwner {
+import javafx.beans.property.{ListProperty, SimpleListProperty}
+import javafx.collections.{FXCollections, ObservableList}
 
-  var channels: List[Channel] = List.empty[Channel]
+import scala.collection.JavaConversions._
+import scala.collection.mutable.Seq
 
-  def addChannel(channel: Channel): Unit = {
-    channels = channels :+ channel
-  }
+class ChannelService extends ChannelOwner {
+  private val channels: Seq[Channel] = Seq.empty[Channel]
+  private val channels_propery_ol: ObservableList[Channel] = FXCollections.observableArrayList[Channel](channels)
+  private val channels_property: SimpleListProperty[Channel] = new SimpleListProperty[Channel](channels_propery_ol)
+
+  def getChannels: List[Channel] = channels_property.toList
+  def addChannel(c: Channel): Unit = channels_property.add(c)
+  def removeChannel(c: Channel): Unit = channels_property.remove(c)
+  def clearChannels: Unit = channels_property.clear()
+  def getChannelsProperty: ListProperty[Channel] = channels_property
 
   def closeAndRemoveChannels(): Unit = {
     channels.foreach(_.close())
-    channels = List.empty[Channel]
+    channels_property.clear()
   }
 
   def pull(sampleRate: Double, bufferSize: Int): Map[String, Array[Float]] = {
-    channels.map(c => c.id -> c.pull(sampleRate, bufferSize)).toMap
+    channels.map(c => c.getId -> c.pull(sampleRate, bufferSize)).toMap
   }
 }
