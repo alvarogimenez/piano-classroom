@@ -94,22 +94,6 @@
                      </children>
                   </HBox>
                   <Label fx:id="label_calculate_error" prefHeight="17.0" prefWidth="568.0" textFill="#c32e2e" />
-                  <Label text="Manual Layout">
-                     <font>
-                        <Font name="System Bold" size="12.0" />
-                     </font>
-                  </Label>
-
-                  <HBox alignment="CENTER_LEFT" spacing="10.0">
-                     <children>
-                        <Label prefHeight="17.0" prefWidth="65.0" text="Left C:" />
-                        <ComboBox disable="true" prefHeight="25.0" prefWidth="60.0" />
-                        <Label prefHeight="17.0" prefWidth="64.0" text="Right C:" />
-                        <ComboBox disable="true" prefHeight="25.0" prefWidth="60.0" />
-                     </children>
-                  </HBox>
-
-                  <Button fx:id="button_manual" disable="true" mnemonicParsing="false" text="Manual" />
                </children>
             </VBox>
          </center>

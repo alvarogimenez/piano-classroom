@@ -204,7 +204,7 @@ class HighlighterConfigurationController(dialog: Stage, model: HighlighterConfig
         try {
           val layout =
           KeyboardLayoutUtils.extractLayoutFromImage(
-            model.getImage,
+            model.getPreview,
             model.getBrightnessThreshold / 100.0,
             model.getSmoothAverage / 100.0,
             model.getCutY
