@@ -8,7 +8,7 @@ import javafx.scene.control._
 import javafx.stage.Stage
 
 import context.Context
-import sound.midi.MidiInterfaceIdentifier
+import services.midi.MidiInterfaceIdentifier
 
 import scala.collection.JavaConversions._
 

@@ -12,7 +12,7 @@ import javafx.stage.Stage
 import javax.sound.midi.{MidiMessage, ShortMessage}
 
 import context.Context
-import sound.midi.{MidiInterfaceIdentifier, MidiListener, MidiSubscriber}
+import services.midi.{MidiInterfaceIdentifier, MidiListener, MidiSubscriber}
 
 class MidiLinkModel {
   val auto_close_modal: SimpleBooleanProperty = new SimpleBooleanProperty()

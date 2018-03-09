@@ -17,12 +17,12 @@ import javafx.stage.Stage
 
 import com.sksamuel.scrimage.filter.ThresholdFilter
 import com.sksamuel.scrimage.{Image => ScrImage}
-import ui.controller.component.SliderStack
-import ui.controller.component.SliderStack.SliderType
+import ui.controller.component.monitor.SliderStack
+import ui.controller.component.monitor.SliderStack.SliderType
 import ui.controller.monitor.highlighterConfiguration.HighlighterPreviewType.HighlighterPreviewType
 import util.KeyboardLayoutUtils
-import util.KeyboardLayoutUtils.{KeyboardLayout, LayoutMode}
 import util.KeyboardLayoutUtils.LayoutMode.LayoutMode
+import util.KeyboardLayoutUtils.{KeyboardLayout, LayoutMode}
 
 object HighlighterPreviewType extends Enumeration {
   type HighlighterPreviewType = Value

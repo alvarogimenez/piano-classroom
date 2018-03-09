@@ -8,12 +8,14 @@ import io.autoSave.AutoSave
 import io.contracts._
 import org.json4s.native.Serialization
 import org.json4s.{Formats, NoTypeHints}
-import sound.audio.asio.AsioService
-import sound.audio.channel.ChannelService
-import sound.audio.mixer.{MixListener, MixerService}
-import sound.midi.MidiService
+import services.audio.asio.AsioService
+import services.audio.channel.ChannelService
+import services.audio.mixer.{MixListener, MixerService}
+import services.audio.playback.PlaybackService
+import services.midi.MidiService
 import ui.controller.mixer.MixerModel
 import ui.controller.monitor.MonitorModel
+import ui.controller.recording.RecordingModel
 import ui.controller.track.TrackSetModel
 import ui.renderer.GlobalRenderer
 
@@ -38,8 +40,10 @@ object Context {
   val channelService = new ChannelService()
   val mixerService = new MixerService(channelService)
   val asioService = new AsioService(mixerService)
+  val playbackService = new PlaybackService()
 
   val trackSetModel = new TrackSetModel()
+  val recordingModel = new RecordingModel()
   val mixerModel = new MixerModel()
   val monitorModel = new MonitorModel()
 

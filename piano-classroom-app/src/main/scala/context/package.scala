@@ -4,13 +4,14 @@ import javafx.scene.shape.Rectangle
 
 import io.contracts._
 import io.{fromJson, toJson}
-import sound.audio.channel.MidiChannel
-import sound.midi.{MidiInterfaceIdentifier, MidiVstSource}
+import services.audio.channel.MidiChannel
+import services.midi.{MidiInterfaceIdentifier, MidiVstSource}
 import ui.controller.MainStageController
-import ui.controller.component.PaletteColorButton
+import ui.controller.component.drawboard.PaletteColorButton
 import ui.controller.mixer._
 import ui.controller.monitor.{MonitorSource, TrackProfile, TrackProfileInfo}
 import ui.controller.monitor.drawboard.{CanvasData, CanvasLine, DrawBoardCanvasModel}
+import ui.controller.recording.RecordingTrackModel
 import ui.controller.track.TrackModel
 import util.KeyboardLayoutUtils.{KeyBoundingBox, KeyboardLayout}
 import util.{KeyboardNote, MusicNote}
@@ -81,7 +82,8 @@ package object context {
               `bus-info` = List.empty,
               `mixer-profiles`= List.empty
             ),
-            `monitor` = None
+            `monitor` = None,
+            `recording` = None
           )
         )
     }
@@ -304,6 +306,25 @@ package object context {
           )
         }
     )
+
+    // Recording configuration
+    Context.projectSession
+      .get()
+      .`save-state`
+      .`recording`
+      .foreach { recordingConfiguration =>
+        recordingConfiguration.`tracks`.foreach { trackInfo =>
+          Context.channelService.getChannels.find(_.getId == trackInfo.`channel-id`) match {
+            case Some(channel: MidiChannel) =>
+              val model = new RecordingTrackModel(channel)
+              model.getChannelNameProperty.bind(channel.getNameProperty)
+              model.setRecordingEnabled(trackInfo.`recording-enabled`)
+              Context.recordingModel.addRecordingTrack(model)
+            case _ =>
+              throw new Exception(s"Reference to non-existing channel '${trackInfo.`channel-id`}' in a RecordingTrack")
+          }
+        }
+      }
 
     // Monitor Configuration
     Context.projectSession

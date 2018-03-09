@@ -17,8 +17,8 @@ import javafx.stage.{Modality, Stage}
 
 import context.Context
 import io.contracts._
-import sound.audio.channel.Channel
-import sound.audio.mixer.BusMix
+import services.audio.channel.Channel
+import services.audio.mixer.BusMix
 import ui.controller.component.ProfileButton
 import ui.controller.global.ProjectSessionUpdating
 import ui.controller.{MainStageController, global}

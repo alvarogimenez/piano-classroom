@@ -12,6 +12,7 @@
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.input.KeyCodeCombination?>
@@ -19,6 +20,7 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
@@ -194,6 +196,82 @@
                      </top>
                   </BorderPane>
                </content></Tab>
+                <Tab text="Recording">
+                    <content>
+                        <BorderPane fx:id="bpane_recording" prefHeight="200.0" prefWidth="200.0">
+                            <top>
+                                <BorderPane>
+                           <left>
+                              <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="210.0" minWidth="210.0" prefHeight="35.0" spacing="5.0" BorderPane.alignment="CENTER">
+                                 <children>
+                                    <Button fx:id="button_metronome_bar" maxHeight="30.0" maxWidth="48.0" minHeight="30.0" minWidth="48.0" mnemonicParsing="false" text="12 / 8" />
+                                    <Button fx:id="button_metronome_tap" maxHeight="30.0" minHeight="30.0" mnemonicParsing="false" text="TAP" />
+                                    <Pane fx:id="pane_metronome_view" maxHeight="30.0" minHeight="30.0" prefWidth="80.0" />
+                                    <ToggleButton fx:id="toggle_metronome_enabled" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingMetronomeDisabled.png')" />
+                                 </children>
+                              </HBox>
+                           </left>
+                           <center>
+                              <HBox alignment="CENTER" maxHeight="35.0" spacing="5.0" BorderPane.alignment="CENTER">
+                                 <children>
+                                    <Button fx:id="button_stop" maxHeight="40.0" maxWidth="40.0" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingStop.png')" />
+                                    <Button fx:id="button_play" maxHeight="40.0" maxWidth="40.0" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingPlay.png')" />
+                                    <ToggleButton fx:id="button_record" maxHeight="40.0" maxWidth="40.0" minHeight="40.0" minWidth="40.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecord.png')" />
+                                 </children></HBox>
+                           </center>
+                           <right>
+                              <HBox alignment="CENTER_RIGHT" maxHeight="35.0" maxWidth="210.0" minWidth="210.0" spacing="5.0" BorderPane.alignment="CENTER">
+                                 <children>
+                                    <Button fx:id="button_record_skip_left" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordRight.png')" />
+                                    <Button fx:id="button_record_skip_right" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordLeft.png')" />
+                                    <ToggleButton fx:id="button_record_midi_append" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordAppend.png')" />
+                                 </children>
+                              </HBox>
+                           </right>
+                           <bottom>
+                              <BorderPane BorderPane.alignment="CENTER">
+                                 <left>
+                                    <HBox BorderPane.alignment="CENTER">
+                                       <children>
+                                          <Button fx:id="button_open_file" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/Folder.png')" />
+                                       </children>
+                                       <BorderPane.margin>
+                                          <Insets right="5.0" />
+                                       </BorderPane.margin>
+                                    </HBox>
+                                 </left>
+                                 <right>
+                                    <HBox spacing="5.0" BorderPane.alignment="CENTER">
+                                       <children>
+                                          <Button fx:id="button_save_file" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/Save.png')" />
+                                          <Button fx:id="button_save_file_as" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/SaveAs.png')" />
+                                       </children>
+                                       <BorderPane.margin>
+                                          <Insets left="5.0" />
+                                       </BorderPane.margin>
+                                    </HBox>
+                                 </right>
+                                 <center>
+                                    <TextField fx:id="textfield_last_open_file" maxHeight="30.0" minHeight="30.0" BorderPane.alignment="CENTER" />
+                                 </center>
+                                 <BorderPane.margin>
+                                    <Insets top="5.0" />
+                                 </BorderPane.margin>
+                              </BorderPane>
+                           </bottom></BorderPane>
+                            </top>
+                     <center>
+                        <VBox fx:id="vbox_recording_tracks" prefHeight="200.0" prefWidth="100.0" spacing="5.0" BorderPane.alignment="CENTER">
+                           <padding>
+                              <Insets top="5.0" />
+                           </padding></VBox>
+                     </center>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                        </BorderPane>
+                    </content>
+                </Tab>
             </tabs>
         </TabPane>
     </center>

@@ -6,6 +6,7 @@ import ui.controller.mixer.MixerController
 import ui.controller.monitor.MonitorController
 import ui.controller.track._
 import context._
+import ui.controller.recording.RecordingController
 
 class MainStageController
   extends MenuBarController
@@ -13,6 +14,7 @@ class MainStageController
     with MixerController
     with TrackSetController
     with MonitorController
+    with RecordingController
     with FooterController {
 
   def initialize(): Unit = {
@@ -21,6 +23,7 @@ class MainStageController
     initializeTrackSetController(this)
     initializeMonitorController(this)
     initializeFooterController(this)
+    initializeRecordingController(this)
     loadControllerDependantSettings(this)
   }
 

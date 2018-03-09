@@ -8,7 +8,20 @@ case class ProjectSessionContract(
 case class SaveState(
   `tracks`: SaveTracks,
   `mixer`: SaveMixer,
-  `monitor`: Option[GlobalMonitorConfiguration] = None
+  `monitor`: Option[GlobalMonitorConfiguration] = None,
+  `recording`: Option[RecordingConfiguration] = None
+)
+
+/**
+  * Recording
+  */
+case class RecordingConfiguration(
+  `tracks`: List[RecordingTrackInfo]
+)
+
+case class RecordingTrackInfo(
+  `channel-id`: String,
+  `recording-enabled`: Boolean
 )
 
 /**
