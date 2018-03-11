@@ -69,11 +69,11 @@ trait RecordingController { _ : ProjectSessionUpdating =>
                 val track = new RecordingTrack(_self, trackModel.channel, trackModel)
                 val data =
                   (0 to 30).map { x =>
-                    RecordingNoteData(x * 1000, Some(x * 1000 + 1000), KeyboardNote.widthAbsoluteIndex(x + 20))
+                    RecordingNoteData(x * 247, Some(x * 247 + 247), KeyboardNote.widthAbsoluteIndex(x + 20))
                   }
                 val session = new RecordingSession(Color.LIGHTCORAL)
                 session.setStart(0)
-                session.setEnd(Some(30000))
+                session.setEnd(Some(10000))
                 session.setData(data.toList)
 
                 trackModel.setRecordingSessions(List(session))
@@ -128,8 +128,10 @@ trait RecordingController { _ : ProjectSessionUpdating =>
           Context.playbackService.play(events)
           _model.setPlaying(true)
           button_play.setStyle("-fx-graphic: url('assets/icon/RecordingPause.png')")
-          
-          startRecording()
+
+          if(button_record.isSelected) {
+            startRecording()
+          }
         }
       }
     })
@@ -144,6 +146,7 @@ trait RecordingController { _ : ProjectSessionUpdating =>
         if(button_record.isSelected) {
           stopRecording()
         }
+        button_record.setSelected(false)
       }
     })
     
@@ -170,23 +173,37 @@ trait RecordingController { _ : ProjectSessionUpdating =>
   var _currentSessionInfo: Option[RecordingInfo] = None
   
   private def startRecording() = {
+    val playbackStart = Context.playbackService.getPlaybackTime
+    val recordingStart = System.currentTimeMillis() - playbackStart
+
+    val recordingTracks = _model.getRecordingTracks.filter(_.isRecordingEnabled)
     val sessionsByChannel =
-      _model.getRecordingTracks.map { recordingTrack =>
+      recordingTracks.map { recordingTrack =>
         val session = new RecordingSession(new Color(Random.nextDouble(), Random.nextDouble(), Random.nextDouble(), 1).desaturate())
-        session.setStart(Context.playbackService.getPlaybackTime)
+        session.setStart(playbackStart)
         session.setEnd(None)
         session.setRecordingActive(true)
 
         recordingTrack.channel.getId -> SessionInfo(
           session,
           new MidiEventSubscriber {
-            override def sustainOn() = ???
+            override def sustainOn() =
+              if(_currentSessionInfo.isDefined) {
+                session.addData(RecordingSustainData(System.currentTimeMillis() - recordingStart, None))
+              }
 
-            override def sustainOff() = ???
+            override def sustainOff() =
+              if(_currentSessionInfo.isDefined) {
+                val lastOpenNote = session.getData.collectFirst {case e: RecordingSustainData if e.end.isEmpty => e }
+                if(lastOpenNote.isDefined) {
+                  session.removeData(lastOpenNote.get)
+                  session.addData(lastOpenNote.get.copy(end = Some(System.currentTimeMillis() - recordingStart)))
+                }
+              }
 
             override def noteOn(kn: KeyboardNote) =
               if(_currentSessionInfo.isDefined) {
-                session.addData(RecordingNoteData(System.currentTimeMillis() - _currentSessionInfo.get.recordingStart, None, kn))
+                session.addData(RecordingNoteData(System.currentTimeMillis() - recordingStart, None, kn))
               }
 
             override def noteOff(kn: KeyboardNote) = {
@@ -194,7 +211,7 @@ trait RecordingController { _ : ProjectSessionUpdating =>
                 val lastOpenNote = session.getData.collectFirst {case e: RecordingNoteData if e.end.isEmpty => e }
                 if(lastOpenNote.isDefined) {
                   session.removeData(lastOpenNote.get)
-                  session.addData(lastOpenNote.get.copy(end = Some(System.currentTimeMillis() - _currentSessionInfo.get.recordingStart)))
+                  session.addData(lastOpenNote.get.copy(end = Some(System.currentTimeMillis() - recordingStart)))
                 }
               }
             }
@@ -203,13 +220,13 @@ trait RecordingController { _ : ProjectSessionUpdating =>
 
       }.toMap
 
-    _model.getRecordingTracks.foreach { recordingTrack =>
+    recordingTracks.foreach { recordingTrack =>
       recordingTrack.addRecordingSession(sessionsByChannel(recordingTrack.channel.getId).recordingSession)
       recordingTrack.channel.addMidiSubscriber(sessionsByChannel(recordingTrack.channel.getId).midiSubscriber)
     }
 
     _currentSessionInfo = Some(RecordingInfo(
-      recordingStart = System.currentTimeMillis(),
+      recordingStart = recordingStart,
       sessionInfo = sessionsByChannel
     ))
   }
@@ -219,31 +236,33 @@ trait RecordingController { _ : ProjectSessionUpdating =>
       case Some(currentSessionInfo) =>
         currentSessionInfo.sessionInfo.toList.foreach {
           case (channelId, sessionInfo) =>
-            sessionInfo.recordingSession.setEnd(Some(System.currentTimeMillis() - currentSessionInfo.recordingStart))
-            sessionInfo.recordingSession.setRecordingActive(false)
+            val newSession = sessionInfo.recordingSession
+            val newSessionEnd = System.currentTimeMillis() - currentSessionInfo.recordingStart
+            newSession.setEnd(Some(newSessionEnd))
+            newSession.setRecordingActive(false)
 
             val recordingTrack = _model.getRecordingTracks.find(_.channel.getId == channelId)
             if(button_record_midi_append.isSelected) {
-              sessionInfo.recordingSession.setData(
+              newSession.setData(
                 recordingTrack.toList.flatMap { recordingTrack =>
                   recordingTrack.getRecordingSessions.flatMap(_.getData).filter { data =>
-                    sessionInfo.recordingSession.getEnd.exists(_ > data.start) && data.end.forall(_ > sessionInfo.recordingSession.getStart)
+                    newSession.getEnd.exists(_ > data.start) && data.end.forall(_ > newSession.getStart)
                   }
-                } ++ sessionInfo.recordingSession.getData
+                } ++ newSession.getData
               )
             }
 
             recordingTrack.foreach { r =>
               r.channel.removeMidiSubscriber(sessionInfo.midiSubscriber)
 
-              r.getRecordingSessions.filterNot(_ == sessionInfo.recordingSession).foreach { recordingSession =>
-                if(recordingSession.getStart < sessionInfo.recordingSession.getStart && recordingSession.getEnd.forall(_ > sessionInfo.recordingSession.getStart)) {
-                  recordingSession.setEnd(Some(sessionInfo.recordingSession.getStart))
-                  recordingSession.setData(recordingSession.getData.filter(_.start < sessionInfo.recordingSession.getStart))
-                } else if(sessionInfo.recordingSession.getEnd.exists(end => (recordingSession.getStart < end) && sessionInfo.recordingSession.getEnd.forall(_ > end))) {
-                  recordingSession.setStart(sessionInfo.recordingSession.getEnd.get)
-                  recordingSession.setData(recordingSession.getData.filter(_.start > sessionInfo.recordingSession.getEnd.get))
-                } else if(recordingSession.getStart >= sessionInfo.recordingSession.getStart && recordingSession.getEnd.forall(_ <= sessionInfo.recordingSession.getEnd.get)) {
+              r.getRecordingSessions.filterNot(_ == newSession).foreach { recordingSession =>
+                if(recordingSession.getStart < newSession.getStart && recordingSession.getEnd.forall(_ > newSession.getStart)) {
+                  recordingSession.setEnd(Some(newSession.getStart))
+                  recordingSession.setData(recordingSession.getData.filter(_.start < newSession.getStart))
+                } else if((recordingSession.getStart < newSessionEnd) && recordingSession.getEnd.forall(_ > newSessionEnd)) {
+                  recordingSession.setStart(newSession.getEnd.get)
+                  recordingSession.setData(recordingSession.getData.filter(_.start > newSession.getEnd.get))
+                } else if(recordingSession.getStart >= newSession.getStart && recordingSession.getEnd.forall(_ <= newSessionEnd)) {
                   r.removeRecordingSession(recordingSession)
                 }
               }

@@ -42,5 +42,5 @@ package object recording {
     val end: Option[Long]
   }
   case class RecordingNoteData(start: Long, end: Option[Long], note: KeyboardNote) extends RecordingData
-  case class RecordingSustainData(start: Long, end: Option[Long])
+  case class RecordingSustainData(start: Long, end: Option[Long]) extends RecordingData
 }

@@ -29,7 +29,7 @@ class GlobalRenderer {
             slaves.foreach(_.render())
           }
         })
-        Thread.sleep(1000)
+        Thread.sleep(100)
       }
     }
   }

@@ -54,15 +54,6 @@ class PlaybackService {
   private def playbackTask(stages: List[PlaybackStage]) = new Task[Unit]() {
     var lastQueuedUpdatePlaybackTime: Long = 0
 
-    private def sleep(millis: Long, start: Long) = {
-      (0 until (millis/HEARTBEAT_TIME).toInt).foreach { _ =>
-        queueUpdatePlaybackTime(System.currentTimeMillis() - start)
-        Thread.sleep(HEARTBEAT_TIME)
-      }
-      queueUpdatePlaybackTime(System.currentTimeMillis() - start)
-      Thread.sleep(millis % HEARTBEAT_TIME)
-    }
-
     private def queueUpdatePlaybackTime(time: Long) = {
       if(time - lastQueuedUpdatePlaybackTime > 100) {
         Platform.runLater(new Runnable() {
@@ -74,32 +65,39 @@ class PlaybackService {
       }
     }
 
+    def waitUntil(stageTime: Long, start: Long) = {
+      val currentStageTime = System.currentTimeMillis() - start
+      if(stageTime >= currentStageTime) {
+        val timeGap = stageTime - currentStageTime
+        ((0 until (timeGap/HEARTBEAT_TIME).toInt).map(_ => HEARTBEAT_TIME) :+ timeGap % HEARTBEAT_TIME).foreach { x =>
+          queueUpdatePlaybackTime(System.currentTimeMillis() - start)
+          Thread.sleep(x)
+        }
+      }
+    }
+
     override def call(): Unit = {
       var i = 0
-      val absoluteStart = System.currentTimeMillis()
-      val relativeStart = getPlaybackTime
-      var currentTime = absoluteStart
+      val start = System.currentTimeMillis() - getPlaybackTime
+
       while(!isCancelled && i < stages.length) {
         val stage = stages(i)
-        currentTime = System.currentTimeMillis()
-        val currentRelativeTime = (currentTime - absoluteStart) + relativeStart
-        if(stage.time >= currentRelativeTime) {
-          sleep(stage.time - currentRelativeTime, absoluteStart)
-          stage.events.foreach {
-            case e: PlaybackNoteOnEvent =>
-              e.channel.queueMidiMessage(new ShortMessage(ShortMessage.NOTE_ON, e.note.absoluteIndex(), 64))
-            case e: PlaybackNoteOffEvent =>
-              e.channel.queueMidiMessage(new ShortMessage(ShortMessage.NOTE_OFF, e.note.absoluteIndex(), 64))
-            case e: PlaybackSustainOnEvent =>
-              e.channel.queueMidiMessage(new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127))
-            case e: PlaybackSustainOffEvent =>
-              e.channel.queueMidiMessage(new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0))
-          }
+        waitUntil(stage.time, start)
+        stage.events.foreach {
+          case e: PlaybackNoteOnEvent =>
+            e.channel.queueMidiMessage(new ShortMessage(ShortMessage.NOTE_ON, e.note.absoluteIndex() + 12, 64))
+          case e: PlaybackNoteOffEvent =>
+            e.channel.queueMidiMessage(new ShortMessage(ShortMessage.NOTE_OFF, e.note.absoluteIndex() + 12, 64))
+          case e: PlaybackSustainOnEvent =>
+            e.channel.queueMidiMessage(new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 127))
+          case e: PlaybackSustainOffEvent =>
+            e.channel.queueMidiMessage(new ShortMessage(ShortMessage.CONTROL_CHANGE, 0x40, 0))
         }
         i += 1
       }
       while(!isCancelled) {
-        sleep(HEARTBEAT_TIME, absoluteStart)
+        queueUpdatePlaybackTime(System.currentTimeMillis() - start)
+        Thread.sleep(HEARTBEAT_TIME)
       }
     }
   }

@@ -49,18 +49,16 @@ class RecordingTrackView extends Pane with RendererSlave {
 
   private def draw() = {
     val gc = canvas.getGraphicsContext2D
-    gc.setFill(Color.WHITE)
+    gc.setFill(Color.LIGHTGRAY)
     gc.fillRect(0, 0, getWidth, getHeight)
 
     val noteIndexes = getRecordingSessions.flatMap(_.getData).collect { case e: RecordingNoteData => e}.map(_.note.absoluteIndex())
 
-    println(s"-------------")
     getRecordingSessions.sortBy { r => if(r.isRecordingActive) 1 else 0 }.foreach { recordingSession =>
-      println(s"start = ${recordingSession.getStart}, end = ${recordingSession.getEnd}")
       val  x1 = Math.max(0, (recordingSession.getStart - getRecordingViewport.start) * getWidth / (getRecordingViewport.end - getRecordingViewport.start))
       val  x2 = Math.min(getWidth, (recordingSession.getEnd.getOrElse(getPlaybackPosition) - getRecordingViewport.start) * getWidth / (getRecordingViewport.end - getRecordingViewport.start))
       gc.setFill(recordingSession.color)
-      gc.fillRect(x1, 0, x2, getHeight)
+      gc.fillRect(x1, 0, x2 - x1, getHeight)
 
       if(noteIndexes.nonEmpty) {
         val minNote = noteIndexes.min
@@ -69,19 +67,18 @@ class RecordingTrackView extends Pane with RendererSlave {
         gc.setFill(Color.BLACK)
         recordingSession.getData.foreach {
           case d: RecordingNoteData =>
-            val y = (d.note.absoluteIndex() - minNote) / (maxNote - minNote).toDouble * getHeight
-            val h = getHeight / (maxNote - minNote)
+            val y = (d.note.absoluteIndex() - minNote) / (maxNote - minNote + 1).toDouble * getHeight
+            val h = getHeight / (maxNote - minNote + 1)
             val x1 = (d.start - getRecordingViewport.start) * getWidth / (getRecordingViewport.end - getRecordingViewport.start)
             val x2 = (d.end.getOrElse(getRecordingViewport.end) - getRecordingViewport.start) * getWidth / (getRecordingViewport.end - getRecordingViewport.start)
 
             if (x1 <= getWidth && x2 >= 0) {
-              gc.fillRect(x1, getHeight - y, x2 - x1, h)
+              gc.fillRect(x1, getHeight - y - h, x2 - x1, h)
             }
           case _ =>
         }
       }
     }
-    println(s"-------------")
 
     val playbackRelative = getPlaybackPosition - getRecordingViewport.start
     if(playbackRelative >= 0 && playbackRelative < getRecordingViewport.end) {
