@@ -31,7 +31,7 @@ import javafx.stage.{Modality, Stage}
 import com.github.sarxos.webcam.Webcam
 import com.sun.javafx.tk.Toolkit
 import context.Context
-import sound.audio.channel.{Channel, MidiChannel}
+import services.audio.channel.{Channel, MidiChannel}
 import ui.controller.global.ProjectSessionUpdating
 import ui.controller.monitor._
 import ui.controller.monitor.highlighterConfiguration.{HighlighterConfigurationController, HighlighterConfigurationModel, _}

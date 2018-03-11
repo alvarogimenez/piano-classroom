@@ -15,8 +15,9 @@ import javafx.scene.paint.Color
 import javafx.stage.{Modality, Stage}
 
 import context.Context
-import sound.audio.mixer.{BusMix, ChannelMix}
-import ui.controller.component.{CompressorPreview, Fader, ProfileButton}
+import services.audio.mixer.{BusMix, ChannelMix}
+import ui.controller.component.mixer.{CompressorPreview, Fader}
+import ui.controller.component.ProfileButton
 import ui.controller.global
 import ui.controller.global.ProjectSessionUpdating
 

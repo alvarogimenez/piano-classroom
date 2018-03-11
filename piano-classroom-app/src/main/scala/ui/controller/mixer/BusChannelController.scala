@@ -7,7 +7,7 @@ import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 
-import ui.controller.component.Fader
+import ui.controller.component.mixer.Fader
 import ui.controller.global.ProjectSessionUpdating
 
 class BusChannelModel(val id: String) {

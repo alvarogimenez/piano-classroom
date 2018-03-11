@@ -16,8 +16,8 @@ import javafx.stage.{Modality, Stage}
 import javax.sound.midi.ShortMessage
 
 import context.Context
-import sound.audio.channel.MidiChannel
-import sound.midi.{MidiInterfaceIdentifier, MidiVstSource}
+import services.audio.channel.MidiChannel
+import services.midi.{MidiInterfaceIdentifier, MidiVstSource}
 import ui.controller.component.Keyboard
 import ui.controller.global.ProjectSessionUpdating
 import ui.controller.track.midiLink.{MidiLinkController, MidiLinkModel, _}
