@@ -77,35 +77,41 @@ object Context {
       if(asioService.listDriverNames().contains(audioConfiguration.`driver-name`)) {
         println(s"Initialize ASIo Driver '${audioConfiguration.`driver-name`}' from Session Configuration")
 
-        asioService.init(audioConfiguration.`driver-name`)
+        try {
+          asioService.init(audioConfiguration.`driver-name`)
 
-        val inputConfiguration =
-          if(audioConfiguration.`channel-configuration`.input.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioService.getAvailableInputChannels())) {
+          val inputConfiguration =
+            if (audioConfiguration.`channel-configuration`.input.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioService.getAvailableInputChannels())) {
               (0 until asioService.getAvailableInputChannels())
                 .map { c =>
                   (c, audioConfiguration.`channel-configuration`.input.find(_.`channel-number` == c).exists(_.enabled))
                 }
                 .toMap
-          } else {
-            (0 until asioService.getAvailableInputChannels()).map( _ -> false).toMap
-          }
+            } else {
+              (0 until asioService.getAvailableInputChannels()).map(_ -> false).toMap
+            }
 
-        val outputConfiguration =
-          if(audioConfiguration.`channel-configuration`.output.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioService.getAvailableOutputChannels())) {
-            (0 until asioService.getAvailableOutputChannels())
-              .map { c =>
-                (c, audioConfiguration.`channel-configuration`.output.find(_.`channel-number` == c).exists(_.enabled))
-              }
-              .toMap
-          } else {
-            (0 until asioService.getAvailableOutputChannels()).map( _ -> false).toMap
-          }
+          val outputConfiguration =
+            if (audioConfiguration.`channel-configuration`.output.forall(ace => ace.`channel-number` >= 0 && ace.`channel-number` < asioService.getAvailableOutputChannels())) {
+              (0 until asioService.getAvailableOutputChannels())
+                .map { c =>
+                  (c, audioConfiguration.`channel-configuration`.output.find(_.`channel-number` == c).exists(_.enabled))
+                }
+                .toMap
+            } else {
+              (0 until asioService.getAvailableOutputChannels()).map(_ -> false).toMap
+            }
 
-        println(audioConfiguration)
-        println(s"Configure ASIO Buffers. Input [$inputConfiguration], Output [$outputConfiguration]")
+          println(audioConfiguration)
+          println(s"Configure ASIO Buffers. Input [$inputConfiguration], Output [$outputConfiguration]")
 
-        asioService.configureChannelBuffers(inputConfiguration, outputConfiguration)
-        asioService.start()
+          asioService.configureChannelBuffers(inputConfiguration, outputConfiguration)
+          asioService.start()
+        } catch {
+          case e: Exception =>
+            println(s"Exception while initializing Audio Driver '${audioConfiguration.`driver-name`}': " + e.getMessage)
+            e.printStackTrace()
+        }
       } else {
         println(s"Driver '${audioConfiguration.`driver-name`}' is not available in the System. Will initialize no ASIO Driver")
       }

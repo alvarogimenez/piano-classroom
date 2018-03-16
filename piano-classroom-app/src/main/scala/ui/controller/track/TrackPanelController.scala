@@ -10,7 +10,7 @@ import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.{FXML, FXMLLoader}
 import javafx.scene.Scene
 import javafx.scene.control._
-import javafx.scene.input.ContextMenuEvent
+import javafx.scene.input.{ContextMenuEvent, MouseEvent}
 import javafx.scene.layout.BorderPane
 import javafx.stage.{Modality, Stage}
 import javax.sound.midi.ShortMessage
@@ -25,6 +25,10 @@ import ui.controller.track.pianoRange.{PianoRangeController, PianoRangeModel, _}
 import util.{KeyboardNote, MidiData, MusicNote}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.{Await, Future}
+import scala.util.Try
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class TrackModel(val channel: MidiChannel) {
   final val DEFAULT_TRACK_HEIGHT = 90
@@ -108,6 +112,25 @@ class TrackModel(val channel: MidiChannel) {
     val vstSources = Context.midiService.getVstSources
     setMidiVstSources(List(null) ++ vstSources)
   }
+
+  def extractProperties: Option[Map[String, Double]] = {
+    channel.getVstPlugin.flatMap { vst =>
+      vst.vst.map { v =>
+        val n = v.numParameters()
+        (0 until n).map { pIndex =>
+          pIndex.toString -> v.getParameter(pIndex).toDouble
+        }.toMap
+      }
+    }
+  }
+
+  def applyProperties(properties: Map[String, Double]) = {
+    channel.getVstPlugin.foreach { vst =>
+      properties.foreach { case (property, value) =>
+        vst.vst.foreach { v => v.setParameter(property.toInt, value.toFloat)}
+      }
+    }
+  }
 }
 
 class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel, model: TrackModel) extends BorderPane {
@@ -120,6 +143,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
   @FXML var button_show_piano_roll: ToggleButton = _
   @FXML var button_piano_range: Button = _
   @FXML var button_become_source: Button = _
+  @FXML var button_switch_vst: Button = _
   @FXML var panel_track_main: BorderPane = _
   @FXML var combobox_midi_input: ComboBox[MidiInterfaceIdentifier] = _
   @FXML var combobox_vst_input: ComboBox[MidiVstSource] = _
@@ -135,6 +159,53 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
   this.setCenter(track)
 
   val _self = this
+
+  button_switch_vst.setOnMouseClicked(new EventHandler[MouseEvent] {
+    override def handle(event: MouseEvent) = {
+      val contextMenu = new ContextMenu()
+      Context.trackSetModel.getTrackSet.foreach { track =>
+        val item = new MenuItem(track.getTrackName)
+        item.setOnAction(new EventHandler[ActionEvent] {
+          override def handle(event: ActionEvent): Unit = {
+            val otherVstSource = track.getSelectedMidiVst
+            val otherVstProperties = track.extractProperties
+            val selfVstSource = model.getSelectedMidiVst
+            val selfVstProperties = model.extractProperties
+
+            println(s"Set VSTi source in this model")
+            model.setSelectedMidiVst(otherVstSource)
+            println(s"Put properties to this model")
+            model.channel.getVstPlugin.foreach { vstPlugin =>
+              vstPlugin.vst.foreach { v =>
+                Await.ready(Future {
+                  while (!Try(v.isNativeComponentLoaded).getOrElse(false)) {
+                    Thread.sleep(100)
+                  }
+                }, 30 seconds)
+              }
+            }
+            otherVstProperties.foreach(model.applyProperties)
+
+            println(s"Set VSTi source in the outgoing model")
+            track.setSelectedMidiVst(selfVstSource)
+            println(s"Put properties to the outgoing model")
+            track.channel.getVstPlugin.foreach { vstPlugin =>
+              vstPlugin.vst.foreach { v =>
+                Await.ready(Future {
+                  while (!Try(v.isNativeComponentLoaded).getOrElse(false)) {
+                    Thread.sleep(100)
+                  }
+                }, 30 seconds)
+              }
+            }
+            selfVstProperties.foreach(track.applyProperties)
+          }
+        })
+        contextMenu.getItems.add(item)
+      }
+      contextMenu.show(_self, event.getScreenX, event.getScreenY)
+    }
+  })
 
   this.setOnContextMenuRequested(new EventHandler[ContextMenuEvent] {
     override def handle(event: ContextMenuEvent) = {
@@ -314,6 +385,7 @@ class TrackPanel(parentController: ProjectSessionUpdating, channel: MidiChannel,
       override def changed(observable: ObservableValue[_ <: MidiVstSource], oldValue: MidiVstSource, newValue: MidiVstSource): Unit = {
         println(s"Midi VST changed from $oldValue to $newValue")
         if(newValue != null) {
+          channel.close()
           channel.setVstSource(new File(newValue.path))
         } else {
           channel.close()

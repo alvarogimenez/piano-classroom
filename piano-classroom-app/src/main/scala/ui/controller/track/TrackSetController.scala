@@ -147,7 +147,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
                   id = trackModel.channel.getId,
                   midiInput = Option(trackModel.getSelectedMidiInterface),
                   vstInput = Option(trackModel.getSelectedMidiVst),
-                  vstProperties = extractProperties(trackModel),
+                  vstProperties = trackModel.extractProperties,
                   pianoEnabled = trackModel.getTrackPianoEnabled(),
                   pianoRollEnabled = trackModel.getTrackPianoRollEnabled(),
                   pianoRangeStart = trackModel.getTrackPianoStartNote,
@@ -212,7 +212,7 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
           `name` = track.getTrackName,
           `midi-input` = Option(track.getSelectedMidiInterface).map(_.name),
           `vst-i` = Option(track.getSelectedMidiVst).map(_.path),
-          `vst-properties` = extractProperties(track),
+          `vst-properties` = track.extractProperties,
           `piano-enabled` = track.getTrackPianoEnabled(),
           `piano-roll-enabled` = track.getTrackPianoRollEnabled(),
           `piano-range-start` = SavePianoRange(
@@ -259,15 +259,4 @@ trait TrackSetController { _ : ProjectSessionUpdating =>
         )
       }
     )
-
-  private def extractProperties(t: TrackModel) = {
-    t.channel.getVstPlugin.flatMap { vst =>
-      vst.vst.map { v =>
-        val n = v.numParameters()
-        (0 until n).map { pIndex =>
-          pIndex.toString -> v.getParameter(pIndex).toDouble
-        }.toMap
-      }
-    }
-  }
 }
