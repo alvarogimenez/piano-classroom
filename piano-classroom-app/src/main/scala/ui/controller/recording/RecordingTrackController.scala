@@ -39,8 +39,6 @@ class RecordingTrackModel(val channel: MidiChannel) {
   def getRecordingViewport: RecordingViewport = recording_viewport.get
   def setRecordingViewport(recordingViewport: RecordingViewport): Unit = recording_viewport.set(recordingViewport)
   def getRecordingViewportProperty: ObjectProperty[RecordingViewport] = recording_viewport
-
-  setRecordingViewport(RecordingViewport(0, 30000))
 }
 
 class RecordingTrack(parentController: ProjectSessionUpdating, channel: MidiChannel, model: RecordingTrackModel) extends BorderPane {

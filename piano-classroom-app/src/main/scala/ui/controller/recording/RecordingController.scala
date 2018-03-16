@@ -1,23 +1,27 @@
 package ui.controller.recording
 
 import java.lang.Boolean
-import javafx.beans.property.{BooleanProperty, SimpleBooleanProperty, SimpleListProperty}
+import java.util.concurrent.Callable
+import javafx.beans.binding.Bindings
+import javafx.beans.property._
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.ListChangeListener.Change
 import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.fxml.FXML
-import javafx.scene.control.{Button, TextField, ToggleButton}
-import javafx.scene.layout.{Pane, VBox}
+import javafx.scene.control._
+import javafx.scene.layout.{BorderPane, Pane, VBox}
 import javafx.scene.paint.Color
 import javax.sound.midi.ShortMessage
 
 import context.Context
 import services.audio.playback.{PlaybackNoteOffEvent, PlaybackNoteOnEvent, PlaybackSustainOffEvent, PlaybackSustainOnEvent}
 import ui.controller.MainStageController
+import ui.controller.component.recording.{RecordingCurrentViewportPreview, RecordingViewportPreview}
 import ui.controller.global.ProjectSessionUpdating
+import ui.controller.recording.ViewportMode.ViewportMode
 import ui.controller.track.pianoRange.MidiEventSubscriber
-import util.{KeyboardNote, MidiData, MusicNote}
+import util.{KeyboardNote, MidiData}
 
 import scala.collection.JavaConversions._
 import scala.util.Random
@@ -26,7 +30,9 @@ class RecordingModel {
   val recording_tracks_ol: ObservableList[RecordingTrackModel] = FXCollections.observableArrayList[RecordingTrackModel]
   val recording_tracks: SimpleListProperty[RecordingTrackModel] = new SimpleListProperty[RecordingTrackModel](recording_tracks_ol)
   val playing: BooleanProperty = new SimpleBooleanProperty()
-  
+  val viewport_mode: ObjectProperty[ViewportMode] = new SimpleObjectProperty[ViewportMode]()
+  val recording_viewport: ObjectProperty[RecordingViewport] = new SimpleObjectProperty[RecordingViewport]()
+
   def getRecordingTracks: List[RecordingTrackModel] = recording_tracks_ol.toList
   def setRecordingTracks(l: List[RecordingTrackModel]): Unit = recording_tracks.setAll(l)
   def addRecordingTrack(m: RecordingTrackModel): Unit = recording_tracks_ol.add(m)
@@ -37,19 +43,30 @@ class RecordingModel {
   def isPlaying: Boolean = playing.get()
   def setPlaying(p: Boolean) = playing.set(p)
   def getPlayingProperty: BooleanProperty = playing
+
+  def getViewportMode: ViewportMode = viewport_mode.get
+  def setViewportMode(viewportMode: ViewportMode): Unit = viewport_mode.set(viewportMode)
+  def getViewportModeProperty: ObjectProperty[ViewportMode] = viewport_mode
+
+  def getRecordingViewport: RecordingViewport = recording_viewport.get
+  def setRecordingViewport(recordingViewport: RecordingViewport): Unit = recording_viewport.set(recordingViewport)
+  def getRecordingViewportProperty: ObjectProperty[RecordingViewport] = recording_viewport
+
+  setRecordingViewport(RecordingViewport(0, 10000))
 }
 
 trait RecordingController { _ : ProjectSessionUpdating =>
   private val _self = this
   private val _model = Context.recordingModel
-  
+
   @FXML var vbox_recording_tracks: VBox = _
   @FXML var textfield_last_open_file: TextField = _
   @FXML var button_save_file: Button = _
   @FXML var button_save_file_as: Button = _
   @FXML var button_open_file: Button = _
-  @FXML var button_record_skip_left: Button = _
-  @FXML var button_record_skip_right: Button = _
+  @FXML var button_record_skip_left: ToggleButton = _
+  @FXML var button_record_skip_right: ToggleButton = _
+  @FXML var button_record_loop: ToggleButton = _
   @FXML var button_record_midi_append: ToggleButton = _
   @FXML var button_stop: Button = _
   @FXML var button_play: Button = _
@@ -58,8 +75,40 @@ trait RecordingController { _ : ProjectSessionUpdating =>
   @FXML var pane_metronome_view: Pane = _
   @FXML var button_metronome_tap: Button = _
   @FXML var button_metronome_bar: Button = _
+  @FXML var pane_viewport_preview: BorderPane = _
+  @FXML var pane_viewport: BorderPane = _
+  @FXML var toggle_viewport_mode: ToggleGroup = _
+  @FXML var button_viewport_custom: ToggleButton = _
+  @FXML var button_viewport_fit: ToggleButton = _
+  @FXML var button_viewport_follow: ToggleButton = _
 
   def initializeRecordingController(mainController: MainStageController) = {
+    val recordingViewportPreview = new RecordingViewportPreview(_model)
+    pane_viewport_preview.setCenter(recordingViewportPreview)
+    val recordingCurrentViewportPreview = new RecordingCurrentViewportPreview()
+    pane_viewport.setCenter(recordingCurrentViewportPreview)
+
+    Context.globalRenderer.addSlave(recordingCurrentViewportPreview)
+    Context.globalRenderer.addSlave(recordingViewportPreview)
+
+    button_viewport_custom.setUserData(ViewportMode.CUSTOM)
+    button_viewport_fit.setUserData(ViewportMode.FIT)
+    button_viewport_follow.setUserData(ViewportMode.FOLLOW)
+    _model.getViewportModeProperty.bind(
+      Bindings.createObjectBinding[ViewportMode](
+        new Callable[ViewportMode] {
+          override def call(): ViewportMode = {
+            if (toggle_viewport_mode.getSelectedToggle != null) {
+              toggle_viewport_mode.getSelectedToggle.getUserData.asInstanceOf[ViewportMode]
+            } else {
+              null
+            }
+          }
+        },
+        toggle_viewport_mode.selectedToggleProperty()
+      )
+    )
+
     _model.getRecordingTracksProperty.addListener(new ListChangeListener[RecordingTrackModel] {
       override def onChanged(c: Change[_ <: RecordingTrackModel]) = {
         while (c.next()) {
@@ -67,16 +116,18 @@ trait RecordingController { _ : ProjectSessionUpdating =>
             c.getAddedSubList
               .foreach { trackModel =>
                 val track = new RecordingTrack(_self, trackModel.channel, trackModel)
-                val data =
-                  (0 to 30).map { x =>
-                    RecordingNoteData(x * 247, Some(x * 247 + 247), KeyboardNote.widthAbsoluteIndex(x + 20))
-                  }
-                val session = new RecordingSession(Color.LIGHTCORAL)
-                session.setStart(0)
-                session.setEnd(Some(10000))
-                session.setData(data.toList)
+//                val data =
+//                  (0 to 30).map { x =>
+//                    RecordingNoteData(x * 247, Some(x * 247 + 247), KeyboardNote.widthAbsoluteIndex(x + 20))
+//                  }
+//                val session = new RecordingSession(Color.LIGHTCORAL)
+//                session.setStart(0)
+//                session.setEnd(Some(10000))
+//                session.setData(data.toList)
+//                trackModel.setRecordingSessions(List(session))
 
-                trackModel.setRecordingSessions(List(session))
+                trackModel.setRecordingSessions(List.empty)
+                trackModel.getRecordingViewportProperty.bind(_model.getRecordingViewportProperty)
 
                 track.setUserData(trackModel)
                 vbox_recording_tracks.getChildren.add(track)
@@ -142,14 +193,14 @@ trait RecordingController { _ : ProjectSessionUpdating =>
         Context.playbackService.stop()
         _model.setPlaying(false)
         button_play.setStyle("-fx-graphic: url('assets/icon/RecordingPlay.png')")
-        
+
         if(button_record.isSelected) {
           stopRecording()
         }
         button_record.setSelected(false)
       }
     })
-    
+
     button_record.selectedProperty().addListener(new ChangeListener[java.lang.Boolean] {
       override def changed(observable: ObservableValue[_ <: java.lang.Boolean], oldValue: java.lang.Boolean, newValue: java.lang.Boolean): Unit = {
         if(newValue && _model.isPlaying) {
@@ -171,7 +222,7 @@ trait RecordingController { _ : ProjectSessionUpdating =>
   )
 
   var _currentSessionInfo: Option[RecordingInfo] = None
-  
+
   private def startRecording() = {
     val playbackStart = Context.playbackService.getPlaybackTime
     val recordingStart = System.currentTimeMillis() - playbackStart

@@ -222,8 +222,6 @@
                            <right>
                               <HBox alignment="CENTER_RIGHT" maxHeight="35.0" maxWidth="210.0" minWidth="210.0" spacing="5.0" BorderPane.alignment="CENTER">
                                  <children>
-                                    <Button fx:id="button_record_skip_left" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordRight.png')" />
-                                    <Button fx:id="button_record_skip_right" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordLeft.png')" />
                                     <ToggleButton fx:id="button_record_midi_append" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordAppend.png')" />
                                  </children>
                               </HBox>
@@ -261,10 +259,59 @@
                            </bottom></BorderPane>
                             </top>
                      <center>
-                        <VBox fx:id="vbox_recording_tracks" prefHeight="200.0" prefWidth="100.0" spacing="5.0" BorderPane.alignment="CENTER">
-                           <padding>
+                        <BorderPane BorderPane.alignment="CENTER">
+                           <center>
+                              <VBox fx:id="vbox_recording_tracks" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding>
+                              </VBox>
+                           </center>
+                           <top>
+                              <BorderPane BorderPane.alignment="CENTER">
+                                 <left>
+                                    <VBox prefWidth="100.0" spacing="5.0" BorderPane.alignment="CENTER">
+                                       <children>
+                                          <HBox alignment="CENTER_RIGHT" prefHeight="30.0" spacing="5.0">
+                                             <children>
+                                                 <ToggleButton fx:id="button_viewport_custom" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingViewportCustom.png')">
+                                                   <toggleGroup>
+                                                      <ToggleGroup fx:id="toggle_viewport_mode" />
+                                                   </toggleGroup></ToggleButton>
+                                                 <ToggleButton fx:id="button_viewport_fit" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingViewportFit.png')" toggleGroup="$toggle_viewport_mode" />
+                                                 <ToggleButton fx:id="button_viewport_follow" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingViewportFollow.png')" toggleGroup="$toggle_viewport_mode" />
+                                             </children>
+                                          </HBox>
+                                          <HBox alignment="CENTER_RIGHT" prefHeight="30.0" spacing="5.0">
+                                              <children>
+                                                  <ToggleButton fx:id="button_record_skip_left" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordRight.png')" />
+                                                  <ToggleButton fx:id="button_record_loop" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordLoop.png')" />
+                                                  <ToggleButton fx:id="button_record_skip_right" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" style="-fx-graphic: url('assets/icon/RecordingRecordLeft.png')" />
+                                              </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </left>
+                                 <center>
+                                    <VBox spacing="5.0" BorderPane.alignment="CENTER">
+                                       <children>
+                                          <BorderPane fx:id="pane_viewport_preview" maxHeight="30.0" minHeight="30.0" prefHeight="30.0">
+                                             <VBox.margin>
+                                                <Insets left="2.0" />
+                                             </VBox.margin></BorderPane>
+                                          <BorderPane fx:id="pane_viewport" maxHeight="30.0" minHeight="30.0" prefHeight="30.0">
+                                             <VBox.margin>
+                                                <Insets left="2.0" />
+                                             </VBox.margin></BorderPane>
+                                       </children>
+                                    </VBox>
+                                 </center>
+                              </BorderPane>
+                           </top>
+                           <BorderPane.margin>
                               <Insets top="5.0" />
-                           </padding></VBox>
+                           </BorderPane.margin>
+                        </BorderPane>
                      </center>
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

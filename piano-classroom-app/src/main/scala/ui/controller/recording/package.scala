@@ -43,4 +43,9 @@ package object recording {
   }
   case class RecordingNoteData(start: Long, end: Option[Long], note: KeyboardNote) extends RecordingData
   case class RecordingSustainData(start: Long, end: Option[Long]) extends RecordingData
+
+  object ViewportMode extends Enumeration {
+    type ViewportMode = Value
+    val CUSTOM, FIT, FOLLOW = Value
+  }
 }
